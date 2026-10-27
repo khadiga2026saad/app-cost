@@ -1,0 +1,6 @@
+{
+  "name": "Smart Cost Pro",
+  "description": "تطبيق مالي احترافي لإدارة ومتابعة المصروفات والإيرادات وتكاليف المركبات والتقارير المالية بتخزين محلي دائم.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
