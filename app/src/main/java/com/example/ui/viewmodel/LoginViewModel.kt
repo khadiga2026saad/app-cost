@@ -68,8 +68,21 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
         }.apply()
     }
 
-    fun onBackClick() { notice = "يمكنك الرجوع من زر الرجوع في الجهاز" }
-    fun onLanguageClick() { notice = "تغيير اللغة متاح من زر اللغة أعلى الشاشة" }
+    var currentLanguage by mutableStateOf("ar")
+        private set
+
+    fun onLanguageClick() {
+        currentLanguage = when (currentLanguage) {
+            "ar" -> "en"
+            "en" -> "fr"
+            else -> "ar"
+        }
+        notice = when (currentLanguage) {
+            "ar" -> "تم التبديل إلى اللغة العربية"
+            "en" -> "Switched to English"
+            else -> "Passé au Français"
+        }
+    }
     fun onForgotPasswordClick() { errorMessage = null; showForgotPasswordDialog = true }
     fun onRegisterClick() { errorMessage = null; showRegisterDialog = true }
     fun dismissDialogs() { showRegisterDialog = false; showForgotPasswordDialog = false; showGooglePasswordDialog = false }

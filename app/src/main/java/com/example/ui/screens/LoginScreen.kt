@@ -57,6 +57,7 @@ fun LoginScreen(
     modifier: Modifier = Modifier,
     loginViewModel: LoginViewModel = viewModel()
 ) {
+    val backAction = onBackClick
     val username = loginViewModel.username
     val password = loginViewModel.password
     val showPassword = loginViewModel.showPassword
@@ -87,6 +88,93 @@ fun LoginScreen(
         (error ?: notice)?.let { android.widget.Toast.makeText(context, it, android.widget.Toast.LENGTH_SHORT).show() }
         if (notice != null) loginViewModel.clearNotice()
     }
+    val lang = loginViewModel.currentLanguage
+    val badgeText = when (lang) {
+        "en" -> "Secure Encrypted System"
+        "fr" -> "Système Chiffré Sécurisé"
+        else -> "نظام مشفر آمن"
+    }
+    val subtitleText = when (lang) {
+        "en" -> "Smart Executive Cost & Management System"
+        "fr" -> "Système Intelligent de Gestion et Coûts Exécutifs"
+        else -> "منظومة الإدارة والتكاليف التنفيذية الذكية"
+    }
+    val usernameLabel = when (lang) {
+        "en" -> "Username or Email"
+        "fr" -> "Nom d'utilisateur ou E-mail"
+        else -> "اسم المستخدم أو البريد الإلكتروني"
+    }
+    val usernamePlaceholder = when (lang) {
+        "en" -> "e.g. CEO@smartcost.pro or 29401"
+        "fr" -> "ex: CEO@smartcost.pro ou 29401"
+        else -> "مثال: CEO@smartcost.pro أو 29401"
+    }
+    val passwordLabel = when (lang) {
+        "en" -> "Encrypted Password"
+        "fr" -> "Mot de passe chiffré"
+        else -> "كلمة المرور المشفرة"
+    }
+    val rememberText = when (lang) {
+        "en" -> "Remember this secure device"
+        "fr" -> "Se souvenir de cet appareil"
+        else -> "تذكر هذا الجهاز الآمن"
+    }
+    val forgotText = when (lang) {
+        "en" -> "Forgot Code?"
+        "fr" -> "Code oublié ?"
+        else -> "استعادة الرمز؟"
+    }
+    val loginButtonText = when (lang) {
+        "en" -> "Login"
+        "fr" -> "Connexion"
+        else -> "تسجيل الدخول"
+    }
+    val verifyingText = when (lang) {
+        "en" -> "Verifying..."
+        "fr" -> "Vérification..."
+        else -> "جارٍ التحقق..."
+    }
+    val quickLoginText = when (lang) {
+        "en" -> "Or Quick Login"
+        "fr" -> "Ou Connexion Rapide"
+        else -> "أو تسجيل الدخول السريع"
+    }
+    val biometricTitle = when (lang) {
+        "en" -> "Quick Login via Face ID / Biometrics"
+        "fr" -> "Connexion Rapide par Face ID / Biométrie"
+        else -> "الدخول السريع عبر Face ID / البصمة"
+    }
+    val biometricSub = when (lang) {
+        "en" -> "Verified Biometric Check"
+        "fr" -> "Vérification biométrique approuvée"
+        else -> "التحقق البيومتري المعتمد"
+    }
+    val googleLoginText = when (lang) {
+        "en" -> "Continue with Google"
+        "fr" -> "Continuer avec Google"
+        else -> "متابعة الدخول بحساب Google"
+    }
+    val noAccountText = when (lang) {
+        "en" -> "Don't have an account?"
+        "fr" -> "Vous n'avez pas de compte ?"
+        else -> "ليس لديك حساب؟"
+    }
+    val registerNowText = when (lang) {
+        "en" -> "Register now"
+        "fr" -> "S'inscrire"
+        else -> "سجل الآن"
+    }
+    val guestText = when (lang) {
+        "en" -> "Login as Guest to browse system"
+        "fr" -> "Connexion en tant qu'invité"
+        else -> "الدخول كزائر لتصفح النظام"
+    }
+    val langDisplay = when (lang) {
+        "en" -> "◎ EN"
+        "fr" -> "◎ FR"
+        else -> "◎ AR"
+    }
+
     val fieldShape = RoundedCornerShape(12.dp)
     Column(
         modifier = modifier.fillMaxSize().background(Color(0xFFF9F9FF))
@@ -98,36 +186,36 @@ fun LoginScreen(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            IconButton(onClick = { loginViewModel.onBackClick(); onBackClick() }, modifier = Modifier.size(34.dp)) {
+            IconButton(onClick = { backAction() }, modifier = Modifier.size(38.dp)) {
                 Icon(Icons.Default.ArrowForward, contentDescription = "رجوع", tint = SlateLight)
             }
             Row(
                 Modifier.background(FinancialGreenContainer, CircleShape)
                     .border(1.dp, EmeraldGreen.copy(alpha = .25f), CircleShape)
-                    .padding(horizontal = 8.dp, vertical = 4.dp),
+                    .padding(horizontal = 10.dp, vertical = 5.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Box(Modifier.size(6.dp).background(EmeraldGreen, CircleShape))
+                Box(Modifier.size(8.dp).background(EmeraldGreen, CircleShape))
                 Spacer(Modifier.width(6.dp))
-                Text("نظام مشفر آمن", fontSize = 10.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF047857))
+                Text(badgeText, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color(0xFF047857))
             }
             Surface(onClick = { loginViewModel.onLanguageClick() }, shape = CircleShape, color = GoldLight, border = BorderStroke(1.dp, GoldPrimary.copy(alpha = .4f))) {
-                Text("◎ EN", Modifier.padding(horizontal = 9.dp, vertical = 4.dp), fontSize = 11.sp, fontWeight = FontWeight.Bold, color = GoldDark)
+                Text(langDisplay, Modifier.padding(horizontal = 11.dp, vertical = 6.dp), fontSize = 13.sp, fontWeight = FontWeight.Bold, color = GoldDark)
             }
         }
         Image(
             painter = painterResource(id = R.drawable.ic_smart_cost_logo),
             contentDescription = "الشعار الرسمي لتطبيق سمارت كوست برو",
-            modifier = Modifier.fillMaxWidth().height(88.dp),
+            modifier = Modifier.fillMaxWidth().height(140.dp),
             contentScale = ContentScale.Fit
         )
-        Text("منظومة الإدارة والتكاليف التنفيذية الذكية", fontSize = 10.sp, color = TextSecondaryDark, textAlign = TextAlign.Center)
+        Text(subtitleText, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = TextSecondaryDark, textAlign = TextAlign.Center)
         Spacer(Modifier.height(4.dp))
         Surface(shape = CircleShape, color = SurfaceWhite, border = BorderStroke(1.dp, BorderLight), shadowElevation = 2.dp) {
-            Row(Modifier.padding(horizontal = 10.dp, vertical = 3.dp), verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Default.Shield, null, Modifier.size(12.dp), tint = GoldPrimary)
+            Row(Modifier.padding(horizontal = 12.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Default.Shield, null, Modifier.size(14.dp), tint = GoldPrimary)
                 Spacer(Modifier.width(6.dp))
-                Text("eng.mamdouh saad", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = SlateLight)
+                Text("eng.mamdouh saad", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = SlateLight)
             }
         }
         Spacer(Modifier.height(8.dp))
@@ -138,127 +226,127 @@ fun LoginScreen(
             border = BorderStroke(1.dp, BorderLight.copy(alpha = .6f)),
             shadowElevation = 12.dp
         ) {
-            Column(Modifier.padding(horizontal = 14.dp, vertical = 12.dp)) {
+            Column(Modifier.padding(horizontal = 16.dp, vertical = 14.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.Person, null, Modifier.size(15.dp), tint = GoldDark)
+                    Icon(Icons.Default.Person, null, Modifier.size(18.dp), tint = GoldDark)
                     Spacer(Modifier.width(6.dp))
-                    Text("اسم المستخدم أو البريد الإلكتروني", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = SlateLight)
+                    Text(usernameLabel, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = SlateLight)
                 }
-                Spacer(Modifier.height(3.dp))
+                Spacer(Modifier.height(4.dp))
                 OutlinedTextField(
                     value = username, onValueChange = loginViewModel::onUsernameChange,
                     modifier = Modifier.fillMaxWidth(), singleLine = true,
-                    placeholder = { Text("مثال: CEO@smartcost.pro أو 29401", fontSize = 11.sp) },
-                    leadingIcon = { Icon(Icons.Default.Person, null, Modifier.size(18.dp), tint = TextTertiaryDark) },
-                    textStyle = MaterialTheme.typography.bodySmall.copy(color = DeepSlate),
+                    placeholder = { Text(usernamePlaceholder, fontSize = 13.sp) },
+                    leadingIcon = { Icon(Icons.Default.Person, null, Modifier.size(20.dp), tint = TextTertiaryDark) },
+                    textStyle = MaterialTheme.typography.bodyMedium.copy(color = DeepSlate, fontSize = 14.sp),
                     shape = fieldShape,
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = GoldPrimary, unfocusedBorderColor = BorderLight,
                         focusedContainerColor = SurfaceCard, unfocusedContainerColor = SurfaceCard
                     )
                 )
-                Spacer(Modifier.height(7.dp))
+                Spacer(Modifier.height(10.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.Lock, null, Modifier.size(15.dp), tint = GoldDark)
+                    Icon(Icons.Default.Lock, null, Modifier.size(18.dp), tint = GoldDark)
                     Spacer(Modifier.width(6.dp))
-                    Text("كلمة المرور المشفرة", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = SlateLight)
+                    Text(passwordLabel, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = SlateLight)
                 }
                 Spacer(Modifier.height(6.dp))
                 OutlinedTextField(
                     value = password, onValueChange = loginViewModel::onPasswordChange,
                     modifier = Modifier.fillMaxWidth(), singleLine = true,
-                    placeholder = { Text("••••••••••••", fontSize = 12.sp) },
+                    placeholder = { Text("••••••••••••", fontSize = 14.sp) },
                     visualTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                    leadingIcon = { Icon(Icons.Default.Lock, null, Modifier.size(18.dp), tint = TextTertiaryDark) },
+                    leadingIcon = { Icon(Icons.Default.Lock, null, Modifier.size(20.dp), tint = TextTertiaryDark) },
                     trailingIcon = {
                         IconButton(onClick = { loginViewModel.onPasswordVisibilityClick() }) {
                             Icon(if (showPassword) Icons.Default.VisibilityOff else Icons.Default.Visibility,
                                 contentDescription = if (showPassword) "إخفاء كلمة المرور" else "إظهار كلمة المرور",
-                                tint = TextSecondaryDark, modifier = Modifier.size(18.dp))
+                                tint = TextSecondaryDark, modifier = Modifier.size(20.dp))
                         }
                     },
-                    textStyle = MaterialTheme.typography.bodySmall.copy(color = DeepSlate),
+                    textStyle = MaterialTheme.typography.bodyMedium.copy(color = DeepSlate, fontSize = 14.sp),
                     shape = fieldShape,
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = GoldPrimary, unfocusedBorderColor = BorderLight,
                         focusedContainerColor = SurfaceCard, unfocusedContainerColor = SurfaceCard
                     )
                 )
-                Spacer(Modifier.height(3.dp))
+                Spacer(Modifier.height(6.dp))
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
                     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.clickable { loginViewModel.onRememberDeviceChange(!rememberDevice) }) {
                         Checkbox(checked = rememberDevice, onCheckedChange = loginViewModel::onRememberDeviceChange,
-                            modifier = Modifier.size(32.dp),
+                            modifier = Modifier.size(36.dp),
                             colors = CheckboxDefaults.colors(checkedColor = GoldDark))
-                        Text("تذكر هذا الجهاز الآمن", fontSize = 11.sp, color = TextSecondaryDark)
+                        Text(rememberText, fontSize = 13.sp, fontWeight = FontWeight.Medium, color = TextSecondaryDark)
                     }
-                    Text("استعادة الرمز؟", Modifier.clickable(onClick = { loginViewModel.onForgotPasswordClick() }), fontSize = 11.sp, fontWeight = FontWeight.Bold, color = GoldDark)
+                    Text(forgotText, Modifier.clickable(onClick = { loginViewModel.onForgotPasswordClick() }), fontSize = 13.sp, fontWeight = FontWeight.Bold, color = GoldDark)
                 }
-                Spacer(Modifier.height(7.dp))
+                Spacer(Modifier.height(10.dp))
                 Button(
-                    onClick = { activity?.let { loginViewModel.onLoginClick(it, onLoginClick) } ?: run { android.widget.Toast.makeText(context, "تعذر فتح نافذة المصادقة", android.widget.Toast.LENGTH_SHORT).show() } }, enabled = !isLoading, modifier = Modifier.fillMaxWidth().height(44.dp),
+                    onClick = { activity?.let { loginViewModel.onLoginClick(it, onLoginClick) } ?: run { android.widget.Toast.makeText(context, "تعذر فتح نافذة المصادقة", android.widget.Toast.LENGTH_SHORT).show() } }, enabled = !isLoading, modifier = Modifier.fillMaxWidth().height(50.dp),
                     shape = fieldShape, colors = ButtonDefaults.buttonColors(containerColor = DeepSlate),
                     elevation = ButtonDefaults.buttonElevation(defaultElevation = 6.dp)
                 ) {
                     if (isLoading) {
-                        CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp, color = GoldPrimary)
+                        CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp, color = GoldPrimary)
                         Spacer(Modifier.width(8.dp))
                     }
-                    Text(if (isLoading) "جارٍ التحقق..." else "تسجيل الدخول", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                    Text(if (isLoading) verifyingText else loginButtonText, fontWeight = FontWeight.Bold, fontSize = 16.sp)
                     Spacer(Modifier.width(8.dp))
-                    Icon(Icons.Default.ArrowBack, null, Modifier.size(17.dp), tint = GoldPrimary)
+                    Icon(Icons.Default.ArrowBack, null, Modifier.size(19.dp), tint = GoldPrimary)
                 }
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(10.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     HorizontalDivider(Modifier.weight(1f), color = BorderLight)
-                    Text("أو تسجيل الدخول السريع", Modifier.padding(horizontal = 10.dp), fontSize = 10.sp, color = TextTertiaryDark)
+                    Text(quickLoginText, Modifier.padding(horizontal = 10.dp), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = TextTertiaryDark)
                     HorizontalDivider(Modifier.weight(1f), color = BorderLight)
                 }
-                Spacer(Modifier.height(6.dp))
+                Spacer(Modifier.height(8.dp))
                 Surface(
                     onClick = { activity?.let { loginViewModel.onBiometricClick(it, onLoginClick) } ?: run { android.widget.Toast.makeText(context, "تعذر فتح نافذة البصمة", android.widget.Toast.LENGTH_SHORT).show() } }, modifier = Modifier.fillMaxWidth(),
                     shape = fieldShape, color = GoldLight.copy(alpha = .7f),
                     border = BorderStroke(1.dp, GoldPrimary.copy(alpha = .45f))
                 ) {
-                    Row(Modifier.padding(horizontal = 12.dp, vertical = 7.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Box(Modifier.size(28.dp).background(SurfaceWhite, RoundedCornerShape(8.dp)), contentAlignment = Alignment.Center) {
-                            Icon(Icons.Default.Shield, null, Modifier.size(17.dp), tint = GoldDark)
+                    Row(Modifier.padding(horizontal = 14.dp, vertical = 9.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Box(Modifier.size(32.dp).background(SurfaceWhite, RoundedCornerShape(8.dp)), contentAlignment = Alignment.Center) {
+                            Icon(Icons.Default.Shield, null, Modifier.size(19.dp), tint = GoldDark)
                         }
                         Spacer(Modifier.width(10.dp))
                         Column(Modifier.weight(1f)) {
-                            Text("الدخول السريع عبر Face ID / البصمة", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = DeepSlate)
-                            Text("التحقق البيومتري المعتمد", fontSize = 10.sp, color = TextSecondaryDark)
+                            Text(biometricTitle, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = DeepSlate)
+                            Text(biometricSub, fontSize = 11.sp, color = TextSecondaryDark)
                         }
-                        Icon(Icons.Default.ArrowBack, null, Modifier.size(15.dp), tint = GoldDark)
+                        Icon(Icons.Default.ArrowBack, null, Modifier.size(17.dp), tint = GoldDark)
                     }
                 }
-                Spacer(Modifier.height(5.dp))
+                Spacer(Modifier.height(8.dp))
                 OutlinedButton(
-                    onClick = { loginViewModel.onGoogleClick(context, onLoginClick) }, enabled = !isLoading, modifier = Modifier.fillMaxWidth().height(42.dp),
+                    onClick = { loginViewModel.onGoogleClick(context, onLoginClick) }, enabled = !isLoading, modifier = Modifier.fillMaxWidth().height(46.dp),
                     shape = fieldShape, border = BorderStroke(1.dp, BorderLight),
                     colors = ButtonDefaults.outlinedButtonColors(containerColor = SurfaceCard)
                 ) {
                     Image(
                         painter = painterResource(id = R.drawable.ic_google_logo),
                         contentDescription = "شعار Google",
-                        modifier = Modifier.size(20.dp)
+                        modifier = Modifier.size(22.dp)
                     )
                     Spacer(Modifier.width(10.dp))
-                    Text("متابعة الدخول بحساب Google", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = SlateLight)
+                    Text(googleLoginText, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = SlateLight)
                 }
-                Spacer(Modifier.height(5.dp))
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
-                    Text("ليس لديك حساب؟", fontSize = 11.sp, color = TextSecondaryDark)
-                    Spacer(Modifier.width(5.dp))
-                    Text("سجل الآن", Modifier.clickable(onClick = { loginViewModel.onRegisterClick() }), fontSize = 11.sp, fontWeight = FontWeight.Bold, color = GoldDark)
+                Spacer(Modifier.height(8.dp))
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
+                    Text(noAccountText, fontSize = 13.sp, color = TextSecondaryDark)
+                    Spacer(Modifier.width(6.dp))
+                    Text(registerNowText, Modifier.clickable(onClick = { loginViewModel.onRegisterClick() }), fontSize = 13.sp, fontWeight = FontWeight.Bold, color = GoldDark)
                 }
             }
         }
-        Spacer(Modifier.height(5.dp))
-        Text("الدخول كزائر لتصفح النظام", Modifier.fillMaxWidth().clickable(onClick = { loginViewModel.onGuestClick(onGuestClick) }).padding(vertical = 5.dp),
-            fontSize = 11.sp, fontWeight = FontWeight.Bold, color = TextSecondaryDark, textAlign = TextAlign.Center)
-        Spacer(Modifier.height(2.dp))
+        Spacer(Modifier.height(8.dp))
+        Text(guestText, Modifier.fillMaxWidth().clickable(onClick = { loginViewModel.onGuestClick(onGuestClick) }).padding(vertical = 6.dp),
+            fontSize = 13.sp, fontWeight = FontWeight.Bold, color = TextSecondaryDark, textAlign = TextAlign.Center)
+        Spacer(Modifier.height(4.dp))
     }
 
     if (showRegisterDialog) {
