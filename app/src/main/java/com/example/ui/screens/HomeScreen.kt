@@ -564,10 +564,6 @@ fun ExecutiveHeader(
                 }
             }
 
-            Spacer(modifier = Modifier.height(10.dp))
-
-            // شريط الأخبار المالي بتنسيق وتوسيع كامل
-            ApprovedHomeTicker()
         }
     }
 }
