@@ -233,7 +233,20 @@ fun SmartCostProApp(
             Box(Modifier.weight(1f)) {
         // When on DASHBOARD, HomeScreen provides its full dedicated Executive Header & Navigation
         if (showingAccountSettings) {
-            AccountSettingsScreen()
+            AccountSettingsScreen(
+                onSwitchAccount = {
+                    FirebaseAuth.getInstance().signOut()
+                    showingAccountSettings = false
+                    showingCostCategories = false
+                    isInWorkspace = false
+                },
+                onLogout = {
+                    FirebaseAuth.getInstance().signOut()
+                    showingAccountSettings = false
+                    showingCostCategories = false
+                    isInWorkspace = false
+                }
+            )
         } else if (showingCostCategories) {
             MainCategoriesScreen(
                 viewModel = viewModel,
