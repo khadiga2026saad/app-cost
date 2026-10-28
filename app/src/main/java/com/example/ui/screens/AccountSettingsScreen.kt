@@ -10,6 +10,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.activity.compose.LocalActivityResultRegistryOwner
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import android.graphics.BitmapFactory
@@ -124,7 +125,8 @@ private fun AccountProfileEditor(
     var notice by remember(accountKey) { mutableStateOf("") }
     var confirmAction by remember { mutableStateOf<String?>(null) }
     val imageFile = remember(accountKey) { File(context.filesDir, "profile_" + accountKey.hashCode() + ".jpg") }
-    val picker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+    val hasPhotoPicker = LocalActivityResultRegistryOwner.current != null
+    val picker = if (hasPhotoPicker) rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         if (uri != null) {
             try {
                 context.contentResolver.openInputStream(uri)?.use { input ->
@@ -137,6 +139,7 @@ private fun AccountProfileEditor(
             }
         }
     }
+    else null
     Text("الملف الشخصي", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
     Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
         Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -145,13 +148,14 @@ private fun AccountProfileEditor(
             }
             Box(
                 Modifier.size(88.dp).clip(CircleShape).background(Color(0xFFF6E8BC))
-                    .clickable { picker.launch("image/*") },
+                    .clickable(enabled = picker != null) { picker?.launch("image/*") },
                 contentAlignment = Alignment.Center
             ) {
                 if (bitmap != null) Image(bitmap, "صورة المستخدم", Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
                 else Icon(Icons.Default.Person, "صورة المستخدم", Modifier.size(46.dp), tint = Color(0xFF9B7921))
             }
-            TextButton(onClick = { picker.launch("image/*") }) { Text("تغيير صورة المستخدم") }
+            TextButton(onClick = { picker?.launch("image/*") }, enabled = picker != null) { Text("تغيير صورة المستخدم") }
+            if (!hasPhotoPicker) Text("اختيار الصور غير متاح في بيئة المعاينة الحالية", style = MaterialTheme.typography.bodySmall)
         }
     }
     OutlinedTextField(fullName, { fullName = it }, label = { Text("الاسم الكامل") }, singleLine = true, modifier = Modifier.fillMaxWidth())
