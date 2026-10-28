@@ -65,7 +65,6 @@ fun MainCategoriesScreen(
  // No fabricated records or amounts: the reference mockup's example figures are deliberately omitted.
  CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
  Scaffold(containerColor=CategoryPalette.background,
-  topBar={ CategoryHeader(onLogout) },
   bottomBar={
    NavigationBar(containerColor=CategoryPalette.white) {
     NavigationBarItem(selected=false,onClick=onNavigateBack,icon={Icon(Icons.Outlined.GridView,null)},label={Text("الرئيسية")})
@@ -77,7 +76,6 @@ fun MainCategoriesScreen(
   }
  ) { padding ->
   LazyColumn(Modifier.fillMaxSize().padding(padding).padding(horizontal=14.dp),verticalArrangement=Arrangement.spacedBy(13.dp)) {
-   item { Spacer(Modifier.height(2.dp)); CategoryTicker() }
    item {
     Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween,verticalAlignment=Alignment.CenterVertically) {
      Text("الأفرع والأقسام الرئيسية",fontSize=17.sp,fontWeight=FontWeight.Bold,color=CategoryPalette.ink)
