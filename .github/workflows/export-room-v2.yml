@@ -27,7 +27,7 @@ jobs:
           build = Path('app/build.gradle.kts')
           source = build.read_text()
           assert 'room.schemaLocation' not in source
-          build.write_text('ksp {\n  arg("room.schemaLocation", "$projectDir/schemas")\n}\n\n' + source)
+          build.write_text(source.replace('android {', 'ksp {\\n  arg("room.schemaLocation", "$projectDir/schemas")\\n}\\n\\nandroid {', 1))
           PY
       - name: Generate exact Room v2 schema
         working-directory: historical-v2
