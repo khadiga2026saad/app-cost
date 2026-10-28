@@ -185,6 +185,49 @@ fun SmartCostProApp(
             else currentScreen = Screen.DASHBOARD
         }
 
+        var currentTimeString by remember { mutableStateOf("") }
+        var currentDateString by remember { mutableStateOf("") }
+        var showSearchDialog by remember { mutableStateOf(false) }
+        var searchQuery by remember { mutableStateOf("") }
+        var showVoiceDialog by remember { mutableStateOf(false) }
+        LaunchedEffect(Unit) {
+            val timeFormat = java.text.SimpleDateFormat("hh:mm a", java.util.Locale("ar"))
+            val dateFormat = java.text.SimpleDateFormat("d MMMM yyyy", java.util.Locale("ar"))
+            while (true) {
+                val now = java.util.Date()
+                currentTimeString = timeFormat.format(now)
+                currentDateString = dateFormat.format(now)
+                kotlinx.coroutines.delay(1000L)
+            }
+        }
+        Column(modifier = modifier.fillMaxSize()) {
+            Column(
+                modifier = Modifier.fillMaxWidth()
+                    .background(MaterialTheme.colorScheme.background)
+                    .padding(horizontal = 8.dp, vertical = 6.dp)
+            ) {
+                ExecutiveHeader(
+                    timeString = currentTimeString,
+                    dateString = currentDateString,
+                    onSearchClick = { showSearchDialog = true },
+                    onVoiceClick = { showVoiceDialog = true },
+                    onSettingsClick = { showSearchDialog = false },
+                    onLogout = {
+                        FirebaseAuth.getInstance().signOut()
+                        isInWorkspace = false
+                    },
+                    onHomeClick = { showingCostCategories = false; currentScreen = Screen.DASHBOARD }
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+                LiveFinancialTickerBar()
+            }
+            if (showSearchDialog) {
+                SearchDialog(query = searchQuery, onQueryChange = { searchQuery = it }, onDismiss = { showSearchDialog = false })
+            }
+            if (showVoiceDialog) {
+                VoiceSearchDialog(onDismiss = { showVoiceDialog = false })
+            }
+            Box(Modifier.weight(1f)) {
         // When on DASHBOARD, HomeScreen provides its full dedicated Executive Header & Navigation
         if (showingCostCategories) {
             MainCategoriesScreen(
@@ -245,61 +288,6 @@ fun SmartCostProApp(
             // Secondary Screen Scaffold with TopAppBar and standard NavigationBar
             Scaffold(
                 modifier = modifier.fillMaxSize(),
-                topBar = {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(MaterialTheme.colorScheme.background)
-                            .padding(horizontal = 16.dp, vertical = 6.dp)
-                    ) {
-                        // Current live time state for header
-                        var currentTimeString by remember { mutableStateOf("") }
-                        var currentDateString by remember { mutableStateOf("") }
-                        var showSearchDialog by remember { mutableStateOf(false) }
-                        var searchQuery by remember { mutableStateOf("") }
-                        var showVoiceDialog by remember { mutableStateOf(false) }
-
-                        LaunchedEffect(Unit) {
-                            val timeFormat = java.text.SimpleDateFormat("hh:mm a", java.util.Locale("ar"))
-                            val dateFormat = java.text.SimpleDateFormat("d MMMM yyyy", java.util.Locale("ar"))
-                            while (true) {
-                                val now = java.util.Date()
-                                currentTimeString = timeFormat.format(now)
-                                currentDateString = dateFormat.format(now)
-                                kotlinx.coroutines.delay(1000L)
-                            }
-                        }
-
-                        ExecutiveHeader(
-                            timeString = currentTimeString,
-                            dateString = currentDateString,
-                            onSearchClick = { showSearchDialog = true },
-                            onVoiceClick = { showVoiceDialog = true },
-                            onSettingsClick = { },
-                            onLogout = {
-                                FirebaseAuth.getInstance().signOut()
-                                isInWorkspace = false
-                            },
-                            onHomeClick = { currentScreen = Screen.DASHBOARD }
-                        )
-
-                        Spacer(modifier = Modifier.height(6.dp))
-
-                        LiveFinancialTickerBar()
-
-                        if (showSearchDialog) {
-                            SearchDialog(
-                                query = searchQuery,
-                                onQueryChange = { searchQuery = it },
-                                onDismiss = { showSearchDialog = false }
-                            )
-                        }
-
-                        if (showVoiceDialog) {
-                            VoiceSearchDialog(onDismiss = { showVoiceDialog = false })
-                        }
-                    }
-                },
                 bottomBar = {
                     NavigationBar(
                         modifier = Modifier
@@ -369,6 +357,8 @@ fun SmartCostProApp(
                         }
                     }
                 }
+            }
+        }
             }
         }
     }
