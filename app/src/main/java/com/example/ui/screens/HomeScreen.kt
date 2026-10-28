@@ -540,7 +540,7 @@ fun ExecutiveHeader(
                             onDismissRequest = { expandedMenu = false }
                         ) {
                             DropdownMenuItem(
-                                text = { Text("إعدادات النظام") },
+                                text = { Text("إعداد الحساب") },
                                 leadingIcon = {
                                     Icon(Icons.Default.Settings, contentDescription = null, tint = DeepSlate)
                                 },
