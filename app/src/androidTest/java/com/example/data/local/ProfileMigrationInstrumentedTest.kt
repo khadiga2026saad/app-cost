@@ -32,11 +32,16 @@ class ProfileMigrationInstrumentedTest {
         )
         val db = helper.writableDatabase
         fun count(table: String): Long = db.query("SELECT COUNT(*) FROM $table").use { it.moveToFirst(); it.getLong(0) }
-        val beforeExpenses = count("expenses")
-        val beforeRevenues = count("revenues")
+        fun counts(): Map<String, Long> {
+            val tables = mutableListOf<String>()
+            db.query("SELECT name FROM sqlite_master WHERE type='table' AND name NOT IN ('android_metadata','sqlite_sequence','room_master_table','user_profiles')").use { cursor ->
+                while (cursor.moveToNext()) tables += cursor.getString(0)
+            }
+            return tables.associateWith(::count)
+        }
+        val before = counts()
         AppDatabase.MIGRATION_2_3.migrate(db)
-        assertEquals(beforeExpenses, count("expenses"))
-        assertEquals(beforeRevenues, count("revenues"))
+        assertEquals(before, counts())
         assertEquals(0L, count("user_profiles"))
         helper.close()
         context.deleteDatabase(name)
