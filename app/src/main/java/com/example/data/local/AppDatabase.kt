@@ -18,6 +18,8 @@ import com.example.data.local.dao.TreasuryMovementDao
 import com.example.data.local.dao.VehicleDao
 import com.example.data.local.dao.VehicleLogDao
 import com.example.data.local.dao.UserDao
+import com.example.data.local.dao.ProfileDao
+import com.example.data.local.entities.UserProfile
 import com.example.data.local.entities.CertificatePayoutScheduleEntity
 import com.example.data.local.entities.CurrentAccountEntity
 import com.example.data.local.entities.ExpenseEntity
@@ -53,13 +55,15 @@ import kotlinx.coroutines.launch
         CertificatePayoutScheduleEntity::class,
         RevenueEntity::class,
         TreasuryMovementEntity::class,
-        UserEntity::class
+        UserEntity::class,
+        UserProfile::class
     ],
-    version = 2,
-    exportSchema = false
+    version = 3,
+    exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {
 
+    abstract fun profileDao(): ProfileDao
     abstract fun userDao(): UserDao
     abstract fun currentAccountDao(): CurrentAccountDao
     abstract fun studentDao(): StudentDao
@@ -72,6 +76,11 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun treasuryMovementDao(): TreasuryMovementDao
 
     companion object {
+        val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("CREATE TABLE IF NOT EXISTS `user_profiles` (`accountKey` TEXT NOT NULL, `fullName` TEXT NOT NULL, `nickname` TEXT NOT NULL, `birthDate` TEXT, `phone` TEXT, `photoPath` TEXT, `currency` TEXT NOT NULL, `dateFormat` TEXT NOT NULL, `numberLanguage` TEXT NOT NULL, PRIMARY KEY(`accountKey`))")
+            }
+        }
         private val MIGRATION_1_2 = object : Migration(1, 2) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("CREATE TABLE IF NOT EXISTS `users` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `username` TEXT NOT NULL, `email` TEXT NOT NULL, `passwordHash` TEXT NOT NULL, `salt` TEXT NOT NULL, `createdAt` INTEGER NOT NULL)")
@@ -89,7 +98,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "smart_cost_pro_database"
                 )
-                    .addMigrations(MIGRATION_1_2)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
                     .addCallback(DatabaseCallback())
                     .build()
                 INSTANCE = instance
