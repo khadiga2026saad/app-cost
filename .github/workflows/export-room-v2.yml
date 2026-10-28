@@ -1,0 +1,41 @@
+name: Export historical Room v2 schema
+on:
+  workflow_dispatch:
+jobs:
+  export-v2:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 5f7782676f41b8f65f971d24fe35cb7282a91375
+          path: historical-v2
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Enable schema export in historical worktree only
+        working-directory: historical-v2
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          db = Path('app/src/main/java/com/example/data/local/AppDatabase.kt')
+          source = db.read_text()
+          assert 'version = 2' in source and 'exportSchema = false' in source
+          db.write_text(source.replace('exportSchema = false', 'exportSchema = true'))
+          build = Path('app/build.gradle.kts')
+          source = build.read_text()
+          assert 'room.schemaLocation' not in source
+          build.write_text('ksp {\n  arg("room.schemaLocation", "$projectDir/schemas")\n}\n\n' + source)
+          PY
+      - name: Generate exact Room v2 schema
+        working-directory: historical-v2
+        run: |
+          if [ -f ./gradlew ]; then chmod +x ./gradlew; ./gradlew :app:kspDebugKotlin; else gradle :app:kspDebugKotlin; fi
+          test -f app/schemas/com.example.data.local.AppDatabase/2.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: historical-room-v2-schema
+          path: historical-v2/app/schemas/com.example.data.local.AppDatabase/2.json
+          if-no-files-found: error
