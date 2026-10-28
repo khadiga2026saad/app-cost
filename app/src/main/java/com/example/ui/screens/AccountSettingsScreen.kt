@@ -14,6 +14,8 @@ import androidx.activity.compose.LocalActivityResultRegistryOwner
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import android.graphics.BitmapFactory
+import android.app.DatePickerDialog
+import java.util.Calendar
 import android.content.Context
 import java.io.File
 import java.text.SimpleDateFormat
@@ -160,7 +162,36 @@ private fun AccountProfileEditor(
     }
     OutlinedTextField(fullName, { fullName = it }, label = { Text("الاسم الكامل") }, singleLine = true, modifier = Modifier.fillMaxWidth())
     OutlinedTextField(nickname, { nickname = it }, label = { Text("اسم الشهرة") }, singleLine = true, modifier = Modifier.fillMaxWidth())
-    OutlinedTextField(birthDate, { birthDate = it }, label = { Text("تاريخ الميلاد (YYYY-MM-DD)") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+    OutlinedTextField(
+        value = birthDate,
+        onValueChange = {},
+        readOnly = true,
+        label = { Text("تاريخ الميلاد") },
+        placeholder = { Text("اختر تاريخ الميلاد") },
+        singleLine = true,
+        modifier = Modifier.fillMaxWidth()
+    )
+    OutlinedButton(
+        onClick = {
+            val calendar = Calendar.getInstance()
+            if (birthDate.isNotBlank()) {
+                try {
+                    val date = SimpleDateFormat("yyyy-MM-dd", Locale.US).apply { isLenient = false }.parse(birthDate)
+                    if (date != null) calendar.time = date
+                } catch (_: Exception) { /* Use current date for invalid legacy value. */ }
+            }
+            DatePickerDialog(
+                context,
+                { _, year, month, day ->
+                    birthDate = String.format(Locale.US, "%04d-%02d-%02d", year, month + 1, day)
+                },
+                calendar.get(Calendar.YEAR),
+                calendar.get(Calendar.MONTH),
+                calendar.get(Calendar.DAY_OF_MONTH)
+            ).apply { datePicker.maxDate = System.currentTimeMillis(); show() }
+        },
+        modifier = Modifier.fillMaxWidth()
+    ) { Text("اختيار تاريخ الميلاد من التقويم") }
     Text("البريد الإلكتروني: " + (user?.email ?: "حساب زائر"), style = MaterialTheme.typography.bodyMedium)
     Text("نوع الحساب: " + if (user == null) "زائر" else "حساب مسجل", style = MaterialTheme.typography.bodySmall)
     Button(
