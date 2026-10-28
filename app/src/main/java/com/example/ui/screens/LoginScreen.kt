@@ -344,8 +344,43 @@ fun LoginScreen(
             }
         }
         Spacer(Modifier.height(8.dp))
-        Text(guestText, Modifier.fillMaxWidth().clickable(onClick = { loginViewModel.onGuestClick(onGuestClick) }).padding(vertical = 6.dp),
-            fontSize = 13.sp, fontWeight = FontWeight.Bold, color = TextSecondaryDark, textAlign = TextAlign.Center)
+        Surface(
+            onClick = { loginViewModel.onGuestClick(onGuestClick) },
+            modifier = Modifier.fillMaxWidth().widthIn(max = 448.dp),
+            shape = RoundedCornerShape(16.dp),
+            color = SurfaceWhite,
+            border = BorderStroke(1.dp, BorderLight),
+            shadowElevation = 2.dp
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(
+                    modifier = Modifier.size(42.dp)
+                        .background(GoldLight.copy(alpha = .35f), CircleShape)
+                        .border(1.dp, GoldPrimary.copy(alpha = .45f), CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.ic_smart_cost_logo),
+                        contentDescription = "شعار SMART COST PRO",
+                        modifier = Modifier.size(36.dp),
+                        contentScale = ContentScale.Fit
+                    )
+                }
+                Spacer(Modifier.width(12.dp))
+                Text(
+                    guestText,
+                    modifier = Modifier.weight(1f),
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = TextSecondaryDark,
+                    textAlign = TextAlign.Start
+                )
+                Icon(Icons.Default.ArrowBack, contentDescription = null, modifier = Modifier.size(18.dp), tint = GoldDark)
+            }
+        }
         Spacer(Modifier.height(4.dp))
     }
 
