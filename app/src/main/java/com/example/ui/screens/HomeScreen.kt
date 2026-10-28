@@ -233,7 +233,7 @@ fun HomeScreen(
             Surface(
                 onClick = { onNavigateToGateway("expenses") },
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp).testTag("costs_only_gateway"),
-                shape = RoundedCornerShape(16.dp), color = ink, shadowElevation = 7.dp
+                shape = RoundedCornerShape(16.dp), color = Color(0xFF075E52), shadowElevation = 7.dp
             ) {
                 Row(Modifier.padding(15.dp), verticalAlignment = Alignment.CenterVertically) {
                     Box(Modifier.size(42.dp).clip(RoundedCornerShape(12.dp)).background(GoldDark), contentAlignment = Alignment.Center) {
