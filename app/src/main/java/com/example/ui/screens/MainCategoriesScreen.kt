@@ -157,16 +157,17 @@ fun MainCategoriesScreen(
  }
 }
 @Composable private fun CategoryTicker() {
- Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically) {
-  Surface(shape=RoundedCornerShape(12.dp),color=Color(0xFFE0F2FE)) {
-   Row(Modifier.padding(5.dp),verticalAlignment=Alignment.CenterVertically) {
-    androidx.compose.foundation.Image(painterResource(R.drawable.ic_smart_cost_logo),"Smart Cost Pro",Modifier.size(34.dp),contentScale=ContentScale.Fit)
-    Icon(Icons.Default.ArrowForward,null,tint=CategoryPalette.blue,modifier=Modifier.size(15.dp))
+ Row(Modifier.fillMaxWidth().height(48.dp),verticalAlignment=Alignment.CenterVertically) {
+  Surface(shape=RoundedCornerShape(12.dp),color=Color(0xFFE0F2FE),border=BorderStroke(1.dp,Color(0xFFBAE6FD))) {
+   Row(Modifier.padding(horizontal=8.dp,vertical=4.dp),verticalAlignment=Alignment.CenterVertically) {
+    androidx.compose.foundation.Image(painterResource(R.drawable.ic_smart_cost_logo),"Smart Cost Pro",Modifier.size(30.dp),contentScale=ContentScale.Fit)
+    Spacer(Modifier.width(5.dp))
+    Text("نبض القسم",fontSize=11.sp,fontWeight=FontWeight.Bold,color=CategoryPalette.ink)
    }
   }
-  Spacer(Modifier.width(7.dp))
-  Surface(Modifier.weight(1f),shape=RoundedCornerShape(14.dp),color=CategoryPalette.white,border=BorderStroke(1.dp,CategoryPalette.border)) {
-   Text("✦ فائق يعزز إنجاز كل مسؤولياتك المالية • تابع تحديثات قسم التكاليف • ",Modifier.fillMaxWidth().padding(10.dp).basicMarquee(iterations=Int.MAX_VALUE,velocity=35.dp),maxLines=1,fontSize=11.sp,color=CategoryPalette.ink)
+  Spacer(Modifier.width(8.dp))
+  Surface(Modifier.weight(1f),shape=RoundedCornerShape(12.dp),color=CategoryPalette.white,border=BorderStroke(1.dp,CategoryPalette.border)) {
+   Text("✦ SMART COST PRO • تابع تحديثات قسم التكاليف والمصروفات أولاً بأول • ",Modifier.fillMaxWidth().padding(horizontal=10.dp,vertical=8.dp).basicMarquee(iterations=Int.MAX_VALUE,velocity=38.dp),maxLines=1,fontSize=12.5.sp,fontWeight=FontWeight.Bold,color=CategoryPalette.ink)
   }
  }
 }
