@@ -59,6 +59,7 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ui.navigation.Screen
+import com.example.ui.screens.AccountSettingsScreen
 import com.example.ui.screens.LoginScreen
 import com.example.ui.screens.DashboardScreen
 import com.example.ui.screens.ExpensesScreen
@@ -157,6 +158,7 @@ fun SmartCostProApp(
     }
     var currentScreen by remember { mutableStateOf(Screen.DASHBOARD) }
     var showingCostCategories by remember { mutableStateOf(false) }
+    var showingAccountSettings by remember { mutableStateOf(false) }
 
     // Dialog trigger flags when navigating from quick actions
     var triggerAddExpense by remember { mutableStateOf(false) }
@@ -180,8 +182,9 @@ fun SmartCostProApp(
         )
     } else {
         // Handle Android system Back button: if not on DASHBOARD, return to DASHBOARD
-        BackHandler(enabled = showingCostCategories || currentScreen != Screen.DASHBOARD) {
-            if (showingCostCategories) showingCostCategories = false
+        BackHandler(enabled = showingAccountSettings || showingCostCategories || currentScreen != Screen.DASHBOARD) {
+            if (showingAccountSettings) showingAccountSettings = false
+            else if (showingCostCategories) showingCostCategories = false
             else currentScreen = Screen.DASHBOARD
         }
 
@@ -211,12 +214,12 @@ fun SmartCostProApp(
                     dateString = currentDateString,
                     onSearchClick = { showSearchDialog = true },
                     onVoiceClick = { showVoiceDialog = true },
-                    onSettingsClick = { showSearchDialog = false },
+                    onSettingsClick = { showingAccountSettings = true },
                     onLogout = {
                         FirebaseAuth.getInstance().signOut()
                         isInWorkspace = false
                     },
-                    onHomeClick = { showingCostCategories = false; currentScreen = Screen.DASHBOARD }
+                    onHomeClick = { showingAccountSettings = false; showingCostCategories = false; currentScreen = Screen.DASHBOARD }
                 )
                 Spacer(modifier = Modifier.height(6.dp))
                 LiveFinancialTickerBar()
@@ -229,7 +232,9 @@ fun SmartCostProApp(
             }
             Box(Modifier.weight(1f)) {
         // When on DASHBOARD, HomeScreen provides its full dedicated Executive Header & Navigation
-        if (showingCostCategories) {
+        if (showingAccountSettings) {
+            AccountSettingsScreen()
+        } else if (showingCostCategories) {
             MainCategoriesScreen(
                 viewModel = viewModel,
                 onNavigateBack = { showingCostCategories = false; currentScreen = Screen.DASHBOARD },
