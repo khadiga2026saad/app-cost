@@ -230,22 +230,6 @@ fun HomeScreen(
                 Text("  •  FINANCIAL MONITORING", fontSize = 9.sp, color = SlateMedium)
             }
             Spacer(Modifier.height(12.dp))
-            Surface(Modifier.fillMaxWidth(), color = Color.White, shadowElevation = 3.dp) {
-                Column(Modifier.padding(18.dp)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Analytics, null, tint = GoldDark)
-                        Spacer(Modifier.width(8.dp))
-                        Column(Modifier.weight(1f)) {
-                            Text("Cost Estimation", fontSize = 19.sp, fontWeight = FontWeight.Black, color = ink)
-                            Text("مؤشرات تقدير ومتابعة التكاليف", fontSize = 11.sp, color = SlateMedium)
-                        }
-                        Text("ملخص مالي", color = EmeraldGreen, fontSize = 10.sp, fontWeight = FontWeight.Bold)
-                    }
-                    Spacer(Modifier.height(8.dp))
-                    Text("تُحتسب المؤشرات من بيانات البرنامج عند توفرها؛ لا تُعرض نسب توقعية دون معادلات معتمدة.", fontSize = 10.sp, color = SlateMedium)
-                }
-            }
-            Spacer(Modifier.height(14.dp))
             Surface(
                 onClick = { onNavigateToGateway("expenses") },
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp).testTag("costs_only_gateway"),
