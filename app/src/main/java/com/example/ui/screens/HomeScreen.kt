@@ -211,24 +211,6 @@ fun HomeScreen(
         }
     ) { insets ->
         Column(Modifier.fillMaxSize().padding(insets).verticalScroll(androidx.compose.foundation.rememberScrollState())) {
-            Column(Modifier.fillMaxWidth().background(pale).padding(horizontal = 8.dp, vertical = 6.dp)) {
-                ExecutiveHeader(
-                    timeString = time,
-                    dateString = date,
-                    userName = "أحمد محمود",
-                    userRole = "مؤسس برمجيات ورائد أعمال",
-                    onSettingsClick = { showMenu = true },
-                    onLogout = onLogout,
-                    onHomeClick = { onNavigateToGateway("expenses") }
-                )
-            }
-            Spacer(Modifier.height(12.dp))
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
-                Box(Modifier.size(7.dp).background(GoldPrimary, CircleShape))
-                Spacer(Modifier.width(6.dp))
-                Text("نظام المراقبة المالية", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = ink)
-                Text("  •  FINANCIAL MONITORING", fontSize = 9.sp, color = SlateMedium)
-            }
             Spacer(Modifier.height(12.dp))
             Surface(
                 onClick = { onNavigateToGateway("expenses") },
