@@ -113,20 +113,21 @@ fun AccountSettingsScreen(profileViewModel: ProfileViewModel, modifier: Modifier
                             Text("معلوماتي", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                             val date = profile?.birthDate?.let { runCatching { LocalDate.parse(it) }.getOrNull() }
                             if (date == null) Text("أضف تاريخ ميلادك لتظهر معلوماتك التلقائية.", color = Color.Gray)
-                            else {
+                            val values = if (date == null) List(6) { "—" } else {
                                 val today = LocalDate.now()
                                 val next = (today.year..today.year + 4).mapNotNull { year -> runCatching { date.withYear(year) }.getOrNull() }.first { !it.isBefore(today) }
                                 val birthHijri = android.icu.util.IslamicCalendar().apply { timeInMillis = date.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli() }
                                 val nowHijri = android.icu.util.IslamicCalendar()
                                 val hijriYears = nowHijri.get(android.icu.util.Calendar.YEAR) - birthHijri.get(android.icu.util.Calendar.YEAR) - if (nowHijri.get(android.icu.util.Calendar.MONTH) * 32 + nowHijri.get(android.icu.util.Calendar.DAY_OF_MONTH) < birthHijri.get(android.icu.util.Calendar.MONTH) * 32 + birthHijri.get(android.icu.util.Calendar.DAY_OF_MONTH)) 1 else 0
-                                val values = listOf(
+                                listOf(
                                     "${Period.between(date, today).years} سنة",
                                     "$hijriYears سنة تقريبًا", zodiacLabel(date),
                                     date.dayOfWeek.getDisplayName(java.time.format.TextStyle.FULL, Locale("ar")),
                                     "${birthHijri.get(android.icu.util.Calendar.DAY_OF_MONTH)}/${birthHijri.get(android.icu.util.Calendar.MONTH) + 1}/${birthHijri.get(android.icu.util.Calendar.YEAR)} هـ (تقريبي)",
                                     "$next — بعد ${ChronoUnit.DAYS.between(today, next)} يوم"
                                 )
-                                infoLabels.forEachIndexed { index, label ->
+                            }
+                            infoLabels.forEachIndexed { index, label ->
                                     Row(
                                         Modifier.fillMaxWidth().padding(vertical = 5.dp),
                                         verticalAlignment = Alignment.CenterVertically,
@@ -147,7 +148,6 @@ fun AccountSettingsScreen(profileViewModel: ProfileViewModel, modifier: Modifier
                                     }
                                     if (index != infoLabels.lastIndex) HorizontalDivider(color = Color(0xFFF0E9D8))
                                 }
-                            }
                         }
                         1 -> {
                             Text("إعداد شريط الأخبار", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
