@@ -237,7 +237,7 @@ fun SmartCostProApp(
                     onHomeClick = { showingAccountSettings = false; showingCostCategories = false; currentScreen = Screen.DASHBOARD }
                 )
                 Spacer(modifier = Modifier.height(6.dp))
-                LiveFinancialTickerBar()
+                LiveFinancialTickerBar(accountKey = accountKey, birthDate = profile?.birthDate)
             }
             if (showSearchDialog) {
                 SearchDialog(query = searchQuery, onQueryChange = { searchQuery = it }, onDismiss = { showSearchDialog = false })
