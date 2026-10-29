@@ -111,11 +111,11 @@ fun AccountSettingsScreen(profileViewModel: ProfileViewModel, modifier: Modifier
                             )
                             HorizontalDivider()
                             Text("معلوماتي", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                            val date = profile?.birthDate?.let { runCatching { LocalDate.parse(it) }.getOrNull() }
+                            val date = profile?.birthDate?.let { runCatching { LocalDate.parse(it) }.getOrNull() }?.takeUnless { it.isAfter(LocalDate.now()) }
                             if (date == null) Text("أضف تاريخ ميلادك لتظهر معلوماتك التلقائية.", color = Color.Gray)
                             val values = if (date == null) List(6) { "—" } else {
                                 val today = LocalDate.now()
-                                val next = (today.year..today.year + 4).mapNotNull { year -> runCatching { date.withYear(year) }.getOrNull() }.first { !it.isBefore(today) }
+                                val next = (today.year..today.year + 4).map { year -> date.withYear(year) }.first { !it.isBefore(today) }
                                 val birthHijri = android.icu.util.IslamicCalendar().apply { timeInMillis = date.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli() }
                                 val nowHijri = android.icu.util.IslamicCalendar()
                                 val hijriYears = nowHijri.get(android.icu.util.Calendar.YEAR) - birthHijri.get(android.icu.util.Calendar.YEAR) - if (nowHijri.get(android.icu.util.Calendar.MONTH) * 32 + nowHijri.get(android.icu.util.Calendar.DAY_OF_MONTH) < birthHijri.get(android.icu.util.Calendar.MONTH) * 32 + birthHijri.get(android.icu.util.Calendar.DAY_OF_MONTH)) 1 else 0
