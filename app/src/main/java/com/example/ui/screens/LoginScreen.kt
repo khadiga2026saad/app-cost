@@ -15,6 +15,7 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.ArrowBack
@@ -386,48 +387,50 @@ fun LoginScreen(
 
     if (showRegisterDialog) {
         AlertDialog(
-            onDismissRequest = { loginViewModel.dismissDialogs(); confirmPassword = "" },
-            title = { Text("إنشاء حساب جديد", fontWeight = FontWeight.Bold) },
+            onDismissRequest = { if (!isLoading) { loginViewModel.dismissDialogs(); confirmPassword = "" } },
+            title = { Text(if (loginViewModel.awaitingEmailVerification) "تفعيل البريد الإلكتروني" else "إنشاء حساب جديد", fontWeight = FontWeight.Bold) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Text("سيتم إنشاء الحساب في Firebase باستخدام البريد الإلكتروني وكلمة المرور.")
-                    OutlinedTextField(
-                        value = username,
-                        onValueChange = loginViewModel::onUsernameChange,
-                        label = { Text("البريد الإلكتروني") },
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    OutlinedTextField(
-                        value = password,
-                        onValueChange = loginViewModel::onPasswordChange,
-                        label = { Text("كلمة المرور (6 أحرف على الأقل)") },
-                        singleLine = true,
-                        visualTransformation = PasswordVisualTransformation(),
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    OutlinedTextField(
-                        value = confirmPassword,
-                        onValueChange = { confirmPassword = it },
-                        label = { Text("تأكيد كلمة المرور") },
-                        singleLine = true,
-                        visualTransformation = PasswordVisualTransformation(),
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                        modifier = Modifier.fillMaxWidth()
-                    )
+                    if (loginViewModel.awaitingEmailVerification) {
+                        Text("افتح رابط التفعيل المرسل إلى " + username + " ثم اضغط تحقق.")
+                        TextButton(enabled = !isLoading, onClick = loginViewModel::resendVerification) { Text("إعادة إرسال رابط التفعيل") }
+                    } else {
+                        Text("سيتم إنشاء الحساب باستخدام البريد الإلكتروني وكلمة المرور.")
+                        OutlinedTextField(value = username, onValueChange = loginViewModel::onUsernameChange,
+                            label = { Text("البريد الإلكتروني") }, singleLine = true,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email), modifier = Modifier.fillMaxWidth(),
+                            isError = username.isNotBlank() && !android.util.Patterns.EMAIL_ADDRESS.matcher(username).matches(),
+                            trailingIcon = { if (username.isNotBlank()) Icon(
+                                if (android.util.Patterns.EMAIL_ADDRESS.matcher(username).matches()) Icons.Default.Check else Icons.Default.Close,
+                                contentDescription = "صحة صيغة البريد",
+                                tint = if (android.util.Patterns.EMAIL_ADDRESS.matcher(username).matches()) Color(0xFF075E52) else MaterialTheme.colorScheme.error
+                            ) })
+                        OutlinedTextField(value = password, onValueChange = loginViewModel::onPasswordChange,
+                            label = { Text("كلمة المرور (6 أحرف على الأقل)") }, singleLine = true,
+                            visualTransformation = PasswordVisualTransformation(),
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password), modifier = Modifier.fillMaxWidth())
+                        OutlinedTextField(value = confirmPassword, onValueChange = { confirmPassword = it },
+                            label = { Text("تأكيد كلمة المرور") }, singleLine = true,
+                            visualTransformation = PasswordVisualTransformation(),
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password), modifier = Modifier.fillMaxWidth(),
+                            isError = confirmPassword.isNotEmpty() && confirmPassword != password,
+                            trailingIcon = { if (confirmPassword.isNotEmpty()) Icon(
+                                if (confirmPassword == password) Icons.Default.Check else Icons.Default.Close,
+                                contentDescription = if (confirmPassword == password) "كلمتا المرور متطابقتان" else "كلمتا المرور غير متطابقتين",
+                                tint = if (confirmPassword == password) Color(0xFF075E52) else MaterialTheme.colorScheme.error
+                            ) })
+                    }
+                    if (error != null) Text(error, color = MaterialTheme.colorScheme.error)
+                    if (notice != null) Text(notice, color = Color(0xFF075E52))
                 }
             },
             confirmButton = {
-                TextButton(
-                    enabled = !isLoading,
-                    onClick = { activity?.let { loginViewModel.registerAccount(confirmPassword, it, onLoginClick) } }
-                ) { Text(if (isLoading) "جارٍ الإنشاء..." else "إنشاء الحساب") }
+                TextButton(enabled = !isLoading, onClick = {
+                    if (loginViewModel.awaitingEmailVerification) loginViewModel.checkEmailVerification(onLoginClick)
+                    else activity?.let { loginViewModel.registerAccount(confirmPassword, it, onLoginClick) }
+                }) { Text(if (isLoading) "جارٍ التحقق..." else if (loginViewModel.awaitingEmailVerification) "تحقق من التفعيل" else "إنشاء الحساب") }
             },
-            dismissButton = {
-                TextButton(onClick = { loginViewModel.dismissDialogs(); confirmPassword = "" }) { Text("إلغاء") }
-            }
+            dismissButton = { TextButton(onClick = { loginViewModel.dismissDialogs(); confirmPassword = "" }) { Text("إلغاء") } }
         )
     }
 
