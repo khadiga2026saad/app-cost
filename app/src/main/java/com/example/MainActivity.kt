@@ -142,7 +142,7 @@ fun SmartCostProApp(
             .getBoolean("biometric_enabled", false)
     }
     var isInWorkspace by remember {
-        mutableStateOf(FirebaseAuth.getInstance().currentUser != null && !biometricEnabled)
+        mutableStateOf(FirebaseAuth.getInstance().currentUser?.let { (it.isEmailVerified || it.isAnonymous) && !biometricEnabled } == true)
     }
 
     // Re-lock the workspace when the app returns from the background, if biometrics are enabled.
@@ -173,7 +173,7 @@ fun SmartCostProApp(
         // شاشة الدخول المعتمدة
         LoginScreen(
             onLoginClick = {
-                isInWorkspace = true
+                isInWorkspace = FirebaseAuth.getInstance().currentUser?.let { it.isEmailVerified || it.isAnonymous } == true
                 currentScreen = Screen.DASHBOARD
                 showingCostCategories = false
             },

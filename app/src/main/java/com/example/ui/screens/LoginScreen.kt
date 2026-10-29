@@ -86,7 +86,7 @@ fun LoginScreen(
     var resetEmail by remember(username) { mutableStateOf(username) }
     LaunchedEffect(notice, error) {
         (error ?: notice)?.let { android.widget.Toast.makeText(context, it, android.widget.Toast.LENGTH_SHORT).show() }
-        if (notice != null) loginViewModel.clearNotice()
+        if (notice != null && !loginViewModel.showRegisterDialog && !loginViewModel.showForgotPasswordDialog) loginViewModel.clearNotice()
     }
     val lang = loginViewModel.currentLanguage
     val badgeText = when (lang) {

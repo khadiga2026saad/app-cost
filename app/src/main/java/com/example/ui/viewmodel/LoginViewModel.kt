@@ -20,6 +20,7 @@ import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseAuthUserCollisionException
 import com.google.firebase.auth.GoogleAuthProvider
 import kotlinx.coroutines.launch
 
@@ -42,6 +43,8 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
     var notice by mutableStateOf<String?>(null)
         private set
     var isLoading by mutableStateOf(false)
+        private set
+    var awaitingEmailVerification by mutableStateOf(false)
         private set
     var showRegisterDialog by mutableStateOf(false)
         private set
@@ -84,7 +87,7 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
     fun onForgotPasswordClick() { errorMessage = null; showForgotPasswordDialog = true }
-    fun onRegisterClick() { errorMessage = null; showRegisterDialog = true }
+    fun onRegisterClick() { errorMessage = null; showRegisterDialog = true; awaitingEmailVerification = false }
     fun dismissDialogs() { showRegisterDialog = false; showForgotPasswordDialog = false; showGooglePasswordDialog = false }
 
     fun onBiometricClick(activity: FragmentActivity, onSuccess: () -> Unit) {
@@ -269,6 +272,36 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun resendVerification() {
+        if (isLoading) return
+        val user = auth.currentUser
+        if (user == null || user.isEmailVerified) { errorMessage = "لا يوجد حساب بانتظار التفعيل"; return }
+        isLoading = true
+        errorMessage = null
+        user.sendEmailVerification().addOnCompleteListener { task ->
+            isLoading = false
+            if (task.isSuccessful) notice = "تم إرسال رابط التفعيل. افحص البريد والرسائل غير المرغوبة."
+            else errorMessage = authError(task.exception?.message, true)
+        }
+    }
+
+    fun checkEmailVerification(onSuccess: () -> Unit) {
+        val user = auth.currentUser ?: run { errorMessage = "سجّل الدخول أولًا"; return }
+        if (isLoading) return
+        isLoading = true
+        errorMessage = null
+        user.reload().addOnCompleteListener { task ->
+            isLoading = false
+            if (!task.isSuccessful) errorMessage = authError(task.exception?.message, false)
+            else if (auth.currentUser?.isEmailVerified == true) {
+                awaitingEmailVerification = false
+                showRegisterDialog = false
+                notice = "تم تفعيل البريد بنجاح"
+                onSuccess()
+            } else notice = "لم يتم التفعيل بعد. افتح رابط البريد ثم اضغط تحقق."
+        }
+    }
+
     fun onLoginClick(activity: FragmentActivity, onSuccess: () -> Unit) {
         val email = username.trim()
         if (email.isBlank() || password.isBlank()) {
@@ -286,9 +319,18 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
             .addOnCompleteListener { task ->
                 isLoading = false
                 if (task.isSuccessful && auth.currentUser != null) {
-                    saveRememberedUser(email)
-                    password = ""
-                    offerBiometricSetup(activity, onSuccess)
+                    val user = auth.currentUser!!
+                    if (!user.isEmailVerified) {
+                        awaitingEmailVerification = true
+                        showRegisterDialog = true
+                        password = ""
+                        notice = "يجب تفعيل البريد الإلكتروني قبل الدخول"
+                    } else {
+                        awaitingEmailVerification = false
+                        saveRememberedUser(email)
+                        password = ""
+                        offerBiometricSetup(activity, onSuccess)
+                    }
                 } else {
                     errorMessage = authError(task.exception?.message, isRegistration = false)
                 }
@@ -297,33 +339,29 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
 
     fun registerAccount(confirmPassword: String, activity: FragmentActivity, onSuccess: () -> Unit) {
         val email = username.trim()
-        if (email.isBlank() || !email.contains("@")) {
-            errorMessage = "أدخل بريدًا إلكترونيًا صحيحًا"
-            return
-        }
-        if (password.length < 6) {
-            errorMessage = "كلمة المرور يجب ألا تقل عن 6 أحرف"
-            return
-        }
-        if (password != confirmPassword) {
-            errorMessage = "كلمتا المرور غير متطابقتين"
-            return
-        }
+        if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) { errorMessage = "أدخل بريدًا إلكترونيًا صحيحًا"; return }
+        if (password.length < 6) { errorMessage = "كلمة المرور يجب ألا تقل عن 6 أحرف"; return }
+        if (password != confirmPassword) { errorMessage = "كلمتا المرور غير متطابقتين"; return }
         if (isLoading) return
         isLoading = true
         errorMessage = null
-        auth.createUserWithEmailAndPassword(email, password)
-            .addOnCompleteListener { task ->
-                isLoading = false
-                if (task.isSuccessful && auth.currentUser != null) {
-                    saveRememberedUser(email)
-                    password = ""
-                    showRegisterDialog = false
-                    offerBiometricSetup(activity, onSuccess)
-                } else {
-                    errorMessage = authError(task.exception?.message, isRegistration = true)
+        auth.createUserWithEmailAndPassword(email, password).addOnCompleteListener { task ->
+            if (task.isSuccessful && auth.currentUser != null) {
+                password = ""
+                auth.currentUser!!.sendEmailVerification().addOnCompleteListener { verification ->
+                    isLoading = false
+                    awaitingEmailVerification = true
+                    if (verification.isSuccessful) notice = "تم إنشاء الحساب وإرسال رابط التفعيل. افتح بريدك ثم اضغط تحقق."
+                    else errorMessage = "تم إنشاء الحساب لكن تعذر إرسال رابط التفعيل. اضغط إعادة الإرسال. " +
+                        authError(verification.exception?.message, true)
                 }
+            } else {
+                isLoading = false
+                errorMessage = if (task.exception is FirebaseAuthUserCollisionException)
+                    "هذا البريد مسجل بالفعل. استخدم تسجيل الدخول أو استعادة كلمة المرور."
+                else authError(task.exception?.message, true)
             }
+        }
     }
 
     fun sendPasswordReset() {
