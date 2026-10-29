@@ -12,6 +12,12 @@ jobs:
           distribution: temurin
           java-version: '17'
       - uses: gradle/actions/setup-gradle@v4
+      - name: Restore Google services configuration
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        run: |
+          test -n "$GOOGLE_SERVICES_JSON" || { echo "GOOGLE_SERVICES_JSON secret is missing"; exit 1; }
+          echo "$GOOGLE_SERVICES_JSON" | base64 -d > app/google-services.json
       - name: Build and unit tests
         run: gradle --no-daemon :app:assembleDebug :app:testDebugUnitTest
       - name: Upload test reports
@@ -31,6 +37,12 @@ jobs:
           distribution: temurin
           java-version: '17'
       - uses: gradle/actions/setup-gradle@v4
+      - name: Restore Google services configuration
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        run: |
+          test -n "$GOOGLE_SERVICES_JSON" || { echo "GOOGLE_SERVICES_JSON secret is missing"; exit 1; }
+          echo "$GOOGLE_SERVICES_JSON" | base64 -d > app/google-services.json
       - name: Run Android instrumentation tests
         uses: reactivecircus/android-emulator-runner@v2
         with:
