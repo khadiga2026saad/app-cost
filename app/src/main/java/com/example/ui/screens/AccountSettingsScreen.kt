@@ -20,6 +20,12 @@ import androidx.activity.result.contract.ActivityResultContracts
 import android.graphics.BitmapFactory
 import android.app.DatePickerDialog
 import java.util.Calendar
+import java.time.LocalDate
+import java.time.Period
+import java.time.temporal.ChronoUnit
+import java.time.format.DateTimeFormatter
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.unit.LayoutDirection
 import android.content.Context
 import java.io.File
 import java.text.SimpleDateFormat
@@ -43,6 +49,12 @@ import com.google.firebase.auth.FirebaseUser
 fun AccountSettingsScreen(profileViewModel: ProfileViewModel, modifier: Modifier = Modifier, onSwitchAccount: () -> Unit = {}, onLogout: () -> Unit = {}) {
     var selectedTab by remember { mutableIntStateOf(0) }
     val auth = remember { FirebaseAuth.getInstance() }
+    val context = LocalContext.current
+    val accountKey = auth.currentUser?.uid ?: "guest"
+    val profile by profileViewModel.profile.collectAsStateWithLifecycle()
+    val prefs = remember(accountKey) { context.getSharedPreferences("account_information_visibility", Context.MODE_PRIVATE) }
+    val infoLabels = listOf("العمر الميلادي", "العمر الهجري (تقريبي)", "البرج (ترفيهي)", "يوم الميلاد", "الميلاد الهجري (تقريبي)", "عيد الميلاد القادم")
+    val enabled = remember(accountKey) { mutableStateListOf<Boolean>().apply { repeat(6) { add(prefs.getBoolean("item_$it", true)) } } }
     var signedInUser by remember { mutableStateOf<FirebaseUser?>(auth.currentUser) }
     DisposableEffect(auth) {
         val listener = FirebaseAuth.AuthStateListener { signedInUser = it.currentUser }
@@ -88,19 +100,54 @@ fun AccountSettingsScreen(profileViewModel: ProfileViewModel, modifier: Modifier
             ) {
                 Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     when (selectedTab) {
-                        0 -> AccountProfileEditor(
-                            user = signedInUser,
-                            profileViewModel = profileViewModel,
-                            onSwitchAccount = onSwitchAccount,
-                            onLogout = onLogout
-                        )
+                        0 -> {
+                            AccountProfileEditor(
+                                user = signedInUser,
+                                profileViewModel = profileViewModel,
+                                onSwitchAccount = onSwitchAccount,
+                                onLogout = onLogout
+                            )
+                            HorizontalDivider()
+                            Text("معلوماتي", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                            val date = profile?.birthDate?.let { runCatching { LocalDate.parse(it) }.getOrNull() }
+                            if (date == null) Text("أضف تاريخ ميلادك لتظهر معلوماتك التلقائية.")
+                            else {
+                                val today = LocalDate.now()
+                                val next = date.withYear(today.year).let { if (it.isBefore(today)) it.plusYears(1) else it }
+                                val values = listOf(
+                                    "${Period.between(date, today).years} سنة",
+                                    "حساب تقريبي", "معلومة ترفيهية",
+                                    date.dayOfWeek.getDisplayName(java.time.format.TextStyle.FULL, Locale("ar")),
+                                    "تاريخ تقريبي",
+                                    "$next — بعد ${ChronoUnit.DAYS.between(today, next)} يوم"
+                                )
+                                infoLabels.forEachIndexed { index, label ->
+                                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
+                                        Column(Modifier.weight(1f)) { Text(label); Text(values[index], fontWeight = FontWeight.Bold) }
+                                        Switch(checked = enabled[index], onCheckedChange = { value ->
+                                            enabled[index] = value
+                                            prefs.edit().putBoolean("item_$index", value).apply()
+                                        })
+                                    }
+                                    HorizontalDivider()
+                                }
+                            }
+                        }
                         1 -> {
                             Text("إعداد شريط الأخبار", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                            Text("مساحة تخصيص شريط الأخبار الثابت. الشريط الحالي لم يتم تغييره.", style = MaterialTheme.typography.bodyMedium)
+                            Text("التحكم في المعلومات التي تظهر بالشريط؛ جميع الخيارات تظل متاحة هنا حتى عند إخفائها.")
+                            InformationVisibilityControls(infoLabels, enabled) { index, value ->
+                                enabled[index] = value
+                                prefs.edit().putBoolean("item_$index", value).apply()
+                            }
                         }
                         2 -> {
                             Text("إعداد البرنامج", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                            Text("مساحة إعدادات البرنامج العامة. لم يتم تغيير أي تفضيلات حالية.", style = MaterialTheme.typography.bodyMedium)
+                            Text("إظهار أو إخفاء معلومات الحساب التلقائية")
+                            InformationVisibilityControls(infoLabels, enabled) { index, value ->
+                                enabled[index] = value
+                                prefs.edit().putBoolean("item_$index", value).apply()
+                            }
                         }
                         3 -> if (isOwner) {
                             Text("إعدادات المالك", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
@@ -229,5 +276,16 @@ private fun AccountProfileEditor(user: FirebaseUser?, profileViewModel: ProfileV
                 if (switching) onSwitchAccount() else onLogout()
             }) { Text("تأكيد") } },
             dismissButton = { TextButton(onClick = { confirmAction = null }) { Text("إلغاء") } })
+    }
+}
+
+@Composable
+private fun InformationVisibilityControls(labels: List<String>, enabled: List<Boolean>, onChange: (Int, Boolean) -> Unit) {
+    labels.forEachIndexed { index, label ->
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
+            Text(label, modifier = Modifier.weight(1f))
+            Switch(checked = enabled[index], onCheckedChange = { onChange(index, it) })
+        }
+        HorizontalDivider()
     }
 }
