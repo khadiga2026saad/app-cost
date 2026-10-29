@@ -52,7 +52,7 @@ fun AccountSettingsScreen(profileViewModel: ProfileViewModel, modifier: Modifier
     val context = LocalContext.current
     val accountKey = auth.currentUser?.uid ?: "guest"
     val profile by profileViewModel.profile.collectAsStateWithLifecycle()
-    val prefs = remember(accountKey) { context.getSharedPreferences("account_information_visibility", Context.MODE_PRIVATE) }
+    val prefs = remember(accountKey) { context.getSharedPreferences("account_information_visibility_${accountKey}", Context.MODE_PRIVATE) }
     val infoLabels = listOf("العمر الميلادي", "العمر الهجري (تقريبي)", "البرج (ترفيهي)", "يوم الميلاد", "الميلاد الهجري (تقريبي)", "عيد الميلاد القادم")
     val enabled = remember(accountKey) { mutableStateListOf<Boolean>().apply { repeat(6) { add(prefs.getBoolean("item_$it", true)) } } }
     var signedInUser by remember { mutableStateOf<FirebaseUser?>(auth.currentUser) }
@@ -113,12 +113,15 @@ fun AccountSettingsScreen(profileViewModel: ProfileViewModel, modifier: Modifier
                             if (date == null) Text("أضف تاريخ ميلادك لتظهر معلوماتك التلقائية.")
                             else {
                                 val today = LocalDate.now()
-                                val next = date.withYear(today.year).let { if (it.isBefore(today)) it.plusYears(1) else it }
+                                val next = (today.year..today.year + 4).mapNotNull { year -> runCatching { date.withYear(year) }.getOrNull() }.first { !it.isBefore(today) }
+                                val birthHijri = android.icu.util.IslamicCalendar().apply { timeInMillis = date.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli() }
+                                val nowHijri = android.icu.util.IslamicCalendar()
+                                val hijriYears = nowHijri.get(android.icu.util.Calendar.YEAR) - birthHijri.get(android.icu.util.Calendar.YEAR) - if (nowHijri.get(android.icu.util.Calendar.MONTH) * 32 + nowHijri.get(android.icu.util.Calendar.DAY_OF_MONTH) < birthHijri.get(android.icu.util.Calendar.MONTH) * 32 + birthHijri.get(android.icu.util.Calendar.DAY_OF_MONTH)) 1 else 0
                                 val values = listOf(
                                     "${Period.between(date, today).years} سنة",
-                                    "حساب تقريبي", "معلومة ترفيهية",
+                                    "$hijriYears سنة تقريبًا", zodiacLabel(date),
                                     date.dayOfWeek.getDisplayName(java.time.format.TextStyle.FULL, Locale("ar")),
-                                    "تاريخ تقريبي",
+                                    "${birthHijri.get(android.icu.util.Calendar.DAY_OF_MONTH)}/${birthHijri.get(android.icu.util.Calendar.MONTH) + 1}/${birthHijri.get(android.icu.util.Calendar.YEAR)} هـ (تقريبي)",
                                     "$next — بعد ${ChronoUnit.DAYS.between(today, next)} يوم"
                                 )
                                 infoLabels.forEachIndexed { index, label ->
@@ -288,4 +291,15 @@ private fun InformationVisibilityControls(labels: List<String>, enabled: List<Bo
         }
         HorizontalDivider()
     }
+}
+
+private fun zodiacLabel(date: LocalDate): String {
+    val day = date.monthValue * 100 + date.dayOfMonth
+    return when (day) {
+        in 321..419 -> "الحمل"; in 420..520 -> "الثور"; in 521..620 -> "الجوزاء"
+        in 621..722 -> "السرطان"; in 723..822 -> "الأسد"; in 823..922 -> "العذراء"
+        in 923..1022 -> "الميزان"; in 1023..1121 -> "العقرب"; in 1122..1221 -> "القوس"
+        in 1222..1231, in 101..119 -> "الجدي"; in 120..218 -> "الدلو"
+        in 219..320 -> "الحوت"; else -> "غير محدد"
+    } + " (ترفيهي)"
 }
