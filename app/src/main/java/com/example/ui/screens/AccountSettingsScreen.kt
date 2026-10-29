@@ -50,12 +50,12 @@ fun AccountSettingsScreen(profileViewModel: ProfileViewModel, modifier: Modifier
     var selectedTab by remember { mutableIntStateOf(0) }
     val auth = remember { FirebaseAuth.getInstance() }
     val context = LocalContext.current
-    val accountKey = auth.currentUser?.uid ?: "guest"
+    var signedInUser by remember { mutableStateOf<FirebaseUser?>(auth.currentUser) }
+    val accountKey = signedInUser?.uid ?: "guest"
     val profile by profileViewModel.profile.collectAsStateWithLifecycle()
     val prefs = remember(accountKey) { context.getSharedPreferences("account_information_visibility_${accountKey}", Context.MODE_PRIVATE) }
     val infoLabels = listOf("العمر الميلادي", "العمر الهجري (تقريبي)", "البرج (ترفيهي)", "يوم الميلاد", "الميلاد الهجري (تقريبي)", "عيد الميلاد القادم")
     val enabled = remember(accountKey) { mutableStateListOf<Boolean>().apply { repeat(6) { add(prefs.getBoolean("item_$it", true)) } } }
-    var signedInUser by remember { mutableStateOf<FirebaseUser?>(auth.currentUser) }
     DisposableEffect(auth) {
         val listener = FirebaseAuth.AuthStateListener { signedInUser = it.currentUser }
         auth.addAuthStateListener(listener)
@@ -67,11 +67,12 @@ fun AccountSettingsScreen(profileViewModel: ProfileViewModel, modifier: Modifier
     val tabs = if (isOwner) listOf("إعداد الحساب", "إعداد شريط الأخبار", "إعداد البرنامج", "إعدادات المالك")
         else listOf("إعداد الحساب", "إعداد شريط الأخبار", "إعداد البرنامج")
     LaunchedEffect(isOwner) { if (!isOwner && selectedTab == 3) selectedTab = 0 }
-    Column(modifier.fillMaxSize()) {
+    Column(modifier.fillMaxSize().background(Color(0xFFF7F6F2))) {
         Text(
             "الإعدادات",
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
             style = MaterialTheme.typography.titleLarge,
+            color = Color(0xFF171717),
             fontWeight = FontWeight.Bold
         )
         ScrollableTabRow(
@@ -94,9 +95,10 @@ fun AccountSettingsScreen(profileViewModel: ProfileViewModel, modifier: Modifier
         ) {
             Surface(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
+                shape = RoundedCornerShape(20.dp),
                 color = Color.White,
-                tonalElevation = 2.dp
+                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE8D8A7)),
+                shadowElevation = 3.dp
             ) {
                 Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     when (selectedTab) {
@@ -110,7 +112,7 @@ fun AccountSettingsScreen(profileViewModel: ProfileViewModel, modifier: Modifier
                             HorizontalDivider()
                             Text("معلوماتي", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                             val date = profile?.birthDate?.let { runCatching { LocalDate.parse(it) }.getOrNull() }
-                            if (date == null) Text("أضف تاريخ ميلادك لتظهر معلوماتك التلقائية.")
+                            if (date == null) Text("أضف تاريخ ميلادك لتظهر معلوماتك التلقائية.", color = Color.Gray)
                             else {
                                 val today = LocalDate.now()
                                 val next = (today.year..today.year + 4).mapNotNull { year -> runCatching { date.withYear(year) }.getOrNull() }.first { !it.isBefore(today) }
@@ -125,14 +127,25 @@ fun AccountSettingsScreen(profileViewModel: ProfileViewModel, modifier: Modifier
                                     "$next — بعد ${ChronoUnit.DAYS.between(today, next)} يوم"
                                 )
                                 infoLabels.forEachIndexed { index, label ->
-                                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
-                                        Column(Modifier.weight(1f)) { Text(label); Text(values[index], fontWeight = FontWeight.Bold) }
-                                        Switch(checked = enabled[index], onCheckedChange = { value ->
-                                            enabled[index] = value
-                                            prefs.edit().putBoolean("item_$index", value).apply()
-                                        })
+                                    Row(
+                                        Modifier.fillMaxWidth().padding(vertical = 5.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Column(Modifier.weight(1f)) {
+                                            Text(label, color = Color(0xFF766027), style = MaterialTheme.typography.labelMedium)
+                                            Text(values[index], color = Color(0xFF171717), fontWeight = FontWeight.SemiBold)
+                                        }
+                                        Switch(
+                                            checked = enabled[index],
+                                            onCheckedChange = { value ->
+                                                enabled[index] = value
+                                                prefs.edit().putBoolean("item_$index", value).apply()
+                                            },
+                                            colors = SwitchDefaults.colors(checkedThumbColor = Color.White, checkedTrackColor = Color(0xFFD4AF37))
+                                        )
                                     }
-                                    HorizontalDivider()
+                                    if (index != infoLabels.lastIndex) HorizontalDivider(color = Color(0xFFF0E9D8))
                                 }
                             }
                         }
@@ -146,11 +159,7 @@ fun AccountSettingsScreen(profileViewModel: ProfileViewModel, modifier: Modifier
                         }
                         2 -> {
                             Text("إعداد البرنامج", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                            Text("إظهار أو إخفاء معلومات الحساب التلقائية")
-                            InformationVisibilityControls(infoLabels, enabled) { index, value ->
-                                enabled[index] = value
-                                prefs.edit().putBoolean("item_$index", value).apply()
-                            }
+                            Text("مساحة إعدادات البرنامج العامة. لم يتم تغيير أي تفضيلات حالية.", style = MaterialTheme.typography.bodyMedium)
                         }
                         3 -> if (isOwner) {
                             Text("إعدادات المالك", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
@@ -195,7 +204,7 @@ private fun AccountProfileEditor(user: FirebaseUser?, profileViewModel: ProfileV
     val phoneValid = phone.isBlank() || (phone.all { it.isDigit() || it == '+' || it == ' ' || it == '-' } && phone.count { it.isDigit() } in 7..15)
     val changed = stored != null && (fullName.trim() != stored.fullName || nickname.trim() != stored.nickname ||
         phone.trim() != stored.phone.orEmpty() || birthDate != stored.birthDate.orEmpty() || pendingPhoto != null)
-    Text("الملف الشخصي", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+    Text("الملف الشخصي", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color(0xFF9B7921))
     if (loading) { CircularProgressIndicator(); return }
     if (stored == null) { Text("تعذر تحميل بيانات الحساب. يرجى إعادة فتح الشاشة."); return }
     Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
@@ -285,11 +294,11 @@ private fun AccountProfileEditor(user: FirebaseUser?, profileViewModel: ProfileV
 @Composable
 private fun InformationVisibilityControls(labels: List<String>, enabled: List<Boolean>, onChange: (Int, Boolean) -> Unit) {
     labels.forEachIndexed { index, label ->
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
-            Text(label, modifier = Modifier.weight(1f))
-            Switch(checked = enabled[index], onCheckedChange = { onChange(index, it) })
+        Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
+            Text(label, modifier = Modifier.weight(1f), color = Color(0xFF171717))
+            Switch(checked = enabled[index], onCheckedChange = { onChange(index, it) }, colors = SwitchDefaults.colors(checkedThumbColor = Color.White, checkedTrackColor = Color(0xFFD4AF37)))
         }
-        HorizontalDivider()
+        if (index != labels.lastIndex) HorizontalDivider(color = Color(0xFFF0E9D8))
     }
 }
 
