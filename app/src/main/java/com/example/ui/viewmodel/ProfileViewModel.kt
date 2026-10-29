@@ -41,14 +41,16 @@ class ProfileViewModel(
         }
     }
 
-    fun save(profile: UserProfile) {
+    fun save(profile: UserProfile, onResult: (Boolean) -> Unit = {}) {
         require(profile.accountKey == accountKey) { "Profile belongs to another account" }
         viewModelScope.launch {
             try {
                 repository.save(profile)
                 _error.value = null
+                onResult(true)
             } catch (failure: Exception) {
                 _error.value = failure
+                onResult(false)
             }
         }
     }

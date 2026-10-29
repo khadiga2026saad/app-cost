@@ -8,6 +8,9 @@ import androidx.activity.compose.setContent
 import androidx.activity.compose.LocalActivityResultRegistryOwner
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.ui.viewmodel.ProfileViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.compose.runtime.DisposableEffect
@@ -183,6 +186,14 @@ fun SmartCostProApp(
             modifier = modifier
         )
     } else {
+        val activeUser = FirebaseAuth.getInstance().currentUser
+        val accountKey = activeUser?.uid ?: "guest"
+        val container = (appContext.applicationContext as SmartCostApplication).container
+        val profileViewModel: ProfileViewModel = viewModel(
+            key = "profile_$accountKey",
+            factory = ProfileViewModel.Factory(container, accountKey, activeUser?.displayName.orEmpty())
+        )
+        val profile by profileViewModel.profile.collectAsStateWithLifecycle()
         // Handle Android system Back button: if not on DASHBOARD, return to DASHBOARD
         BackHandler(enabled = showingAccountSettings || showingCostCategories || currentScreen != Screen.DASHBOARD) {
             if (showingAccountSettings) showingAccountSettings = false
@@ -212,6 +223,8 @@ fun SmartCostProApp(
                     .padding(horizontal = 8.dp, vertical = 6.dp)
             ) {
                 ExecutiveHeader(
+                    userName = profile?.nickname?.takeIf { it.isNotBlank() } ?: profile?.fullName?.takeIf { it.isNotBlank() } ?: activeUser?.displayName ?: "زائر",
+                    photoPath = profile?.photoPath,
                     timeString = currentTimeString,
                     dateString = currentDateString,
                     onSearchClick = { showSearchDialog = true },
@@ -236,6 +249,7 @@ fun SmartCostProApp(
         // When on DASHBOARD, HomeScreen provides its full dedicated Executive Header & Navigation
         if (showingAccountSettings) {
             AccountSettingsScreen(
+                profileViewModel = profileViewModel,
                 onSwitchAccount = {
                     FirebaseAuth.getInstance().signOut()
                     showingAccountSettings = false

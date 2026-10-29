@@ -6,6 +6,8 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
+import android.graphics.BitmapFactory
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.border
@@ -361,7 +363,8 @@ fun ApprovedHomeTicker(
 fun ExecutiveHeader(
     timeString: String,
     dateString: String,
-    userName: String = "أحمد محمود",
+    userName: String = "زائر",
+    photoPath: String? = null,
     userRole: String = "مؤسس برمجيات ورائد أعمال",
     onSearchClick: () -> Unit = {},
     onVoiceClick: () -> Unit = {},
@@ -407,12 +410,11 @@ fun ExecutiveHeader(
                                 .border(1.5.dp, GoldPrimary, CircleShape),
                             contentAlignment = Alignment.Center
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.Person,
-                                contentDescription = "صورة المستخدم",
-                                tint = DeepSlate,
-                                modifier = Modifier.size(22.dp)
-                            )
+                            val photo = remember(photoPath) {
+                                photoPath?.let { BitmapFactory.decodeFile(it)?.asImageBitmap() }
+                            }
+                            if (photo != null) Image(photo, "صورة المستخدم", Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+                            else Icon(Icons.Default.Person, "صورة المستخدم", tint = DeepSlate, modifier = Modifier.size(22.dp))
                         }
                         // مؤشر الحالة النشط
                         Box(

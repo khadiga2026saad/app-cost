@@ -8,6 +8,10 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.ui.viewmodel.ProfileViewModel
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.activity.compose.LocalActivityResultRegistryOwner
@@ -36,7 +40,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 
 @Composable
-fun AccountSettingsScreen(modifier: Modifier = Modifier, onSwitchAccount: () -> Unit = {}, onLogout: () -> Unit = {}) {
+fun AccountSettingsScreen(profileViewModel: ProfileViewModel, modifier: Modifier = Modifier, onSwitchAccount: () -> Unit = {}, onLogout: () -> Unit = {}) {
     var selectedTab by remember { mutableIntStateOf(0) }
     val auth = remember { FirebaseAuth.getInstance() }
     var signedInUser by remember { mutableStateOf<FirebaseUser?>(auth.currentUser) }
@@ -86,6 +90,7 @@ fun AccountSettingsScreen(modifier: Modifier = Modifier, onSwitchAccount: () -> 
                     when (selectedTab) {
                         0 -> AccountProfileEditor(
                             user = signedInUser,
+                            profileViewModel = profileViewModel,
                             onSwitchAccount = onSwitchAccount,
                             onLogout = onLogout
                         )
@@ -110,124 +115,119 @@ fun AccountSettingsScreen(modifier: Modifier = Modifier, onSwitchAccount: () -> 
 }
 
 @Composable
-private fun AccountProfileEditor(
-    user: FirebaseUser?,
-    onSwitchAccount: () -> Unit,
-    onLogout: () -> Unit
-) {
+private fun AccountProfileEditor(user: FirebaseUser?, profileViewModel: ProfileViewModel, onSwitchAccount: () -> Unit, onLogout: () -> Unit) {
     val context = LocalContext.current
+    val profile by profileViewModel.profile.collectAsStateWithLifecycle()
+    val loading by profileViewModel.loading.collectAsStateWithLifecycle()
+    val error by profileViewModel.error.collectAsStateWithLifecycle()
     val accountKey = user?.uid ?: "guest"
-    val prefs = remember(accountKey) {
-        context.getSharedPreferences("profile_" + accountKey, Context.MODE_PRIVATE)
-    }
-    var fullName by remember(accountKey) { mutableStateOf(prefs.getString("full_name", user?.displayName.orEmpty()).orEmpty()) }
-    var nickname by remember(accountKey) { mutableStateOf(prefs.getString("nickname", "").orEmpty()) }
-    var birthDate by remember(accountKey) { mutableStateOf(prefs.getString("birth_date", "").orEmpty()) }
-    var photoVersion by remember(accountKey) { mutableIntStateOf(0) }
+    var fullName by remember(accountKey) { mutableStateOf("") }
+    var nickname by remember(accountKey) { mutableStateOf("") }
+    var phone by remember(accountKey) { mutableStateOf("") }
+    var birthDate by remember(accountKey) { mutableStateOf("") }
+    var pendingPhoto by remember(accountKey) { mutableStateOf<android.net.Uri?>(null) }
     var notice by remember(accountKey) { mutableStateOf("") }
-    var confirmAction by remember { mutableStateOf<String?>(null) }
-    val imageFile = remember(accountKey) { File(context.filesDir, "profile_" + accountKey.hashCode() + ".jpg") }
-    val hasPhotoPicker = LocalActivityResultRegistryOwner.current != null
-    val picker = if (hasPhotoPicker) rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
-        if (uri != null) {
-            try {
-                context.contentResolver.openInputStream(uri)?.use { input ->
-                    imageFile.outputStream().use { output -> input.copyTo(output) }
-                } ?: error("Cannot open selected image")
-                photoVersion++
-                notice = "تم تحديث الصورة على هذا الجهاز"
-            } catch (e: Exception) {
-                notice = "تعذر حفظ الصورة. حاول اختيار صورة أخرى."
-            }
+    var saving by remember(accountKey) { mutableStateOf(false) }
+    var confirmAction by remember(accountKey) { mutableStateOf<String?>(null) }
+    LaunchedEffect(profile, accountKey) {
+        profile?.takeIf { it.accountKey == accountKey }?.let {
+            fullName = it.fullName; nickname = it.nickname; phone = it.phone.orEmpty(); birthDate = it.birthDate.orEmpty()
         }
     }
-    else null
+    val picker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        if (uri != null) { pendingPhoto = uri; notice = "" }
+    }
+    val stored = profile?.takeIf { it.accountKey == accountKey }
+    val dateValid = birthDate.isBlank() || try {
+        val parsed = SimpleDateFormat("yyyy-MM-dd", Locale.US).apply { isLenient = false }.parse(birthDate)
+        parsed != null && parsed.time <= System.currentTimeMillis()
+    } catch (_: Exception) { false }
+    val phoneValid = phone.isBlank() || (phone.all { it.isDigit() || it == '+' || it == ' ' || it == '-' } && phone.count { it.isDigit() } in 7..15)
+    val changed = stored != null && (fullName.trim() != stored.fullName || nickname.trim() != stored.nickname ||
+        phone.trim() != stored.phone.orEmpty() || birthDate != stored.birthDate.orEmpty() || pendingPhoto != null)
     Text("الملف الشخصي", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+    if (loading) { CircularProgressIndicator(); return }
+    if (stored == null) { Text("تعذر تحميل بيانات الحساب. يرجى إعادة فتح الشاشة."); return }
     Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
         Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            val bitmap = remember(photoVersion, accountKey) {
-                if (imageFile.exists()) BitmapFactory.decodeFile(imageFile.absolutePath)?.asImageBitmap() else null
-            }
-            Box(
-                Modifier.size(88.dp).clip(CircleShape).background(Color(0xFFF6E8BC))
-                    .clickable(enabled = picker != null) { picker?.launch("image/*") },
-                contentAlignment = Alignment.Center
-            ) {
+            val bitmap = remember(pendingPhoto, stored.photoPath) {
+                try {
+                    pendingPhoto?.let { uri -> context.contentResolver.openInputStream(uri)?.use(BitmapFactory::decodeStream) }
+                        ?: stored.photoPath?.let { BitmapFactory.decodeFile(it) }
+                } catch (_: Exception) { null }
+            }?.asImageBitmap()
+            Box(Modifier.size(88.dp).clip(CircleShape).background(Color(0xFFF6E8BC)).clickable { picker.launch("image/*") },
+                contentAlignment = Alignment.Center) {
                 if (bitmap != null) Image(bitmap, "صورة المستخدم", Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
                 else Icon(Icons.Default.Person, "صورة المستخدم", Modifier.size(46.dp), tint = Color(0xFF9B7921))
             }
-            TextButton(onClick = { picker?.launch("image/*") }, enabled = picker != null) { Text("تغيير صورة المستخدم") }
-            if (!hasPhotoPicker) Text("اختيار الصور غير متاح في بيئة المعاينة الحالية", style = MaterialTheme.typography.bodySmall)
+            TextButton(onClick = { picker.launch("image/*") }) { Text("تغيير صورة المستخدم") }
+            if (pendingPhoto != null) Text("الصورة للمعاينة فقط حتى الحفظ", style = MaterialTheme.typography.bodySmall)
         }
     }
-    OutlinedTextField(fullName, { fullName = it }, label = { Text("الاسم الكامل") }, singleLine = true, modifier = Modifier.fillMaxWidth())
-    OutlinedTextField(nickname, { nickname = it }, label = { Text("اسم الشهرة") }, singleLine = true, modifier = Modifier.fillMaxWidth())
-    OutlinedTextField(
-        value = birthDate,
-        onValueChange = {},
-        readOnly = true,
-        label = { Text("تاريخ الميلاد") },
-        placeholder = { Text("اختر تاريخ الميلاد") },
-        singleLine = true,
-        modifier = Modifier.fillMaxWidth()
-    )
-    OutlinedButton(
-        onClick = {
-            val calendar = Calendar.getInstance()
-            if (birthDate.isNotBlank()) {
-                try {
-                    val date = SimpleDateFormat("yyyy-MM-dd", Locale.US).apply { isLenient = false }.parse(birthDate)
-                    if (date != null) calendar.time = date
-                } catch (_: Exception) { /* Use current date for invalid legacy value. */ }
+    OutlinedTextField(fullName, { fullName = it; notice = "" }, label = { Text("الاسم الكامل") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+    OutlinedTextField(nickname, { nickname = it; notice = "" }, label = { Text("اسم العرض") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+    OutlinedTextField(phone, { phone = it; notice = "" }, label = { Text("رقم الهاتف (اختياري)") },
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone), isError = !phoneValid, singleLine = true, modifier = Modifier.fillMaxWidth())
+    OutlinedTextField(birthDate, {}, readOnly = true, label = { Text("تاريخ الميلاد (اختياري)") },
+        modifier = Modifier.fillMaxWidth(), singleLine = true, isError = !dateValid)
+    OutlinedButton(onClick = {
+        val calendar = Calendar.getInstance()
+        if (birthDate.isNotBlank()) try {
+            SimpleDateFormat("yyyy-MM-dd", Locale.US).apply { isLenient = false }.parse(birthDate)?.let { calendar.time = it }
+        } catch (_: Exception) {}
+        DatePickerDialog(context, { _, y, m, d ->
+            birthDate = String.format(Locale.US, "%04d-%02d-%02d", y, m + 1, d)
+        }, calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH))
+            .apply { datePicker.maxDate = System.currentTimeMillis(); show() }
+    }, modifier = Modifier.fillMaxWidth()) { Text("اختيار تاريخ الميلاد من التقويم") }
+    if (birthDate.isNotBlank()) TextButton(onClick = { birthDate = "" }) { Text("مسح تاريخ الميلاد") }
+    Text("البريد الإلكتروني: " + (user?.email ?: "حساب زائر"))
+    Button(enabled = changed && dateValid && phoneValid && !saving, onClick = {
+        saving = true
+        val previousPath = stored.photoPath
+        var newFile: File? = null
+        try {
+            val path = pendingPhoto?.let { uri ->
+                File(context.filesDir, "profile_${accountKey.hashCode()}_${System.nanoTime()}.jpg").also { file ->
+                    context.contentResolver.openInputStream(uri)?.use { input ->
+                        file.outputStream().use { output -> input.copyTo(output) }
+                    } ?: error("Cannot read image")
+                    newFile = file
+                }.absolutePath
+            } ?: previousPath
+            profileViewModel.save(stored.copy(fullName = fullName.trim(), nickname = nickname.trim(),
+                phone = phone.trim().ifBlank { null }, birthDate = birthDate.ifBlank { null }, photoPath = path)) { success ->
+                saving = false
+                if (success) {
+                    pendingPhoto = null
+                    notice = "تم حفظ البيانات بنجاح"
+                    if (newFile != null && previousPath != null && previousPath != path) File(previousPath).delete()
+                } else {
+                    newFile?.delete()
+                    notice = "تعذر حفظ البيانات؛ لم يتم اعتماد الصورة الجديدة"
+                }
             }
-            DatePickerDialog(
-                context,
-                { _, year, month, day ->
-                    birthDate = String.format(Locale.US, "%04d-%02d-%02d", year, month + 1, day)
-                },
-                calendar.get(Calendar.YEAR),
-                calendar.get(Calendar.MONTH),
-                calendar.get(Calendar.DAY_OF_MONTH)
-            ).apply { datePicker.maxDate = System.currentTimeMillis(); show() }
-        },
-        modifier = Modifier.fillMaxWidth()
-    ) { Text("اختيار تاريخ الميلاد من التقويم") }
-    Text("البريد الإلكتروني: " + (user?.email ?: "حساب زائر"), style = MaterialTheme.typography.bodyMedium)
-    Text("نوع الحساب: " + if (user == null) "زائر" else "حساب مسجل", style = MaterialTheme.typography.bodySmall)
-    Button(
-        onClick = {
-            val validDate = birthDate.isBlank() || run {
-                val format = SimpleDateFormat("yyyy-MM-dd", Locale.US).apply { isLenient = false }
-                try { format.parse(birthDate)?.let { it.time <= System.currentTimeMillis() } == true } catch (_: Exception) { false }
-            }
-            if (!validDate) notice = "أدخل تاريخ ميلاد صحيحًا بصيغة YYYY-MM-DD"
-            else {
-                prefs.edit().putString("full_name", fullName.trim())
-                    .putString("nickname", nickname.trim())
-                    .putString("birth_date", birthDate.trim()).apply()
-                notice = "تم حفظ بيانات الملف الشخصي على هذا الجهاز"
-            }
-        },
-        modifier = Modifier.fillMaxWidth(),
-        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF075E52))
-    ) { Text("حفظ التغييرات") }
-    if (notice.isNotBlank()) Text(notice, style = MaterialTheme.typography.bodySmall, color = Color(0xFF075E52))
+        } catch (_: Exception) {
+            newFile?.delete(); saving = false; notice = "تعذر قراءة الصورة المختارة"
+        }
+    }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD4AF37))) {
+        Text(if (saving) "جارٍ الحفظ..." else "حفظ التغييرات", color = Color.Black)
+    }
+    if (error != null) Text("حدث خطأ أثناء تحميل أو حفظ البيانات", color = MaterialTheme.colorScheme.error)
+    if (notice.isNotBlank()) Text(notice, style = MaterialTheme.typography.bodySmall)
     HorizontalDivider()
     OutlinedButton(onClick = { confirmAction = "switch" }, modifier = Modifier.fillMaxWidth()) { Text("تبديل الحساب") }
     TextButton(onClick = { confirmAction = "logout" }, modifier = Modifier.fillMaxWidth()) { Text("تسجيل الخروج") }
     if (confirmAction != null) {
         val switching = confirmAction == "switch"
-        AlertDialog(
-            onDismissRequest = { confirmAction = null },
+        AlertDialog(onDismissRequest = { confirmAction = null },
             title = { Text(if (switching) "تبديل الحساب" else "تسجيل الخروج") },
-            text = { Text(if (switching) "هل تريد العودة لشاشة الدخول لاستخدام حساب آخر؟" else "هل تريد تسجيل الخروج من الحساب الحالي؟") },
-            confirmButton = {
-                TextButton(onClick = {
-                    confirmAction = null
-                    if (switching) onSwitchAccount() else onLogout()
-                }) { Text("تأكيد") }
-            },
-            dismissButton = { TextButton(onClick = { confirmAction = null }) { Text("إلغاء") } }
-        )
+            text = { Text("هل تريد المتابعة؟") },
+            confirmButton = { TextButton(onClick = {
+                confirmAction = null
+                if (switching) onSwitchAccount() else onLogout()
+            }) { Text("تأكيد") } },
+            dismissButton = { TextButton(onClick = { confirmAction = null }) { Text("إلغاء") } })
     }
 }
