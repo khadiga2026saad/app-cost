@@ -597,7 +597,7 @@ fun LiveFinancialTickerBar(accountKey: String = "guest", birthDate: String? = nu
         val zodiac = when (date.monthValue * 100 + date.dayOfMonth) {
             in 321..419 -> "الحمل"; in 420..520 -> "الثور"; in 521..620 -> "الجوزاء"; in 621..722 -> "السرطان"; in 723..822 -> "الأسد"; in 823..922 -> "العذراء"; in 923..1022 -> "الميزان"; in 1023..1121 -> "العقرب"; in 1122..1221 -> "القوس"; in 1222..1231, in 101..119 -> "الجدي"; in 120..218 -> "الدلو"; else -> "الحوت"
         }
-        listOf("العمر: ${java.time.Period.between(date, today).years} سنة", "العمر الهجري: $hijriAge سنة تقريبًا", "البرج الترفيهي: $zodiac", "يوم الميلاد: ${date.dayOfWeek.getDisplayName(java.time.format.TextStyle.FULL, java.util.Locale(\"ar\"))}", "الميلاد الهجري التقريبي: ${hijri.get(android.icu.util.Calendar.DAY_OF_MONTH)}/${hijri.get(android.icu.util.Calendar.MONTH) + 1}/${hijri.get(android.icu.util.Calendar.YEAR)}", "عيد الميلاد القادم: بعد ${java.time.temporal.ChronoUnit.DAYS.between(today, next)} يوم")
+        listOf("العمر: ${java.time.Period.between(date, today).years} سنة", "العمر الهجري: $hijriAge سنة تقريبًا", "البرج الترفيهي: $zodiac", "يوم الميلاد: ${date.dayOfWeek.getDisplayName(java.time.format.TextStyle.FULL, java.util.Locale("ar"))}", "الميلاد الهجري التقريبي: ${hijri.get(android.icu.util.Calendar.DAY_OF_MONTH)}/${hijri.get(android.icu.util.Calendar.MONTH) + 1}/${hijri.get(android.icu.util.Calendar.YEAR)}", "عيد الميلاد القادم: بعد ${java.time.temporal.ChronoUnit.DAYS.between(today, next)} يوم")
     }
     val tickerText = details?.filterIndexed { index, _ -> visibleItems[index] }?.joinToString("   •   ").orEmpty().ifBlank { "SMART COST PRO" }
 
