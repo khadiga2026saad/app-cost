@@ -587,7 +587,7 @@ fun LiveFinancialTickerBar(accountKey: String = "guest", birthDate: String? = nu
         prefs.registerOnSharedPreferenceChangeListener(listener)
         onDispose { prefs.unregisterOnSharedPreferenceChangeListener(listener) }
     }
-    val birth = birthDate?.let { runCatching { java.time.LocalDate.parse(it) }.getOrNull() }
+    val birth = birthDate?.let { runCatching { java.time.LocalDate.parse(it) }.getOrNull() }?.takeUnless { it.isAfter(java.time.LocalDate.now()) }
     val today = java.time.LocalDate.now()
     val details = birth?.let { date ->
         val hijri = android.icu.util.IslamicCalendar().apply { timeInMillis = date.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli() }
