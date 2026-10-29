@@ -575,7 +575,31 @@ fun ExecutiveHeader(
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun LiveFinancialTickerBar() {
+fun LiveFinancialTickerBar(accountKey: String = "guest", birthDate: String? = null) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val prefs = remember(accountKey) { context.getSharedPreferences("account_information_visibility_${accountKey}", android.content.Context.MODE_PRIVATE) }
+    var visibleItems by remember(accountKey) { mutableStateOf((0..5).map { prefs.getBoolean("item_$it", true) }) }
+    DisposableEffect(prefs) {
+        val listener = android.content.SharedPreferences.OnSharedPreferenceChangeListener { _, _ ->
+            visibleItems = (0..5).map { prefs.getBoolean("item_$it", true) }
+        }
+        prefs.registerOnSharedPreferenceChangeListener(listener)
+        onDispose { prefs.unregisterOnSharedPreferenceChangeListener(listener) }
+    }
+    val birth = birthDate?.let { runCatching { java.time.LocalDate.parse(it) }.getOrNull() }
+    val today = java.time.LocalDate.now()
+    val details = birth?.let { date ->
+        val hijri = android.icu.util.IslamicCalendar().apply { timeInMillis = date.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli() }
+        val nowHijri = android.icu.util.IslamicCalendar()
+        val hijriAge = nowHijri.get(android.icu.util.Calendar.YEAR) - hijri.get(android.icu.util.Calendar.YEAR) - if (nowHijri.get(android.icu.util.Calendar.MONTH) * 32 + nowHijri.get(android.icu.util.Calendar.DAY_OF_MONTH) < hijri.get(android.icu.util.Calendar.MONTH) * 32 + hijri.get(android.icu.util.Calendar.DAY_OF_MONTH)) 1 else 0
+        val next = (today.year..today.year + 4).mapNotNull { runCatching { date.withYear(it) }.getOrNull() }.first { !it.isBefore(today) }
+        val zodiac = when (date.monthValue * 100 + date.dayOfMonth) {
+            in 321..419 -> "الحمل"; in 420..520 -> "الثور"; in 521..620 -> "الجوزاء"; in 621..722 -> "السرطان"; in 723..822 -> "الأسد"; in 823..922 -> "العذراء"; in 923..1022 -> "الميزان"; in 1023..1121 -> "العقرب"; in 1122..1221 -> "القوس"; in 1222..1231, in 101..119 -> "الجدي"; in 120..218 -> "الدلو"; else -> "الحوت"
+        }
+        listOf("العمر: ${java.time.Period.between(date, today).years} سنة", "العمر الهجري: $hijriAge سنة تقريبًا", "البرج الترفيهي: $zodiac", "يوم الميلاد: ${date.dayOfWeek.getDisplayName(java.time.format.TextStyle.FULL, java.util.Locale(\"ar\"))}", "الميلاد الهجري التقريبي: ${hijri.get(android.icu.util.Calendar.DAY_OF_MONTH)}/${hijri.get(android.icu.util.Calendar.MONTH) + 1}/${hijri.get(android.icu.util.Calendar.YEAR)}", "عيد الميلاد القادم: بعد ${java.time.temporal.ChronoUnit.DAYS.between(today, next)} يوم")
+    }
+    val tickerText = details?.filterIndexed { index, _ -> visibleItems[index] }?.joinToString("   •   ").orEmpty().ifBlank { "SMART COST PRO" }
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -627,7 +651,7 @@ fun LiveFinancialTickerBar() {
 
             // Scrolling Ticker with basicMarquee
             Text(
-                text = "💡 تنبيه الميزانية: تم استهلاك 65% من مخصصات التشغيل لشهر مارس   •   📈 مؤشر التوفير: ارتفاع معدل خفض التكاليف بنسبة +8.4%   •   🔔 فاتورة تشغيل مستحقة خلال 48 ساعة   •   💰 التدفق النقدي: تم استلام إيرادات جديدة بقيمة 45,000 ج.م",
+                text = tickerText,
                 style = MaterialTheme.typography.bodySmall.copy(
                     color = DeepSlate,
                     fontWeight = FontWeight.SemiBold
