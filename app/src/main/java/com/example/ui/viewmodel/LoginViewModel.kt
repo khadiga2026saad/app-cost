@@ -189,9 +189,15 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
         errorMessage = null
         viewModelScope.launch {
             try {
+                val clientIdResource = context.resources.getIdentifier("default_web_client_id", "string", context.packageName)
+                if (clientIdResource == 0 || context.getString(clientIdResource).isBlank()) {
+                    errorMessage = "إعداد Google Sign-In غير مكتمل: فعّل Google في Firebase، وأضف SHA-1 وSHA-256 ثم نزّل google-services.json المحدث"
+                    isLoading = false
+                    return@launch
+                }
                 val googleOption = GetGoogleIdOption.Builder()
                     .setFilterByAuthorizedAccounts(false)
-                    .setServerClientId(context.getString(R.string.default_web_client_id))
+                    .setServerClientId(context.getString(clientIdResource))
                     .setAutoSelectEnabled(false)
                     .build()
                 val request = GetCredentialRequest.Builder()
