@@ -138,8 +138,9 @@ fun SmartCostProApp(
     // when the user opted in to biometric unlock on this device.
     val appContext = LocalContext.current
     val biometricEnabled = remember {
-        appContext.getSharedPreferences("smart_cost_auth_prefs", android.content.Context.MODE_PRIVATE)
-            .getBoolean("biometric_enabled", false)
+        val prefs = appContext.getSharedPreferences("smart_cost_auth_prefs", android.content.Context.MODE_PRIVATE)
+        prefs.getBoolean("biometric_enabled", false) &&
+            prefs.getString("biometric_uid", null) == FirebaseAuth.getInstance().currentUser?.uid
     }
     var isInWorkspace by remember {
         mutableStateOf(FirebaseAuth.getInstance().currentUser?.let { (it.isEmailVerified || it.isAnonymous) && !biometricEnabled } == true)
