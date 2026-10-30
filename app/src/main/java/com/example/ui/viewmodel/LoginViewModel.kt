@@ -212,16 +212,9 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
                         if (task.isSuccessful && auth.currentUser != null) {
                             val user = auth.currentUser!!
                             saveRememberedUser(user.email.orEmpty())
-                            val hasPasswordProvider = user.providerData.any { it.providerId == EmailAuthProvider.PROVIDER_ID }
-                            if (hasPasswordProvider) {
-                                offerBiometricSetup(findFragmentActivity(context), onSuccess)
-                            } else {
-                                // Keep the same Google-backed Firebase account and add email/password as a linked provider.
-                                pendingGoogleSuccess = onSuccess
-                                pendingGoogleActivity = findFragmentActivity(context)
-                                showGooglePasswordDialog = true
-                                notice = "يمكنك تعيين كلمة مرور للدخول بالبريد الإلكتروني أيضًا"
-                            }
+                            // Google sign-in is complete at this point. Do not block entry
+                            // behind an optional email/password-linking dialog.
+                            offerBiometricSetup(findFragmentActivity(context), onSuccess)
                         } else {
                             errorMessage = task.exception?.localizedMessage ?: "تعذر تسجيل الدخول بحساب Google"
                         }
