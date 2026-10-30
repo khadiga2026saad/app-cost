@@ -220,6 +220,23 @@ fun LoginScreen(
             }
         }
         Spacer(Modifier.height(8.dp))
+        // Temporary visual marker to verify Google AI Studio is previewing this main branch.
+        Surface(
+            modifier = Modifier.widthIn(max = 448.dp).fillMaxWidth(),
+            shape = RoundedCornerShape(8.dp),
+            color = Color(0xFFE8F5E9),
+            border = BorderStroke(1.dp, Color(0xFF2E7D32))
+        ) {
+            Text(
+                text = "ChatGPT",
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 5.dp),
+                color = Color(0xFF1B5E20),
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center
+            )
+        }
+        Spacer(Modifier.height(8.dp))
         Surface(
             modifier = Modifier.fillMaxWidth().widthIn(max = 448.dp),
             shape = RoundedCornerShape(24.dp),
