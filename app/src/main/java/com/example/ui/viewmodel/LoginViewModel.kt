@@ -119,7 +119,9 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
             object : BiometricPrompt.AuthenticationCallback() {
                 override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
                     super.onAuthenticationSucceeded(result)
-                    onSuccess()
+                    if (auth.currentUser?.uid == expectedBiometricUid &&
+                        preferences.getString("biometric_uid", null) == expectedBiometricUid) onSuccess()
+                    else notice = "تغيّر الحساب أثناء التحقق؛ سجّل الدخول مجددًا"
                 }
                 override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
                     super.onAuthenticationError(errorCode, errString)
