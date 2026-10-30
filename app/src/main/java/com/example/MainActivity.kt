@@ -137,13 +137,18 @@ fun SmartCostProApp(
     // Keep the Firebase session, but require biometric verification on a fresh app launch
     // when the user opted in to biometric unlock on this device.
     val appContext = LocalContext.current
+    val authPrefs = remember {
+        appContext.getSharedPreferences("smart_cost_auth_prefs", android.content.Context.MODE_PRIVATE)
+    }
     val biometricEnabled = remember {
-        val prefs = appContext.getSharedPreferences("smart_cost_auth_prefs", android.content.Context.MODE_PRIVATE)
         // Legacy biometric enrollment without a UID must not silently unlock a saved session.
-        prefs.getBoolean("biometric_enabled", false)
+        authPrefs.getBoolean("biometric_enabled", false)
     }
     var isInWorkspace by remember {
-        mutableStateOf(FirebaseAuth.getInstance().currentUser?.let { (it.isEmailVerified || it.isAnonymous) && !biometricEnabled } == true)
+        mutableStateOf(
+            FirebaseAuth.getInstance().currentUser?.let { (it.isEmailVerified || it.isAnonymous) && !biometricEnabled } == true ||
+                (authPrefs.getBoolean("guest_mode", false) && FirebaseAuth.getInstance().currentUser == null)
+        )
     }
 
     // Re-lock the workspace when the app returns from the background, if biometrics are enabled.
@@ -174,11 +179,15 @@ fun SmartCostProApp(
         // شاشة الدخول المعتمدة
         LoginScreen(
             onLoginClick = {
+                authPrefs.edit().putBoolean("guest_mode", false).apply()
                 isInWorkspace = FirebaseAuth.getInstance().currentUser?.let { it.isEmailVerified || it.isAnonymous } == true
                 currentScreen = Screen.DASHBOARD
                 showingCostCategories = false
             },
             onGuestClick = {
+                // Guest workspace must never inherit an authenticated Firebase identity.
+                FirebaseAuth.getInstance().signOut()
+                authPrefs.edit().putBoolean("guest_mode", true).apply()
                 isInWorkspace = true
                 currentScreen = Screen.DASHBOARD
                 showingCostCategories = false
@@ -233,6 +242,7 @@ fun SmartCostProApp(
                     onSettingsClick = { showingAccountSettings = true },
                     onLogout = {
                         FirebaseAuth.getInstance().signOut()
+                        authPrefs.edit().putBoolean("guest_mode", false).apply()
                         isInWorkspace = false
                     },
                     onHomeClick = { showingAccountSettings = false; showingCostCategories = false; currentScreen = Screen.DASHBOARD }
@@ -281,7 +291,7 @@ fun SmartCostProApp(
                     }
                 },
                 onAddNewCategory = { /* Requires approved category persistence before activation. */ },
-                onLogout = { FirebaseAuth.getInstance().signOut(); isInWorkspace = false; showingCostCategories = false }
+                onLogout = { FirebaseAuth.getInstance().signOut(); authPrefs.edit().putBoolean("guest_mode", false).apply(); isInWorkspace = false; showingCostCategories = false }
             )
         } else if (currentScreen == Screen.DASHBOARD) {
             HomeScreen(
@@ -315,6 +325,7 @@ fun SmartCostProApp(
                 },
                 onLogout = {
                     FirebaseAuth.getInstance().signOut()
+                    authPrefs.edit().putBoolean("guest_mode", false).apply()
                     isInWorkspace = false
                 },
                 modifier = modifier
