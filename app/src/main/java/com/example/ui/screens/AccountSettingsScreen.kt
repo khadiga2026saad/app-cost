@@ -27,6 +27,11 @@ import java.time.format.DateTimeFormatter
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.LayoutDirection
 import android.content.Context
+import android.content.ContextWrapper
+import androidx.biometric.BiometricManager
+import androidx.biometric.BiometricPrompt
+import androidx.core.content.ContextCompat
+import androidx.fragment.app.FragmentActivity
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -56,6 +61,57 @@ fun AccountSettingsScreen(profileViewModel: ProfileViewModel, modifier: Modifier
     val prefs = remember(accountKey) { context.getSharedPreferences("account_information_visibility_${accountKey}", Context.MODE_PRIVATE) }
     val infoLabels = listOf("العمر الميلادي", "العمر الهجري (تقريبي)", "البرج (ترفيهي)", "يوم الميلاد", "الميلاد الهجري (تقريبي)", "عيد الميلاد القادم")
     val enabled = remember(accountKey) { mutableStateListOf<Boolean>().apply { repeat(6) { add(prefs.getBoolean("item_$it", true)) } } }
+    val authPrefs = remember(context) { context.getSharedPreferences("smart_cost_auth_prefs", Context.MODE_PRIVATE) }
+    var biometricEnabled by remember(accountKey) { mutableStateOf(signedInUser != null && authPrefs.getBoolean("biometric_enabled", false) && authPrefs.getString("biometric_uid", null) == signedInUser?.uid) }
+    var biometricNotice by remember { mutableStateOf<String?>(null) }
+    fun setBiometricEnabled(enable: Boolean) {
+        if (!enable) {
+            authPrefs.edit().putBoolean("biometric_enabled", false).remove("biometric_uid").apply()
+            biometricEnabled = false
+            biometricNotice = "تم إيقاف الدخول بالبصمة دون حذف الحساب أو بياناته."
+            return
+        }
+        val user = auth.currentUser
+        if (user == null || user.isAnonymous || !user.isEmailVerified) {
+            biometricEnabled = false
+            biometricNotice = "سجّل الدخول بحساب موثّق أولًا لتفعيل البصمة."
+            return
+        }
+        val activity = context.findSettingsFragmentActivity()
+        if (activity == null) { biometricNotice = "تعذر فتح نافذة التحقق على هذا الجهاز."; return }
+        val availability = BiometricManager.from(activity).canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_WEAK)
+        if (availability != BiometricManager.BIOMETRIC_SUCCESS) {
+            biometricNotice = when (availability) {
+                BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED -> "أضف بصمة أو وسيلة تعرف حيوي من إعدادات أمان الهاتف أولًا."
+                BiometricManager.BIOMETRIC_ERROR_NO_HARDWARE -> "هذا الجهاز لا يدعم التحقق الحيوي."
+                else -> "التحقق الحيوي غير متاح حاليًا."
+            }
+            return
+        }
+        val expectedUid = user.uid
+        BiometricPrompt(activity, ContextCompat.getMainExecutor(activity), object : BiometricPrompt.AuthenticationCallback() {
+            override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
+                super.onAuthenticationSucceeded(result)
+                val current = auth.currentUser
+                if (current != null && current.uid == expectedUid && !current.isAnonymous && current.isEmailVerified) {
+                    authPrefs.edit().putBoolean("biometric_enabled", true).putString("biometric_uid", expectedUid).apply()
+                    biometricEnabled = true
+                    biometricNotice = "تم تفعيل الدخول بالبصمة لهذا الحساب."
+                } else {
+                    biometricEnabled = false
+                    biometricNotice = "تغيّر الحساب؛ لم يتم تفعيل البصمة."
+                }
+            }
+            override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
+                super.onAuthenticationError(errorCode, errString)
+                biometricNotice = if (errorCode == BiometricPrompt.ERROR_NEGATIVE_BUTTON || errorCode == BiometricPrompt.ERROR_USER_CANCELED) "تم إلغاء تفعيل البصمة." else "تعذر التحقق: $errString"
+            }
+            override fun onAuthenticationFailed() {
+                super.onAuthenticationFailed()
+                biometricNotice = "لم تتطابق البصمة؛ حاول مرة أخرى."
+            }
+        }).authenticate(BiometricPrompt.PromptInfo.Builder().setTitle("تفعيل الدخول بالبصمة").setSubtitle("أكد هويتك لتفعيل الدخول السريع لهذا الحساب").setNegativeButtonText("إلغاء").setAllowedAuthenticators(BiometricManager.Authenticators.BIOMETRIC_WEAK).build())
+    }
     DisposableEffect(auth) {
         val listener = FirebaseAuth.AuthStateListener { signedInUser = it.currentUser }
         auth.addAuthStateListener(listener)
@@ -109,6 +165,15 @@ fun AccountSettingsScreen(profileViewModel: ProfileViewModel, modifier: Modifier
                                 onSwitchAccount = onSwitchAccount,
                                 onLogout = onLogout
                             )
+                            HorizontalDivider()
+                            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
+                                Column(Modifier.weight(1f)) {
+                                    Text("تفعيل الدخول بالبصمة", fontWeight = FontWeight.SemiBold, color = Color(0xFF171717))
+                                    Text("استخدم البصمة لفتح الجلسة المحفوظة على هذا الجهاز", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                                }
+                                Switch(checked = biometricEnabled, onCheckedChange = { setBiometricEnabled(it) }, colors = SwitchDefaults.colors(checkedThumbColor = Color.White, checkedTrackColor = Color(0xFFD4AF37)), modifier = Modifier.testTag("biometric_enabled_switch"))
+                            }
+                            biometricNotice?.let { Text(it, color = if (it.startsWith("تم")) Color(0xFF15803D) else Color(0xFFB45309), style = MaterialTheme.typography.bodySmall) }
                             HorizontalDivider()
                             Text("معلوماتي", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                             val date = profile?.birthDate?.let { runCatching { LocalDate.parse(it) }.getOrNull() }?.takeUnless { it.isAfter(LocalDate.now()) }
@@ -311,4 +376,13 @@ private fun zodiacLabel(date: LocalDate): String {
         in 1222..1231, in 101..119 -> "الجدي"; in 120..218 -> "الدلو"
         in 219..320 -> "الحوت"; else -> "غير محدد"
     } + " (ترفيهي)"
+}
+
+private fun Context.findSettingsFragmentActivity(): FragmentActivity? {
+    var current: Context = this
+    while (current is ContextWrapper) {
+        if (current is FragmentActivity) return current
+        current = current.baseContext
+    }
+    return current as? FragmentActivity
 }
