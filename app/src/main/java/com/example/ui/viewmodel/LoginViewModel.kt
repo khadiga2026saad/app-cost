@@ -91,10 +91,14 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
     fun dismissDialogs() { showRegisterDialog = false; showForgotPasswordDialog = false; showGooglePasswordDialog = false }
 
     fun onBiometricClick(activity: FragmentActivity, onSuccess: () -> Unit) {
-        if (auth.currentUser == null) {
-            notice = "سجّل الدخول بحسابك أولًا، ثم فعّل الدخول بالبصمة على هذا الجهاز"
+        val biometricUser = auth.currentUser
+        if (biometricUser == null || !biometricUser.isEmailVerified ||
+            !preferences.getBoolean("biometric_enabled", false) ||
+            preferences.getString("biometric_uid", null) != biometricUser.uid) {
+            notice = "سجّل الدخول بحسابك وفعّل البصمة لهذا الحساب أولًا"
             return
         }
+        val expectedBiometricUid = biometricUser.uid
         val manager = BiometricManager.from(activity)
         val availability = manager.canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_WEAK)
         if (availability != BiometricManager.BIOMETRIC_SUCCESS) {
