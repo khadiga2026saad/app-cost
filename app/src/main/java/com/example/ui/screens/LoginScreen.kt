@@ -90,19 +90,19 @@ fun LoginScreen(
         else -> "منظومة الإدارة والتكاليف التنفيذية الذكية"
     }
     val usernameLabel = when (lang) {
-        "en" -> "Username or Email"
+        "en" -> "Email address"
         "fr" -> "Nom d'utilisateur ou E-mail"
-        else -> "اسم المستخدم أو البريد الإلكتروني"
+        else -> "البريد الإلكتروني"
     }
     val usernamePlaceholder = when (lang) {
-        "en" -> "e.g. CEO@smartcost.pro or 29401"
-        "fr" -> "ex: CEO@smartcost.pro ou 29401"
-        else -> "مثال: CEO@smartcost.pro أو 29401"
+        "en" -> "Enter your email address"
+        "fr" -> "Saisissez votre adresse e-mail"
+        else -> "أدخل بريدك الإلكتروني المسجل"
     }
     val passwordLabel = when (lang) {
-        "en" -> "Encrypted Password"
-        "fr" -> "Mot de passe chiffré"
-        else -> "كلمة المرور المشفرة"
+        "en" -> "Password"
+        "fr" -> "Mot de passe"
+        else -> "كلمة المرور"
     }
     val rememberText = when (lang) {
         "en" -> "Remember this secure device"
@@ -110,9 +110,9 @@ fun LoginScreen(
         else -> "تذكر هذا الجهاز الآمن"
     }
     val forgotText = when (lang) {
-        "en" -> "Forgot Code?"
-        "fr" -> "Code oublié ?"
-        else -> "استعادة الرمز؟"
+        "en" -> "Forgot password?"
+        "fr" -> "Mot de passe oublié ?"
+        else -> "نسيت كلمة المرور؟"
     }
     val loginButtonText = when (lang) {
         "en" -> "Login"
