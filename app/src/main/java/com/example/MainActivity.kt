@@ -140,27 +140,34 @@ fun SmartCostProApp(
     val authPrefs = remember {
         appContext.getSharedPreferences("smart_cost_auth_prefs", android.content.Context.MODE_PRIVATE)
     }
-    val biometricEnabled = remember {
-        // Legacy biometric enrollment without a UID must not silently unlock a saved session.
-        authPrefs.getBoolean("biometric_enabled", false)
+    fun biometricIsEnabledForCurrentUser(): Boolean {
+        val user = FirebaseAuth.getInstance().currentUser ?: return false
+        // A biometric preference belongs only to the Firebase UID that enrolled it.
+        return authPrefs.getBoolean("biometric_enabled", false) &&
+            authPrefs.getString("biometric_uid", null) == user.uid
     }
     var isInWorkspace by remember {
         mutableStateOf(
-            FirebaseAuth.getInstance().currentUser?.let { (it.isEmailVerified || it.isAnonymous) && !biometricEnabled } == true ||
+            FirebaseAuth.getInstance().currentUser?.let {
+                (it.isEmailVerified || it.isAnonymous) && !(
+                    authPrefs.getBoolean("biometric_enabled", false) &&
+                        authPrefs.getString("biometric_uid", null) == it.uid
+                    )
+            } == true ||
                 (authPrefs.getBoolean("guest_mode", false) && FirebaseAuth.getInstance().currentUser == null)
         )
     }
 
-    // Re-lock the workspace when the app returns from the background, if biometrics are enabled.
+    // Re-read preferences on lifecycle events: remember() alone becomes stale if biometrics
+    // are enrolled while this Activity is already alive. Lock only the UID that enrolled them.
     val lifecycleOwner = LocalLifecycleOwner.current
-    DisposableEffect(lifecycleOwner, biometricEnabled) {
+    DisposableEffect(lifecycleOwner) {
         var hasGoneToBackground = false
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_STOP) {
                 hasGoneToBackground = true
-            } else if (event == Lifecycle.Event.ON_START && hasGoneToBackground &&
-                biometricEnabled && FirebaseAuth.getInstance().currentUser != null) {
-                isInWorkspace = false
+            } else if (event == Lifecycle.Event.ON_START && hasGoneToBackground) {
+                if (biometricIsEnabledForCurrentUser()) isInWorkspace = false
                 hasGoneToBackground = false
             }
         }
