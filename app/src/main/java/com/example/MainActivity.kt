@@ -186,10 +186,18 @@ fun SmartCostProApp(
         // شاشة الدخول المعتمدة
         LoginScreen(
             onLoginClick = {
+                val signedInAccount = FirebaseAuth.getInstance().currentUser
+                val canEnterAccountWorkspace = signedInAccount != null &&
+                    !signedInAccount.isAnonymous &&
+                    signedInAccount.isEmailVerified
                 authPrefs.edit().putBoolean("guest_mode", false).apply()
-                isInWorkspace = FirebaseAuth.getInstance().currentUser?.let { it.isEmailVerified || it.isAnonymous } == true
-                currentScreen = Screen.DASHBOARD
-                showingCostCategories = false
+                // Never route to the dashboard unless a real, verified account is active.
+                // If authentication is incomplete, remain on the login screen.
+                isInWorkspace = canEnterAccountWorkspace
+                if (canEnterAccountWorkspace) {
+                    currentScreen = Screen.DASHBOARD
+                    showingCostCategories = false
+                }
             },
             onGuestClick = {
                 // A guest must not inherit an authenticated Firebase identity.
