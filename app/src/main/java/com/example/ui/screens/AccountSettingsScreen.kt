@@ -145,24 +145,6 @@ fun AccountSettingsScreen(profileViewModel: ProfileViewModel, modifier: Modifier
                 )
             }
         }
-        Surface(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp),
-            shape = RoundedCornerShape(16.dp),
-            color = Color.White,
-            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE8D8A7)),
-            shadowElevation = 2.dp
-        ) {
-            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
-                    Column(Modifier.weight(1f)) {
-                        Text("تفعيل الدخول بالبصمة", fontWeight = FontWeight.SemiBold, color = Color(0xFF171717))
-                        Text("فعّلها من هنا لاستخدام البصمة عند فتح التطبيق", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
-                    }
-                    Switch(checked = biometricEnabled, onCheckedChange = { setBiometricEnabled(it) }, colors = SwitchDefaults.colors(checkedThumbColor = Color.White, checkedTrackColor = Color(0xFFD4AF37)))
-                }
-                biometricNotice?.let { Text(it, color = if (it.startsWith("تم")) Color(0xFF15803D) else Color(0xFFB45309), style = MaterialTheme.typography.bodySmall) }
-            }
-        }
         Column(
             Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -233,7 +215,16 @@ fun AccountSettingsScreen(profileViewModel: ProfileViewModel, modifier: Modifier
                         }
                         2 -> {
                             Text("إعداد البرنامج", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                            Text("مساحة إعدادات البرنامج العامة. لم يتم تغيير أي تفضيلات حالية.", style = MaterialTheme.typography.bodyMedium)
+                            Text("إعدادات البرنامج العامة", style = MaterialTheme.typography.bodyMedium)
+                            HorizontalDivider()
+                            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
+                                Column(Modifier.weight(1f)) {
+                                    Text("تفعيل الدخول بالبصمة", fontWeight = FontWeight.SemiBold, color = Color(0xFF171717))
+                                    Text("فعّلها لاستخدام البصمة عند فتح التطبيق", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                                }
+                                Switch(checked = biometricEnabled, onCheckedChange = { setBiometricEnabled(it) }, colors = SwitchDefaults.colors(checkedThumbColor = Color.White, checkedTrackColor = Color(0xFFD4AF37)))
+                            }
+                            biometricNotice?.let { Text(it, color = if (it.startsWith("تم")) Color(0xFF15803D) else Color(0xFFB45309), style = MaterialTheme.typography.bodySmall) }
                         }
                         3 -> if (isOwner) {
                             Text("إعدادات المالك", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
