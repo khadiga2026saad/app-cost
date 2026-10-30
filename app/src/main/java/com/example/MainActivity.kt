@@ -139,8 +139,8 @@ fun SmartCostProApp(
     val appContext = LocalContext.current
     val biometricEnabled = remember {
         val prefs = appContext.getSharedPreferences("smart_cost_auth_prefs", android.content.Context.MODE_PRIVATE)
-        prefs.getBoolean("biometric_enabled", false) &&
-            prefs.getString("biometric_uid", null) == FirebaseAuth.getInstance().currentUser?.uid
+        // Legacy biometric enrollment without a UID must not silently unlock a saved session.
+        prefs.getBoolean("biometric_enabled", false)
     }
     var isInWorkspace by remember {
         mutableStateOf(FirebaseAuth.getInstance().currentUser?.let { (it.isEmailVerified || it.isAnonymous) && !biometricEnabled } == true)
