@@ -156,7 +156,8 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
             object : BiometricPrompt.AuthenticationCallback() {
                 override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
                     super.onAuthenticationSucceeded(result)
-                    preferences.edit().putBoolean("biometric_enabled", true).apply()
+                    preferences.edit().putBoolean("biometric_enabled", true)
+                        .putString("biometric_uid", auth.currentUser?.uid).apply()
                     notice = "تم تفعيل الدخول السريع بالبصمة على هذا الجهاز"
                     onComplete()
                 }
