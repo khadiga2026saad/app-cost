@@ -143,6 +143,16 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private fun offerBiometricSetup(activity: FragmentActivity?, onComplete: () -> Unit) {
+        val user = auth.currentUser
+        // Do not ask the same account to enroll on every successful login.
+        // A preference from another UID must never be treated as this user's enrollment.
+        if (user != null &&
+            preferences.getBoolean("biometric_enabled", false) &&
+            preferences.getString("biometric_uid", null) == user.uid
+        ) {
+            onComplete()
+            return
+        }
         if (activity == null) {
             onComplete()
             return
@@ -391,9 +401,15 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun onGuestClick(onEnter: () -> Unit) {
-        // Do not let guest mode bypass the biometric lock on an authenticated session.
-        if (auth.currentUser != null && preferences.getBoolean("biometric_enabled", false)) {
-            notice = "افتح جلستك بالبصمة أولًا؛ وضع الزائر لا يتجاوز قفل الحساب"
+        // Only the account that enrolled biometrics is subject to its lock.
+        // A stale preference belonging to a different UID must not block guest mode.
+        val currentUser = auth.currentUser
+        val biometricUid = preferences.getString("biometric_uid", null)
+        val biometricEnabledForCurrentUser = currentUser != null &&
+            preferences.getBoolean("biometric_enabled", false) &&
+            biometricUid == currentUser.uid
+        if (biometricEnabledForCurrentUser) {
+            notice = "افتح جلسة الحساب بالبصمة أولًا؛ وضع الزائر لا يتجاوز قفل الحساب"
             return
         }
         onEnter()
