@@ -1,7 +1,6 @@
 package com.example.ui.screens
 
-import android.content.Context
-import android.content.ContextWrapper
+import androidx.activity.compose.LocalActivity
 import androidx.fragment.app.FragmentActivity
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
@@ -64,18 +63,8 @@ fun LoginScreen(
     val showPassword = loginViewModel.showPassword
     val rememberDevice = loginViewModel.rememberDevice
     val context = androidx.compose.ui.platform.LocalContext.current
-    val activity = remember(context) {
-        var current: Context? = context
-        var found: FragmentActivity? = null
-        while (current != null) {
-            if (current is FragmentActivity) {
-                found = current
-                break
-            }
-            current = (current as? ContextWrapper)?.baseContext
-        }
-        found
-    }
+    // The localized Compose Context may be a configuration ContextImpl rather than an Activity wrapper.
+    val activity = LocalActivity.current as? FragmentActivity
     val notice = loginViewModel.notice
     val error = loginViewModel.errorMessage
     val isLoading = loginViewModel.isLoading
@@ -325,7 +314,7 @@ fun LoginScreen(
                 }
                 Spacer(Modifier.height(8.dp))
                 OutlinedButton(
-                    onClick = { loginViewModel.onGoogleClick(context, onLoginClick) }, enabled = !isLoading, modifier = Modifier.fillMaxWidth().height(46.dp),
+                    onClick = { loginViewModel.onGoogleClick(activity ?: context, onLoginClick) }, enabled = !isLoading, modifier = Modifier.fillMaxWidth().height(46.dp),
                     shape = fieldShape, border = BorderStroke(1.dp, BorderLight),
                     colors = ButtonDefaults.outlinedButtonColors(containerColor = SurfaceCard)
                 ) {
