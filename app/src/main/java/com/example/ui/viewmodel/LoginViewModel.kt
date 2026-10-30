@@ -172,9 +172,15 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
             object : BiometricPrompt.AuthenticationCallback() {
                 override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
                     super.onAuthenticationSucceeded(result)
-                    preferences.edit().putBoolean("biometric_enabled", true)
-                        .putString("biometric_uid", auth.currentUser?.uid).apply()
-                    notice = "تم تفعيل الدخول السريع بالبصمة على هذا الجهاز"
+                    // Bind enrollment to the exact account that initiated this prompt.
+                    val currentUid = auth.currentUser?.uid
+                    if (user != null && currentUid == user.uid) {
+                        preferences.edit().putBoolean("biometric_enabled", true)
+                            .putString("biometric_uid", user.uid).apply()
+                        notice = "تم تفعيل الدخول السريع بالبصمة على هذا الجهاز"
+                    } else {
+                        notice = "تغيّر الحساب؛ لم يتم تفعيل البصمة للحساب الآخر"
+                    }
                     onComplete()
                 }
                 override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
@@ -324,7 +330,7 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
             errorMessage = "من فضلك أدخل البريد الإلكتروني وكلمة المرور"
             return
         }
-        if (!email.contains("@")) {
+        if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
             errorMessage = "أدخل بريدًا إلكترونيًا صحيحًا"
             return
         }
@@ -382,8 +388,8 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
 
     fun sendPasswordReset() {
         val email = username.trim()
-        if (email.isBlank() || !email.contains("@")) {
-            errorMessage = "أدخل بريدك الإلكتروني المسجل أولًا"
+        if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            errorMessage = "أدخل بريدًا إلكترونيًا صحيحًا لاستعادة كلمة المرور"
             return
         }
         if (isLoading) return
