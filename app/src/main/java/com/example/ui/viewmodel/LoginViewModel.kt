@@ -393,8 +393,7 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
 
     fun onGuestClick(onEnter: () -> Unit) {
         // Do not let guest mode bypass the biometric lock on an authenticated session.
-        if (auth.currentUser != null && preferences.getBoolean("biometric_enabled", false) &&
-            preferences.getBoolean("biometric_enabled", false)) {
+        if (auth.currentUser != null && preferences.getBoolean("biometric_enabled", false)) {
             notice = "افتح جلستك بالبصمة أولًا؛ وضع الزائر لا يتجاوز قفل الحساب"
             return
         }
