@@ -240,7 +240,7 @@ fun SmartCostProApp(
                     .padding(horizontal = 8.dp, vertical = 6.dp)
             ) {
                 ExecutiveHeader(
-                    userName = profile?.nickname?.takeIf { it.isNotBlank() } ?: profile?.fullName?.takeIf { it.isNotBlank() } ?: activeUser?.displayName ?: "زائر",
+                    userName = profile?.nickname?.takeIf { it.isNotBlank() } ?: profile?.fullName?.takeIf { it.isNotBlank() } ?: activeUser?.displayName ?: activeUser?.email?.substringBefore("@")?.takeIf { it.isNotBlank() } ?: if (activeUser == null) "زائر" else "حسابي",
                     photoPath = profile?.photoPath,
                     timeString = currentTimeString,
                     dateString = currentDateString,
