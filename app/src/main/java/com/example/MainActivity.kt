@@ -149,7 +149,9 @@ fun SmartCostProApp(
     var isInWorkspace by remember {
         mutableStateOf(
             FirebaseAuth.getInstance().currentUser?.let {
-                (it.isEmailVerified || it.isAnonymous) && !(
+                // Anonymous Firebase identities are not registered accounts. Guest mode is
+                // represented separately by the local guest_mode preference.
+                !it.isAnonymous && it.isEmailVerified && !(
                     authPrefs.getBoolean("biometric_enabled", false) &&
                         authPrefs.getString("biometric_uid", null) == it.uid
                     )
