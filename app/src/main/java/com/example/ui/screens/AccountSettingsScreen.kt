@@ -51,7 +51,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 
 @Composable
-fun AccountSettingsScreen(profileViewModel: ProfileViewModel, modifier: Modifier = Modifier, onSwitchAccount: () -> Unit = {}, onLogout: () -> Unit = {}) {
+fun AccountSettingsScreen(profileViewModel: ProfileViewModel, modifier: Modifier = Modifier, biometricActivity: FragmentActivity, onSwitchAccount: () -> Unit = {}, onLogout: () -> Unit = {}) {
     var selectedTab by remember { mutableIntStateOf(0) }
     val auth = remember { FirebaseAuth.getInstance() }
     val context = LocalContext.current
@@ -77,8 +77,7 @@ fun AccountSettingsScreen(profileViewModel: ProfileViewModel, modifier: Modifier
             biometricNotice = "سجّل الدخول بحساب موثّق أولًا لتفعيل البصمة."
             return
         }
-        val activity = context.findSettingsFragmentActivity()
-        if (activity == null) { biometricNotice = "تعذر فتح نافذة التحقق على هذا الجهاز."; return }
+        val activity = biometricActivity
         val availability = BiometricManager.from(activity).canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_WEAK)
         if (availability != BiometricManager.BIOMETRIC_SUCCESS) {
             biometricNotice = when (availability) {
@@ -378,11 +377,3 @@ private fun zodiacLabel(date: LocalDate): String {
     } + " (ترفيهي)"
 }
 
-private fun Context.findSettingsFragmentActivity(): FragmentActivity? {
-    var current: Context = this
-    while (current is ContextWrapper) {
-        if (current is FragmentActivity) return current
-        current = current.baseContext
-    }
-    return current as? FragmentActivity
-}
