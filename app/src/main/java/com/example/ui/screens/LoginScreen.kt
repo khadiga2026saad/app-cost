@@ -1,6 +1,5 @@
 package com.example.ui.screens
 
-import androidx.activity.compose.LocalActivity
 import androidx.fragment.app.FragmentActivity
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
@@ -49,6 +48,7 @@ import com.example.R
 
 @Composable
 fun LoginScreen(
+    biometricActivity: FragmentActivity? = null,
     onLoginClick: () -> Unit = {},
     onBiometricClick: () -> Unit = {},
     onGoogleClick: () -> Unit = {},
@@ -66,8 +66,6 @@ fun LoginScreen(
     val showPassword = loginViewModel.showPassword
     val rememberDevice = loginViewModel.rememberDevice
     val context = androidx.compose.ui.platform.LocalContext.current
-    // The localized Compose Context may be a configuration ContextImpl rather than an Activity wrapper.
-    val activity = LocalActivity.current as? FragmentActivity
     val notice = loginViewModel.notice
     val error = loginViewModel.errorMessage
     val isLoading = loginViewModel.isLoading
@@ -317,7 +315,7 @@ fun LoginScreen(
                 }
                 Spacer(Modifier.height(8.dp))
                 Surface(
-                    onClick = { activity?.let { loginViewModel.onBiometricClick(it, onLoginClick) } ?: run { android.widget.Toast.makeText(context, "تعذر فتح نافذة البصمة", android.widget.Toast.LENGTH_SHORT).show() } }, modifier = Modifier.fillMaxWidth(),
+                    onClick = { biometricActivity?.let { loginViewModel.onBiometricClick(it, onLoginClick) } ?: run { android.widget.Toast.makeText(context, "تعذر فتح نافذة البصمة", android.widget.Toast.LENGTH_SHORT).show() } }, modifier = Modifier.fillMaxWidth(),
                     shape = fieldShape, color = GoldLight.copy(alpha = .7f),
                     border = BorderStroke(1.dp, GoldPrimary.copy(alpha = .45f))
                 ) {
