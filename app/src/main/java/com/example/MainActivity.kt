@@ -119,6 +119,7 @@ class MainActivity : FragmentActivity() {
                     LocalLayoutDirection provides layoutDirection
                 ) {
                     SmartCostProApp(
+                        biometricActivity = this@MainActivity,
                         viewModel = financeViewModel,
                         isEnglish = isEnglish,
                         onToggleLanguage = { isEnglish = !isEnglish }
@@ -132,6 +133,7 @@ class MainActivity : FragmentActivity() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SmartCostProApp(
+    biometricActivity: FragmentActivity,
     viewModel: FinanceViewModel,
     isEnglish: Boolean = false,
     onToggleLanguage: () -> Unit = {},
@@ -294,7 +296,7 @@ fun SmartCostProApp(
         // When on DASHBOARD, HomeScreen provides its full dedicated Executive Header & Navigation
         if (showingAccountSettings) {
             AccountSettingsScreen(
-                biometricActivity = this@MainActivity,
+                biometricActivity = biometricActivity,
                 profileViewModel = profileViewModel,
                 onSwitchAccount = {
                     FirebaseAuth.getInstance().signOut()
