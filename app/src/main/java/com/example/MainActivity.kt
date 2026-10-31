@@ -294,6 +294,7 @@ fun SmartCostProApp(
         // When on DASHBOARD, HomeScreen provides its full dedicated Executive Header & Navigation
         if (showingAccountSettings) {
             AccountSettingsScreen(
+                biometricActivity = this@MainActivity,
                 profileViewModel = profileViewModel,
                 onSwitchAccount = {
                     FirebaseAuth.getInstance().signOut()
