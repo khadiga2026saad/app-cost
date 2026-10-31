@@ -192,6 +192,7 @@ fun SmartCostProApp(
     if (!isInWorkspace) {
         // شاشة الدخول المعتمدة
         LoginScreen(
+            biometricActivity = biometricActivity,
             onLoginClick = {
                 val signedInAccount = FirebaseAuth.getInstance().currentUser
                 val canEnterAccountWorkspace = signedInAccount != null &&
