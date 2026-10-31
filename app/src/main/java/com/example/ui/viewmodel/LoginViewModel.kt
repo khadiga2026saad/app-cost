@@ -2,7 +2,9 @@ package com.example.ui.viewmodel
 
 import android.app.Application
 import android.content.Context
+import android.content.ContextWrapper
 import androidx.biometric.BiometricManager
+import androidx.core.content.ContextCompat
 import androidx.biometric.BiometricPrompt
 import androidx.fragment.app.FragmentActivity
 import androidx.compose.runtime.getValue

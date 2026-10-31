@@ -22,12 +22,15 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material.icons.Icons
@@ -243,7 +246,21 @@ fun SmartCostProApp(
                 kotlinx.coroutines.delay(1000L)
             }
         }
-        Column(modifier = modifier.fillMaxSize()) {
+        val topSafeInset = WindowInsets.safeDrawing.asPaddingValues().calculateTopPadding()
+        val effectiveStatusHeight = maxOf(topSafeInset, 32.dp)
+
+        Column(
+            modifier = modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
+        ) {
+            // شريط علوي أسود مخصص لمنطقة الإشعارات والبطارية والشبكة لمنع أي تداخل مع التطبيق
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(effectiveStatusHeight)
+                    .background(Color(0xFF0F172A))
+            )
             Column(
                 modifier = Modifier.fillMaxWidth()
                     .background(MaterialTheme.colorScheme.background)

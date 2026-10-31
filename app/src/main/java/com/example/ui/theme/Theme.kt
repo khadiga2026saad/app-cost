@@ -65,8 +65,8 @@ fun SmartCostProTheme(
         SideEffect {
             val window = (view.context as? Activity)?.window
             if (window != null) {
-                window.statusBarColor = colorScheme.background.toArgb()
-                WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = true
+                window.statusBarColor = android.graphics.Color.parseColor("#0F172A")
+                WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = false
             }
         }
     }

@@ -8,10 +8,12 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
@@ -29,6 +31,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.ui.viewmodel.LoginViewModel
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -166,11 +169,29 @@ fun LoginScreen(
     }
 
     val fieldShape = RoundedCornerShape(12.dp)
+    val scrollState = rememberScrollState()
+    val topSafeInset = WindowInsets.safeDrawing.asPaddingValues().calculateTopPadding()
+    val effectiveStatusHeight = maxOf(topSafeInset, 32.dp)
+
     Column(
-        modifier = modifier.fillMaxSize().background(Color(0xFFF9F9FF))
-            .windowInsetsPadding(WindowInsets.safeDrawing).padding(horizontal = 16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+        modifier = modifier
+            .fillMaxSize()
+            .background(Color(0xFFF9F9FF))
     ) {
+        // شريط علوي أسود مخصص لمنطقة الإشعارات والبطارية والشبكة
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(effectiveStatusHeight)
+                .background(Color(0xFF0F172A))
+        )
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(scrollState)
+                .padding(horizontal = 16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
         Row(
             Modifier.fillMaxWidth().padding(top = 4.dp, bottom = 2.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -337,42 +358,79 @@ fun LoginScreen(
         Spacer(Modifier.height(8.dp))
         Surface(
             onClick = { loginViewModel.onGuestClick(onGuestClick) },
-            modifier = Modifier.fillMaxWidth().widthIn(max = 448.dp),
-            shape = RoundedCornerShape(16.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .widthIn(max = 448.dp),
+            shape = RoundedCornerShape(18.dp),
             color = SurfaceWhite,
-            border = BorderStroke(1.dp, BorderLight),
-            shadowElevation = 2.dp
+            border = BorderStroke(1.5.dp, GoldPrimary.copy(alpha = 0.55f)),
+            shadowElevation = 4.dp
         ) {
             Row(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 14.dp, vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
+                // Golden ball containing SMART COST PRO logo
                 Box(
-                    modifier = Modifier.size(42.dp)
-                        .background(GoldLight.copy(alpha = .35f), CircleShape)
-                        .border(1.dp, GoldPrimary.copy(alpha = .45f), CircleShape),
+                    modifier = Modifier
+                        .size(50.dp)
+                        .shadow(elevation = 2.dp, shape = CircleShape)
+                        .background(GoldLight.copy(alpha = 0.5f), CircleShape)
+                        .border(1.5.dp, GoldPrimary, CircleShape)
+                        .clip(CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
                     Image(
                         painter = painterResource(id = R.drawable.ic_smart_cost_logo),
                         contentDescription = "شعار SMART COST PRO",
-                        modifier = Modifier.size(36.dp),
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(CircleShape),
                         contentScale = ContentScale.Fit
                     )
                 }
                 Spacer(Modifier.width(12.dp))
-                Text(
-                    guestText,
-                    modifier = Modifier.weight(1f),
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = TextSecondaryDark,
-                    textAlign = TextAlign.Start
-                )
-                Icon(Icons.Default.ArrowBack, contentDescription = null, modifier = Modifier.size(18.dp), tint = GoldDark)
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = guestText,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = DeepSlate,
+                        textAlign = TextAlign.Start
+                    )
+                    Text(
+                        text = when (lang) {
+                            "en" -> "Direct access to explore all modules & reports"
+                            "fr" -> "Accès direct pour explorer le système et les rapports"
+                            else -> "دخول فوري لاستعراض كافة أقسام النظام والتقارير"
+                        },
+                        fontSize = 11.sp,
+                        color = TextSecondaryDark,
+                        textAlign = TextAlign.Start
+                    )
+                }
+                Spacer(Modifier.width(8.dp))
+                Surface(
+                    shape = CircleShape,
+                    color = GoldLight.copy(alpha = 0.7f),
+                    border = BorderStroke(1.dp, GoldPrimary.copy(alpha = 0.45f)),
+                    modifier = Modifier.size(32.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            Icons.Default.ArrowBack,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp),
+                            tint = GoldDark
+                        )
+                    }
+                }
             }
         }
-        Spacer(Modifier.height(4.dp))
+        Spacer(Modifier.height(36.dp))
+        }
     }
 
     if (showRegisterDialog) {

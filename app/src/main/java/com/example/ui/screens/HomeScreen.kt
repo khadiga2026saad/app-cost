@@ -70,6 +70,7 @@ import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -373,13 +374,13 @@ fun ExecutiveHeader(
     onLogout: () -> Unit = {},
     onHomeClick: () -> Unit = {}
 ) {
-    var expandedMenu by remember { mutableStateOf(false) }
+    var expandedOverflowMenu by remember { mutableStateOf(false) }
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .testTag("executive_header_card"),
-        shape = RoundedCornerShape(20.dp),
+        shape = RoundedCornerShape(22.dp),
         colors = CardDefaults.cardColors(containerColor = SurfaceCrispWhite),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         border = BorderStroke(1.dp, BorderLight)
@@ -387,7 +388,7 @@ fun ExecutiveHeader(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 10.dp, vertical = 10.dp)
+                .padding(horizontal = 14.dp, vertical = 14.dp)
         ) {
             // الشريط العلوي: بيانات المستخدم على اليمين وأزرار التحكم المتناسقة على اليسار
             Row(
@@ -402,10 +403,10 @@ fun ExecutiveHeader(
                         .weight(1f, fill = false)
                         .testTag("header_user_profile")
                 ) {
-                    Box(modifier = Modifier.size(44.dp)) {
+                    Box(modifier = Modifier.size(48.dp)) {
                         Box(
                             modifier = Modifier
-                                .size(42.dp)
+                                .size(46.dp)
                                 .clip(CircleShape)
                                 .background(Color(0xFFE0F2FE))
                                 .border(1.5.dp, GoldPrimary, CircleShape),
@@ -415,25 +416,25 @@ fun ExecutiveHeader(
                                 photoPath?.let { BitmapFactory.decodeFile(it)?.asImageBitmap() }
                             }
                             if (photo != null) Image(photo, "صورة المستخدم", Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
-                            else Icon(Icons.Default.Person, "صورة المستخدم", tint = DeepSlate, modifier = Modifier.size(22.dp))
+                            else Icon(Icons.Default.Person, "صورة المستخدم", tint = DeepSlate, modifier = Modifier.size(24.dp))
                         }
                         // مؤشر الحالة النشط
                         Box(
                             modifier = Modifier
-                                .size(11.dp)
+                                .size(12.dp)
                                 .align(Alignment.BottomStart)
                                 .background(EmeraldGreen, CircleShape)
                                 .border(2.dp, SurfaceCrispWhite, CircleShape)
                         )
                     }
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(modifier = Modifier.width(9.dp))
                     Column {
                         Text(
                             text = userName,
-                            style = MaterialTheme.typography.titleSmall.copy(
+                            style = MaterialTheme.typography.titleMedium.copy(
                                 fontWeight = FontWeight.ExtraBold,
                                 color = DeepSlate,
-                                fontSize = 13.5.sp
+                                fontSize = 14.5.sp
                             ),
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
@@ -442,7 +443,7 @@ fun ExecutiveHeader(
                             text = userRole,
                             style = MaterialTheme.typography.labelSmall.copy(
                                 color = SlateMedium,
-                                fontSize = 10.sp,
+                                fontSize = 10.5.sp,
                                 fontWeight = FontWeight.Medium
                             ),
                             maxLines = 1,
@@ -451,114 +452,124 @@ fun ExecutiveHeader(
                     }
                 }
 
-                Spacer(modifier = Modifier.width(6.dp))
+                Spacer(modifier = Modifier.width(4.dp))
 
-                // 2. أدوات التحكم (الساعة المدمجة، الإشعارات، وإعدادات النظام الموحدة)
+                // 2. أدوات التحكم: الساعة، الإشعارات، الترس، والثلاث نقط (كلها شفافة حتة واحدة مع البطاقة)
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    horizontalArrangement = Arrangement.spacedBy(1.dp)
                 ) {
-                    // ويدجت الساعة والتاريخ الحية
-                    Surface(
-                        shape = RoundedCornerShape(12.dp),
-                        color = Color(0xFFF1F5F9),
-                        border = BorderStroke(1.dp, BorderLight)
+                    // ويدجت الساعة والتاريخ الحية (شفافة تماماً وبدون خلفية أو إطار)
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center,
+                        modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
                     ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier.padding(horizontal = 7.dp, vertical = 4.dp)
-                        ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(
-                                    imageVector = Icons.Filled.Schedule,
-                                    contentDescription = null,
-                                    tint = Color(0xFF06B6D4),
-                                    modifier = Modifier.size(11.dp)
-                                )
-                                Spacer(Modifier.width(3.dp))
-                                Text(
-                                    text = if (timeString.isNotEmpty()) timeString else "12:00 م",
-                                    style = MaterialTheme.typography.labelMedium.copy(
-                                        fontWeight = FontWeight.Bold,
-                                        color = DeepSlate,
-                                        fontSize = 10.5.sp
-                                    )
-                                )
-                            }
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Filled.Schedule,
+                                contentDescription = null,
+                                tint = Color(0xFF06B6D4),
+                                modifier = Modifier.size(12.dp)
+                            )
+                            Spacer(Modifier.width(3.dp))
                             Text(
-                                text = if (dateString.isNotEmpty()) dateString else "اليوم",
-                                style = MaterialTheme.typography.labelSmall.copy(
-                                    color = SlateMedium,
-                                    fontSize = 8.5.sp,
-                                    fontWeight = FontWeight.SemiBold
+                                text = if (timeString.isNotEmpty()) timeString else "12:00 م",
+                                style = MaterialTheme.typography.labelMedium.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    color = DeepSlate,
+                                    fontSize = 11.sp
                                 )
                             )
                         }
+                        Text(
+                            text = if (dateString.isNotEmpty()) dateString else "اليوم",
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                color = SlateMedium,
+                                fontSize = 9.sp,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        )
                     }
 
-                    // جرس التنبيهات مع شارة حمراء
-                    Box {
+                    // جرس التنبيهات مع شارة حمراء (شفاف تماماً وبدون أي خلفية أو إطار)
+                    Box(contentAlignment = Alignment.Center) {
                         IconButton(
                             onClick = {},
                             modifier = Modifier
                                 .size(36.dp)
-                                .background(SurfaceCard, CircleShape)
-                                .border(1.dp, BorderLight, CircleShape)
+                                .testTag("btn_header_notifications")
                         ) {
                             Icon(
                                 imageVector = Icons.Filled.Notifications,
                                 contentDescription = "الإشعارات",
                                 tint = DeepSlate,
-                                modifier = Modifier.size(18.dp)
+                                modifier = Modifier.size(20.dp)
                             )
                         }
                         Box(
                             modifier = Modifier
-                                .size(9.dp)
+                                .size(8.dp)
                                 .align(Alignment.TopEnd)
+                                .padding(top = 4.dp, end = 4.dp)
                                 .background(CoralRed, CircleShape)
-                                .border(1.5.dp, SurfaceCrispWhite, CircleShape)
+                                .border(1.dp, SurfaceCrispWhite, CircleShape)
                         )
                     }
 
-                    // قائمة الإعدادات ومساحة العمل (موحدة وأنيقة لمنع أي اقتطاع)
+                    // أيقونة الترس للإعدادات فقط (شفافة تماماً - تفتح إعدادات الحساب مباشرة وبدون تسجيل خروج)
+                    IconButton(
+                        onClick = onSettingsClick,
+                        modifier = Modifier
+                            .size(36.dp)
+                            .testTag("btn_header_settings")
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Settings,
+                            contentDescription = "الإعدادات",
+                            tint = DeepSlate,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+
+                    // أيقونة الثلاث نقط العمودية (شفافة تماماً) - مخصصة لتسجيل الخروج فقط
                     Box {
                         IconButton(
-                            onClick = { expandedMenu = true },
+                            onClick = { expandedOverflowMenu = true },
                             modifier = Modifier
                                 .size(36.dp)
-                                .background(SurfaceCard, CircleShape)
-                                .border(1.dp, BorderLight, CircleShape)
-                                .testTag("btn_header_settings")
+                                .testTag("btn_header_overflow")
                         ) {
                             Icon(
-                                imageVector = Icons.Default.Settings,
-                                contentDescription = "الإعدادات",
+                                imageVector = Icons.Default.MoreVert,
+                                contentDescription = "خيارات إضافية",
                                 tint = DeepSlate,
-                                modifier = Modifier.size(18.dp)
+                                modifier = Modifier.size(20.dp)
                             )
                         }
                         DropdownMenu(
-                            expanded = expandedMenu,
-                            onDismissRequest = { expandedMenu = false }
+                            expanded = expandedOverflowMenu,
+                            onDismissRequest = { expandedOverflowMenu = false }
                         ) {
                             DropdownMenuItem(
-                                text = { Text("إعداد الحساب") },
+                                text = {
+                                    Text(
+                                        text = "تسجيل الخروج",
+                                        style = MaterialTheme.typography.bodyMedium.copy(
+                                            fontWeight = FontWeight.Bold,
+                                            color = CoralRed
+                                        )
+                                    )
+                                },
                                 leadingIcon = {
-                                    Icon(Icons.Default.Settings, contentDescription = null, tint = DeepSlate)
+                                    Icon(
+                                        imageVector = Icons.AutoMirrored.Filled.Logout,
+                                        contentDescription = null,
+                                        tint = CoralRed
+                                    )
                                 },
                                 onClick = {
-                                    expandedMenu = false
-                                    onSettingsClick()
-                                }
-                            )
-                            DropdownMenuItem(
-                                text = { Text("تسجيل الخروج") },
-                                leadingIcon = {
-                                    Icon(Icons.Default.Shield, contentDescription = null, tint = CoralRed)
-                                },
-                                onClick = {
-                                    expandedMenu = false
+                                    expandedOverflowMenu = false
                                     onLogout()
                                 }
                             )
@@ -566,7 +577,6 @@ fun ExecutiveHeader(
                     }
                 }
             }
-
         }
     }
 }
@@ -599,7 +609,23 @@ fun LiveFinancialTickerBar(accountKey: String = "guest", birthDate: String? = nu
         }
         listOf("العمر: ${java.time.Period.between(date, today).years} سنة", "العمر الهجري: $hijriAge سنة تقريبًا", "البرج الترفيهي: $zodiac", "يوم الميلاد: ${date.dayOfWeek.getDisplayName(java.time.format.TextStyle.FULL, java.util.Locale("ar"))}", "الميلاد الهجري التقريبي: ${hijri.get(android.icu.util.Calendar.DAY_OF_MONTH)}/${hijri.get(android.icu.util.Calendar.MONTH) + 1}/${hijri.get(android.icu.util.Calendar.YEAR)}", "عيد الميلاد القادم: بعد ${java.time.temporal.ChronoUnit.DAYS.between(today, next)} يوم")
     }
-    val tickerText = details?.filterIndexed { index, _ -> visibleItems[index] }?.joinToString("   •   ").orEmpty().ifBlank { "SMART COST PRO" }
+
+    val defaultFinancialNews = listOf(
+        "✦ SMART COST PRO: المنظومة التنفيذية لإدارة ومراقبة التكاليف والمصروفات الذكية",
+        "رصد فوري ولحظي لحركة التدفقات النقدية والمصروفات والسيولة",
+        "تحديث دوري لمؤشرات الأداء المالي والأرصدة التشغيلية المعتمدة",
+        "تقارير تفصيلية ودراسات تكاليف جاهزة للتصدير المباشر (PDF / Excel)",
+        "أعلى معايير التشفير والأمان المالي وحماية السجلات"
+    )
+
+    val personalItems = details?.filterIndexed { index, _ -> visibleItems.getOrElse(index) { true } } ?: emptyList()
+    val allItems = if (personalItems.isNotEmpty()) {
+        defaultFinancialNews + personalItems
+    } else {
+        defaultFinancialNews
+    }
+    // Duplicate list items so that the news ticker always exceeds screen width and runs continuously
+    val tickerText = (allItems + allItems).joinToString("   ✦   ")
 
     Card(
         modifier = Modifier
@@ -614,7 +640,7 @@ fun LiveFinancialTickerBar(accountKey: String = "guest", birthDate: String? = nu
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 10.dp),
+                .padding(horizontal = 12.dp, vertical = 9.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Brand Logo Emblem (شعار البرنامج في رأس الشريط المتحرك)
@@ -638,33 +664,46 @@ fun LiveFinancialTickerBar(accountKey: String = "guest", birthDate: String? = nu
 
             Spacer(modifier = Modifier.width(10.dp))
 
-            // Brand Label Tag
-            Text(
-                text = "نبض التكلفة:",
-                style = MaterialTheme.typography.labelSmall.copy(
-                    fontWeight = FontWeight.ExtraBold,
-                    color = DeepSlate,
-                    fontSize = 11.sp
+            // Brand Label Tag with live pulsing indicator
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier
+                        .size(7.dp)
+                        .clip(CircleShape)
+                        .background(EmeraldGreen)
                 )
-            )
+                Spacer(modifier = Modifier.width(5.dp))
+                Text(
+                    text = "نبض التكلفة:",
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        fontWeight = FontWeight.ExtraBold,
+                        color = DeepSlate,
+                        fontSize = 11.5.sp
+                    )
+                )
+            }
 
             Spacer(modifier = Modifier.width(8.dp))
 
-            // Scrolling Ticker with basicMarquee
-            Text(
-                text = tickerText,
-                style = MaterialTheme.typography.bodySmall.copy(
-                    color = DeepSlate,
-                    fontWeight = FontWeight.SemiBold
-                ),
-                maxLines = 1,
-                modifier = Modifier
-                    .weight(1f)
-                    .basicMarquee(
-                        iterations = Int.MAX_VALUE,
-                        velocity = 45.dp
-                    )
-            )
+            // Scrolling Ticker with continuous basicMarquee
+            CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
+                Text(
+                    text = tickerText,
+                    style = MaterialTheme.typography.bodySmall.copy(
+                        color = DeepSlate,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 12.sp
+                    ),
+                    maxLines = 1,
+                    softWrap = false,
+                    modifier = Modifier
+                        .weight(1f)
+                        .basicMarquee(
+                            iterations = Int.MAX_VALUE,
+                            velocity = 38.dp
+                        )
+                )
+            }
         }
     }
 }
