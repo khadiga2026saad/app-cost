@@ -295,7 +295,7 @@ fun LoginScreen(
                 }
                 Spacer(Modifier.height(10.dp))
                 Button(
-                    onClick = { loginViewModel.onLoginClick(activity, onLoginClick) }, enabled = !isLoading, modifier = Modifier.fillMaxWidth().height(50.dp),
+                    onClick = { loginViewModel.onLoginClick(biometricActivity, onLoginClick) }, enabled = !isLoading, modifier = Modifier.fillMaxWidth().height(50.dp),
                     shape = fieldShape, colors = ButtonDefaults.buttonColors(containerColor = DeepSlate),
                     elevation = ButtonDefaults.buttonElevation(defaultElevation = 6.dp)
                 ) {
@@ -333,7 +333,7 @@ fun LoginScreen(
                 }
                 Spacer(Modifier.height(8.dp))
                 OutlinedButton(
-                    onClick = { loginViewModel.onGoogleClick(activity ?: context, onLoginClick) }, enabled = !isLoading, modifier = Modifier.fillMaxWidth().height(46.dp),
+                    onClick = { loginViewModel.onGoogleClick(biometricActivity ?: context, onLoginClick) }, enabled = !isLoading, modifier = Modifier.fillMaxWidth().height(46.dp),
                     shape = fieldShape, border = BorderStroke(1.dp, BorderLight),
                     colors = ButtonDefaults.outlinedButtonColors(containerColor = SurfaceCard)
                 ) {
@@ -473,7 +473,7 @@ fun LoginScreen(
             confirmButton = {
                 TextButton(enabled = !isLoading, onClick = {
                     if (loginViewModel.awaitingEmailVerification) loginViewModel.checkEmailVerification(onLoginClick)
-                    else loginViewModel.registerAccount(confirmPassword, activity, onLoginClick)
+                    else loginViewModel.registerAccount(confirmPassword, biometricActivity, onLoginClick)
                 }) { Text(if (isLoading) "جارٍ التحقق..." else if (loginViewModel.awaitingEmailVerification) "تحقق من التفعيل" else "إنشاء الحساب") }
             },
             dismissButton = { TextButton(onClick = { loginViewModel.dismissDialogs(); confirmPassword = "" }) { Text("إلغاء") } }
