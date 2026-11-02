@@ -125,6 +125,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.R
 import com.example.core.MoneyUtils
+import com.example.core.BirthInfoCalculator
 import com.example.ui.theme.BackgroundWhite
 import com.example.ui.theme.BlackPrimary
 import com.example.ui.theme.BlackSecondary
@@ -597,17 +598,16 @@ fun LiveFinancialTickerBar(accountKey: String = "guest", birthDate: String? = nu
         prefs.registerOnSharedPreferenceChangeListener(listener)
         onDispose { prefs.unregisterOnSharedPreferenceChangeListener(listener) }
     }
-    val birth = birthDate?.let { runCatching { java.time.LocalDate.parse(it) }.getOrNull() }?.takeUnless { it.isAfter(java.time.LocalDate.now()) }
-    val today = java.time.LocalDate.now()
-    val details = birth?.let { date ->
-        val hijri = android.icu.util.IslamicCalendar().apply { timeInMillis = date.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli() }
-        val nowHijri = android.icu.util.IslamicCalendar()
-        val hijriAge = nowHijri.get(android.icu.util.Calendar.YEAR) - hijri.get(android.icu.util.Calendar.YEAR) - if (nowHijri.get(android.icu.util.Calendar.MONTH) * 32 + nowHijri.get(android.icu.util.Calendar.DAY_OF_MONTH) < hijri.get(android.icu.util.Calendar.MONTH) * 32 + hijri.get(android.icu.util.Calendar.DAY_OF_MONTH)) 1 else 0
-        val next = (today.year..today.year + 4).mapNotNull { runCatching { date.withYear(it) }.getOrNull() }.first { !it.isBefore(today) }
-        val zodiac = when (date.monthValue * 100 + date.dayOfMonth) {
-            in 321..419 -> "الحمل"; in 420..520 -> "الثور"; in 521..620 -> "الجوزاء"; in 621..722 -> "السرطان"; in 723..822 -> "الأسد"; in 823..922 -> "العذراء"; in 923..1022 -> "الميزان"; in 1023..1121 -> "العقرب"; in 1122..1221 -> "القوس"; in 1222..1231, in 101..119 -> "الجدي"; in 120..218 -> "الدلو"; else -> "الحوت"
-        }
-        listOf("العمر: ${java.time.Period.between(date, today).years} سنة", "العمر الهجري: $hijriAge سنة تقريبًا", "البرج الترفيهي: $zodiac", "يوم الميلاد: ${date.dayOfWeek.getDisplayName(java.time.format.TextStyle.FULL, java.util.Locale("ar"))}", "الميلاد الهجري التقريبي: ${hijri.get(android.icu.util.Calendar.DAY_OF_MONTH)}/${hijri.get(android.icu.util.Calendar.MONTH) + 1}/${hijri.get(android.icu.util.Calendar.YEAR)}", "عيد الميلاد القادم: بعد ${java.time.temporal.ChronoUnit.DAYS.between(today, next)} يوم")
+    val birth = birthDate?.let { runCatching { java.time.LocalDate.parse(it) }.getOrNull() }
+    val details = BirthInfoCalculator.compute(birth)?.let { info ->
+        listOf(
+            "العمر: ${info.gregorianAgeYears} سنة",
+            "العمر الهجري: ${info.hijriAgeYearsApprox} سنة تقريبًا",
+            "البرج الترفيهي: ${info.zodiac}",
+            "يوم الميلاد: ${info.birthWeekday}",
+            "الميلاد الهجري التقريبي: ${info.hijriBirthDateApprox}",
+            "عيد الميلاد القادم: بعد ${info.daysUntilNextBirthday} يوم"
+        )
     }
 
     val defaultFinancialNews = listOf(

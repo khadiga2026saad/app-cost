@@ -44,11 +44,23 @@ class ProfilePreferencesMigrator(private val database: AppDatabase, private val 
     companion object {
         fun normalizeBirthDate(raw: String?): String? {
             val value = raw?.trim()?.takeIf { it.isNotEmpty() } ?: return null
-            val iso = DateTimeFormatter.ISO_LOCAL_DATE.withResolverStyle(ResolverStyle.STRICT)
-            val european = DateTimeFormatter.ofPattern("dd/MM/uuuu").withResolverStyle(ResolverStyle.STRICT)
-            return sequenceOf(iso, european).mapNotNull { format ->
-                runCatching { LocalDate.parse(value, format).format(DateTimeFormatter.ISO_LOCAL_DATE) }.getOrNull()
-            }.firstOrNull()
+            val normalizedDigits = value.map { char ->
+                when (char) {
+                    in '\u0660'..'\u0669' -> ('0'.code + (char.code - '\u0660'.code)).toChar()
+                    in '\u06F0'..'\u06F9' -> ('0'.code + (char.code - '\u06F0'.code)).toChar()
+                    else -> char
+                }
+            }.joinToString("")
+            val formats = listOf(
+                DateTimeFormatter.ISO_LOCAL_DATE,
+                DateTimeFormatter.ofPattern("dd/MM/uuuu"),
+                DateTimeFormatter.ofPattern("d/M/uuuu"),
+                DateTimeFormatter.ofPattern("dd-MM-uuuu"),
+                DateTimeFormatter.ofPattern("d-M-uuuu")
+            ).map { it.withResolverStyle(ResolverStyle.STRICT) }
+            return formats.firstNotNullOfOrNull { format ->
+                runCatching { LocalDate.parse(normalizedDigits, format).format(DateTimeFormatter.ISO_LOCAL_DATE) }.getOrNull()
+            }
         }
     }
 }

@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 
 /** Construct a new instance for each account; never reuse one across account switches. */
@@ -34,6 +35,8 @@ class ProfileViewModel(
                 repository.ensureMigrated(accountKey, fallbackName)
                 _loading.value = false
                 repository.observe(accountKey).collect { _profile.value = it }
+            } catch (cancelled: CancellationException) {
+                throw cancelled
             } catch (failure: Exception) {
                 _error.value = failure
                 _loading.value = false
@@ -48,6 +51,8 @@ class ProfileViewModel(
                 repository.save(profile)
                 _error.value = null
                 onResult(true)
+            } catch (cancelled: CancellationException) {
+                throw cancelled
             } catch (failure: Exception) {
                 _error.value = failure
                 onResult(false)

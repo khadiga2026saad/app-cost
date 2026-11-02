@@ -12,6 +12,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.ui.viewmodel.ProfileViewModel
+import com.example.core.BirthInfoCalculator
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.activity.compose.LocalActivityResultRegistryOwner
@@ -21,8 +22,6 @@ import android.graphics.BitmapFactory
 import android.app.DatePickerDialog
 import java.util.Calendar
 import java.time.LocalDate
-import java.time.Period
-import java.time.temporal.ChronoUnit
 import java.time.format.DateTimeFormatter
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.LayoutDirection
@@ -194,22 +193,20 @@ fun AccountSettingsScreen(profileViewModel: ProfileViewModel, modifier: Modifier
                             )
                             HorizontalDivider()
                             Text("معلوماتي", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                            val date = profile?.birthDate?.let { runCatching { LocalDate.parse(it) }.getOrNull() }?.takeUnless { it.isAfter(LocalDate.now()) }
-                            if (date == null) Text("أضف تاريخ ميلادك لتظهر معلوماتك التلقائية.", color = Color.Gray)
-                            val values = if (date == null) List(6) { "—" } else {
-                                val today = LocalDate.now()
-                                val next = (today.year..today.year + 4).map { year -> date.withYear(year) }.first { !it.isBefore(today) }
-                                val birthHijri = android.icu.util.IslamicCalendar().apply { timeInMillis = date.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli() }
-                                val nowHijri = android.icu.util.IslamicCalendar()
-                                val hijriYears = nowHijri.get(android.icu.util.Calendar.YEAR) - birthHijri.get(android.icu.util.Calendar.YEAR) - if (nowHijri.get(android.icu.util.Calendar.MONTH) * 32 + nowHijri.get(android.icu.util.Calendar.DAY_OF_MONTH) < birthHijri.get(android.icu.util.Calendar.MONTH) * 32 + birthHijri.get(android.icu.util.Calendar.DAY_OF_MONTH)) 1 else 0
+                            val birthInfo = BirthInfoCalculator.compute(
+                                profile?.birthDate?.let { runCatching { LocalDate.parse(it) }.getOrNull() }
+                            )
+                            if (birthInfo == null) Text("أضف تاريخ ميلادك لتظهر معلوماتك التلقائية.", color = Color.Gray)
+                            val values = birthInfo?.let { info ->
                                 listOf(
-                                    "${Period.between(date, today).years} سنة",
-                                    "$hijriYears سنة تقريبًا", zodiacLabel(date),
-                                    date.dayOfWeek.getDisplayName(java.time.format.TextStyle.FULL, Locale("ar")),
-                                    "${birthHijri.get(android.icu.util.Calendar.DAY_OF_MONTH)}/${birthHijri.get(android.icu.util.Calendar.MONTH) + 1}/${birthHijri.get(android.icu.util.Calendar.YEAR)} هـ (تقريبي)",
-                                    "$next — بعد ${ChronoUnit.DAYS.between(today, next)} يوم"
+                                    "${info.gregorianAgeYears} سنة",
+                                    "${info.hijriAgeYearsApprox} سنة تقريبًا",
+                                    info.zodiac,
+                                    info.birthWeekday,
+                                    info.hijriBirthDateApprox,
+                                    "${info.nextBirthday} — بعد ${info.daysUntilNextBirthday} يوم"
                                 )
-                            }
+                            } ?: List(6) { "—" }
                             infoLabels.forEachIndexed { index, label ->
                                     Row(
                                         Modifier.fillMaxWidth().padding(vertical = 5.dp),
