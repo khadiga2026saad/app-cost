@@ -356,7 +356,7 @@ fun SmartCostProApp(
                             currentScreen = Screen.EXPENSES
                         }
                         "current_account", "gamaeya" -> {
-                            showingCostCategories = false
+                            // Keep the category gateway underneath so Back returns to it.
                             previewSection = id
                         }
                     }
