@@ -118,11 +118,14 @@ fun CostWorkspaceScreen(
     var showDesignNotice by remember { mutableStateOf(false) }
     val section = costSections.firstOrNull { it.id == selectedSection }
     val tabs = section?.let { tabsFor(it.id) }.orEmpty()
-    val activeTab = tabs.firstOrNull { it.id == selectedTab } ?: tabs.firstOrNull()
+    val activeTab = tabs.firstOrNull { it.id == selectedTab }
 
     BackHandler(enabled = selectedSection != null) {
-        selectedSection = null
-        selectedTab = ""
+        if (selectedTab.isNotBlank()) {
+            selectedTab = ""
+        } else {
+            selectedSection = null
+        }
     }
 
     Scaffold(
@@ -131,13 +134,14 @@ fun CostWorkspaceScreen(
         topBar = {
             Row(Modifier.fillMaxWidth().background(Color.White).padding(horizontal = 12.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
                 IconButton(onClick = {
-                    if (selectedSection != null) {
-                        selectedSection = null
+                    if (selectedTab.isNotBlank()) {
                         selectedTab = ""
+                    } else if (selectedSection != null) {
+                        selectedSection = null
                     } else onNavigateBack()
                 }) { Icon(Icons.Outlined.ArrowForward, contentDescription = "رجوع", tint = CostInk) }
                 Column(Modifier.weight(1f)) {
-                    Text(section?.title ?: "قسم التكاليف", color = CostInk, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                    Text(activeTab?.title ?: section?.title ?: "قسم التكاليف", color = CostInk, fontSize = 18.sp, fontWeight = FontWeight.Bold)
                     Text(section?.subtitle ?: "إدارة المصروفات والدخل والحسابات في مكان واحد", color = CostMuted, fontSize = 10.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
                 Surface(shape = RoundedCornerShape(10.dp), color = Color(0xFFF8F1D9)) {
@@ -171,6 +175,25 @@ fun CostWorkspaceScreen(
                 item {
                     OutlinedButton(onClick = { showDesignNotice = true }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(14.dp), border = BorderStroke(1.dp, CostGold)) {
                         Text("إضافة قسم مالي جديد", color = CostInk, fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
+        } else if (activeTab == null) {
+            LazyColumn(Modifier.fillMaxSize().padding(padding).padding(horizontal = 16.dp), contentPadding = PaddingValues(top = 14.dp, bottom = 28.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                item {
+                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text("الأقسام الفرعية — ${section.title}", color = CostInk, fontSize = 19.sp, fontWeight = FontWeight.Bold)
+                        Text("اختاري بطاقة لفتح سجلات القسم ونموذج الإدخال الخاص به.", color = CostMuted, fontSize = 12.sp)
+                    }
+                }
+                tabs.chunked(2).forEach { rowTabs ->
+                    item {
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                            rowTabs.forEach { tab ->
+                                CostTabCard(tab, Modifier.weight(1f)) { selectedTab = tab.id }
+                            }
+                            if (rowTabs.size == 1) Spacer(Modifier.weight(1f))
+                        }
                     }
                 }
             }
@@ -355,6 +378,19 @@ private fun RecordsPreviewDesign(sectionTitle: String, tabTitle: String) {
 private fun SummaryPill(label: String) {
     Surface(shape = RoundedCornerShape(30.dp), color = Color(0xFF343434)) {
         Text(label, color = Color.White, fontSize = 9.sp, modifier = Modifier.padding(horizontal = 9.dp, vertical = 6.dp))
+    }
+}
+
+@Composable
+private fun CostTabCard(tab: CostTab, modifier: Modifier, onClick: () -> Unit) {
+    Surface(onClick = onClick, modifier = modifier.height(112.dp), shape = RoundedCornerShape(15.dp), color = Color.White, border = BorderStroke(1.dp, CostBorder), shadowElevation = 1.dp) {
+        Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp), horizontalAlignment = Alignment.Start) {
+            Surface(shape = RoundedCornerShape(9.dp), color = Color(0xFFF8F1D9)) {
+                Icon(Icons.Outlined.FolderOpen, contentDescription = null, modifier = Modifier.padding(7.dp).size(20.dp), tint = CostInk)
+            }
+            Text(tab.title, color = CostInk, fontSize = 14.sp, fontWeight = FontWeight.Bold, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            Text("فتح القسم ←", color = CostGoldDark, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+        }
     }
 }
 
