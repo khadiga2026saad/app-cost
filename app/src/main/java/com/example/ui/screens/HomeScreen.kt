@@ -1512,7 +1512,7 @@ private fun CostStudyExportSection() {
             ) {
                 Button(
                     onClick = {
-                        exportDialogMessage = "تم تجهيز ملف دراسة التكاليف بصيغة PDF بنجاح وجاهز للمشاركة أو الحفظ."
+                        exportDialogMessage = "واجهة التصدير جاهزة للمعاينة. سيتم تفعيل إنشاء ملف PDF في المرحلة الثانية."
                     },
                     modifier = Modifier
                         .weight(1f)
@@ -1538,7 +1538,7 @@ private fun CostStudyExportSection() {
 
                 Button(
                     onClick = {
-                        exportDialogMessage = "تم تجهيز جدول دراسة التكاليف بصيغة Excel (XLSX) بنجاح وجاهز للفتح."
+                        exportDialogMessage = "واجهة التصدير جاهزة للمعاينة. سيتم تفعيل إنشاء ملف Excel في المرحلة الثانية."
                     },
                     modifier = Modifier
                         .weight(1f)
@@ -1570,15 +1570,15 @@ private fun CostStudyExportSection() {
             onDismissRequest = { exportDialogMessage = null },
             icon = {
                 Icon(
-                    imageVector = Icons.Default.Check,
+                    imageVector = Icons.Default.Description,
                     contentDescription = null,
-                    tint = EmeraldGreen,
+                    tint = GoldDark,
                     modifier = Modifier.size(32.dp)
                 )
             },
             title = {
                 Text(
-                    text = "نجاح عملية التصدير",
+                    text = "التصدير قيد التجهيز",
                     fontWeight = FontWeight.Bold,
                     color = DeepSlate
                 )
