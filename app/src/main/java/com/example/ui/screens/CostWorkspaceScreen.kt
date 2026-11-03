@@ -20,7 +20,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.ui.viewmodel.FinanceViewModel
 
 private val CostInk = Color(0xFF171717)
 private val CostGold = Color(0xFFD4AF37)
@@ -84,10 +83,7 @@ private fun fieldsFor(sectionId: String, tabId: String): List<String> = when (se
 
 @Composable
 fun CostWorkspaceScreen(
-    viewModel: FinanceViewModel,
     onNavigateBack: () -> Unit,
-    onAccountClick: () -> Unit = {},
-    onLogout: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     var selectedSection by remember { mutableStateOf<String?>(null) }
@@ -211,7 +207,7 @@ fun CostWorkspaceScreen(
                     val formTitle = "نموذج البيانات — " + (activeTab?.title ?: "السجلات")
                     Text(if (section.id == "reports") "معاينة التقرير" else if (section.id == "backup") "إجراءات النسخ الاحتياطي" else formTitle, color = CostInk, fontSize = 16.sp, fontWeight = FontWeight.Bold)
                 }
-                if (activeTab?.id in setOf("records", "list", "trips", "students", "association_list", "movements")) {
+                if (activeTab?.id?.let { it in setOf("records", "list", "trips", "students", "association_list", "movements") } == true) {
                     item { RecordsPreviewDesign(section.title, activeTab?.title.orEmpty()) }
                 } else if (section.id == "reports") {
                     item { ReportPreviewDesign { showDesignNotice = true } }
