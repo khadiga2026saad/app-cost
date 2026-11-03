@@ -12,6 +12,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.ui.text.input.KeyboardType
+import android.app.DatePickerDialog
+import java.util.Calendar
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -50,13 +52,13 @@ private val costSections = listOf(
 )
 
 private fun tabsFor(id: String): List<CostTab> = when (id) {
-    "house" -> listOf(CostTab("records", "سجلات المنزل"), CostTab("form", "إضافة مصروف منزلي"), CostTab("categories", "تصنيفات المنزل"))
+    "house" -> listOf(CostTab("records", "سجلات المنزل"), CostTab("form", "إضافة مصروف منزلي"), CostTab("categories", "إدارة تصنيفات المنزل"))
     "medical" -> listOf(CostTab("records", "السجلات الطبية"), CostTab("form", "إضافة سجل طبي"))
     "work" -> listOf(CostTab("records", "سجلات العمل"), CostTab("form", "إضافة مصروف عمل"))
     "personal" -> listOf(CostTab("records", "السجلات الشخصية"), CostTab("form", "إضافة مصروف شخصي"))
     "associations" -> listOf(CostTab("association_list", "سجلات الجمعيات"), CostTab("form", "جمعية جديدة"), CostTab("installments", "الأقساط"), CostTab("payouts", "القبض"))
     "vehicles" -> listOf(CostTab("records", "بيانات السيارة"), CostTab("fuel", "الوقود"), CostTab("maintenance", "الصيانة"), CostTab("oils", "تغيير الزيت والفلاتر"), CostTab("accidents", "الحوادث"))
-    "education" -> listOf(CostTab("students", "سجلات الطلاب"), CostTab("student_form", "إضافة / تعديل طالب"), CostTab("student_expenses", "سجلات مصروفات الطلاب"), CostTab("student_expense_form", "إضافة مصروف طالب"))
+    "education" -> listOf(CostTab("students", "سجلات الطلاب"), CostTab("student_add", "إضافة طالب"), CostTab("student_edit", "تعديل طالب"), CostTab("student_expenses", "سجلات مصروفات الطلاب"), CostTab("student_expense_form", "إضافة مصروف طالب"))
     "income" -> listOf(CostTab("sources", "مصادر الدخل"), CostTab("form", "إضافة مصدر دخل"))
     "certificates" -> listOf(CostTab("list", "الشهادات المسجلة"), CostTab("form", "بيانات الشهادة"), CostTab("payouts", "العوائد"))
     "current_account" -> listOf(CostTab("movements", "كل الحركات"), CostTab("deposits", "إضافة إيداع"), CostTab("withdrawals", "إضافة سحب"))
@@ -237,7 +239,7 @@ fun CostWorkspaceScreen(
                 if (section.id != "reports" && section.id != "backup") {
                     item {
                         LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.fillMaxWidth()) {
-                            items(listOf("إضافة", "تعديل", "حذف", "تصفية")) { action ->
+                            items(if (section.id == "education" && activeTab?.id == "students") listOf("إضافة طالب", "تعديل طالب") else listOf("إضافة", "تعديل", "حذف", "تصفية")) { action ->
                                 OutlinedButton(onClick = { showDesignNotice = true }, border = BorderStroke(1.dp, CostGold), contentPadding = PaddingValues(horizontal = 12.dp, vertical = 7.dp)) {
                                     Text(action, color = CostInk, fontSize = 11.sp)
                                 }
@@ -345,13 +347,14 @@ private fun ExpenseEntryPreview(sectionId: String, tabId: String) {
     fun value(label: String) = values[label].orEmpty()
     fun setValue(label: String, newValue: String) { values = values + (label to newValue) }
 
-    val houseTypes = listOf("فطار", "غداء", "عشاء", "إصلاحات كهربائية", "إصلاحات سباكة", "إصلاحات دهان", "شراء أجهزة منزلية", "شراء مفروشات", "فواتير ومستحقات منزلية", "منظفات ومستلزمات", "أخرى (مخصص)")
-    val workTypes = listOf("أدوات مكتبية", "صيانة أجهزة العمل", "اشتراكات برمجيات وسيرفرات", "ضيافة واجتماعات", "تنقلات ومواصلات عمل", "شحن وتوصيل مستندات", "دورات تدريبية وتطوير", "أخرى (مخصص)")
-    val personalTypes = listOf("طعام ومشروبات", "مواصلات وتنقلات", "ملابس ومستلزمات شخصية", "صحة وعناية شخصية", "ترفيه وخروج", "هدايا ومناسبات", "اشتراكات شخصية", "فواتير واتصالات شخصية", "أخرى (مخصص)")
+    val houseTypes = listOf("إفطار", "غداء", "عشاء", "إصلاحات كهربائية", "إصلاحات سباكة", "إصلاحات دهان", "شراء أجهزة منزلية", "شراء مفروشات", "فواتير ومستحقات منزلية", "منظفات ومستلزمات", "أخرى (مخصص)")
+    val workTypes = listOf("أدوات مكتبية", "صيانة أجهزة العمل", "اشتراكات برمجيات", "ضيافة واجتماعات", "تنقلات ومواصلات عمل", "شحن وتوصيل مستندات", "أخرى (مخصص)")
+    val personalTypes = listOf("طعام ومشروبات", "مستلزمات", "ملابس ومستلزمات شخصية", "عبايات", "مواصلات وتنقلات", "صحة وعناية شخصية", "ترفيه وخروج", "هدايا ومناسبات", "أخرى (مخصص)")
     val vehicleFuel = listOf("بنزين 80", "بنزين 92", "بنزين 95", "سولار", "غاز طبيعي", "شحن كهربائي")
-    val maintenanceTypes = listOf("سمكرة وهيكل", "دوكو ودهان", "ميكانيكا", "كهرباء وإلكترونيات", "عفشة", "نظام التبريد والرادياتير", "شكمان ونظام العادم", "تكييف وتبريد الصالون", "ضبط زوايا وترصيص", "إصلاح وتغيير الإطارات", "فحص كمبيوتر وتشخيص أعطال", "تنجيد وفرش داخلي", "عناية وتلميع (ديتيلنج)", "زجاج")
-    val oilTypes = listOf("تغيير زيت المحرك", "تغيير فلتر زيت المحرك", "تغيير زيت الفتيس (ناقل الحركة)", "تغيير فلتر زيت الفتيس", "تغيير زيت الكورونة / الدفرنشيل", "تغيير / تزويد زيت الفرامل", "تغيير / تزويد زيت الباور (التوجيه)", "تغيير فلتر هواء المحرك", "تغيير فلتر تكييف الصالون", "تغيير فلتر الوقود (بنزين / سولار)", "غسيل دورة المحرك الداخلية (Engine Flush)", "تغيير / تزويد سائل الرادياتير", "تشحيم النقاط والمفصلات")
+    val maintenanceTypes = listOf("سمكرة وهيكل", "دوكو ودهان", "ميكانيكا", "كهرباء وإلكترونيات", "عفشة", "نظام التبريد والرادياتير", "شكمان ونظام العادم", "تكييف", "ضبط زوايا وترصيص", "إصلاح وتغيير الإطارات", "فحص كمبيوتر", "تنجيد وفرش داخلي", "عناية وتلميع", "زجاج")
+    val oilTypes = listOf("تغيير زيت المحرك", "تغيير فلتر زيت المحرك", "تغيير زيت الفتيس", "تغيير فلتر زيت الفتيس", "تغيير زيت الكورونة", "زيت الفرامل", "زيت الباور", "فلتر هواء المحرك", "فلتر تكييف الصالون", "فلتر الوقود", "غسيل دورة المحرك", "سائل الرادياتير", "تشحيم")
     val oilBrands = listOf("موبيل", "شل", "كاسترول", "توتال", "فالفولين", "ليكوي مولي", "أخرى")
+    val dateFields = setOf("التاريخ", "تاريخ البداية", "تاريخ القبض", "تاريخ الاستحقاق", "تاريخ الإصدار", "تاريخ الرحلة", "تاريخ ووقت التزوّد", "تاريخ صرف العائد")
 
     Column(verticalArrangement = Arrangement.spacedBy(11.dp)) {
         when (sectionId) {
@@ -359,83 +362,170 @@ private fun ExpenseEntryPreview(sectionId: String, tabId: String) {
                 val options = when (sectionId) { "house" -> houseTypes; "work" -> workTypes; else -> personalTypes }
                 val label = if (sectionId == "work") "نوع مصروف العمل" else "تصنيف المصروف"
                 PreviewDropdown(label, options, value(label).ifBlank { options.first() }) { setValue(label, it) }
-                if (value(label).ifBlank { options.first() } == "أخرى (مخصص)") {
-                    PreviewInput("اكتب اسم المصروف", value("اكتب اسم المصروف")) { setValue("اكتب اسم المصروف", it) }
-                }
+                if (sectionId == "personal") PreviewInput("اسم الشخص", value("اسم الشخص")) { setValue("اسم الشخص", it) }
+                if (value(label).ifBlank { options.first() } == "أخرى (مخصص)") PreviewInput("اكتب اسم المصروف", value("اكتب اسم المصروف")) { setValue("اكتب اسم المصروف", it) }
                 PreviewInput("المبلغ", value("المبلغ"), numeric = true) { setValue("المبلغ", it) }
-                PreviewInput("التاريخ", value("التاريخ")) { setValue("التاريخ", it) }
+                PreviewDateInput("التاريخ", value("التاريخ")) { setValue("التاريخ", it) }
                 if (sectionId == "house") {
                     Text("نوع الصرف", color = CostInk, fontWeight = FontWeight.Bold, fontSize = 13.sp)
                     PreviewDropdown("اختر نوع الصرف", listOf("مشتريات ومستلزمات", "مصنعية وأجرة يد"), value("نوع الصرف").ifBlank { "مشتريات ومستلزمات" }) { setValue("نوع الصرف", it) }
                 }
                 PreviewInput("الملاحظات", value("الملاحظات"), multiline = true) { setValue("الملاحظات", it) }
             }
+            "medical" -> {
+                PreviewDropdown("فرد الأسرة", listOf("اختاري فرد الأسرة", "إضافة فرد أسرة لاحقًا"), value("فرد الأسرة").ifBlank { "اختاري فرد الأسرة" }) { setValue("فرد الأسرة", it) }
+                PreviewInput("التشخيص", value("التشخيص"), multiline = true) { setValue("التشخيص", it) }
+                PreviewInput("تكلفة الكشف أو الفحص", value("تكلفة الكشف أو الفحص"), numeric = true) { setValue("تكلفة الكشف أو الفحص", it) }
+                PreviewInput("تكلفة الدواء / العلاج", value("تكلفة الدواء / العلاج"), numeric = true) { setValue("تكلفة الدواء / العلاج", it) }
+                PreviewDateInput("التاريخ", value("التاريخ")) { setValue("التاريخ", it) }
+                PreviewInput("ملاحظات طبية", value("ملاحظات طبية"), multiline = true) { setValue("ملاحظات طبية", it) }
+            }
+            "associations" -> {
+                if (tabId == "form") {
+                    PreviewInput("اسم الجمعية", value("اسم الجمعية")) { setValue("اسم الجمعية", it) }
+                    PreviewInput("قيمة الجمعية", value("قيمة الجمعية"), numeric = true) { setValue("قيمة الجمعية", it) }
+                    PreviewInput("عدد الأفراد", value("عدد الأفراد"), numeric = true) { setValue("عدد الأفراد", it) }
+                    PreviewInput("عدد الأشهر", value("عدد الأشهر"), numeric = true) { setValue("عدد الأشهر", it) }
+                    PreviewInput("قيمة القسط الشهري", value("قيمة القسط الشهري"), numeric = true) { setValue("قيمة القسط الشهري", it) }
+                    PreviewInput("رقم الدور", value("رقم الدور"), numeric = true) { setValue("رقم الدور", it) }
+                    PreviewDateInput("تاريخ البداية", value("تاريخ البداية")) { setValue("تاريخ البداية", it) }
+                    PreviewDateInput("تاريخ القبض", value("تاريخ القبض")) { setValue("تاريخ القبض", it) }
+                    PreviewInput("ملاحظات", value("ملاحظات"), multiline = true) { setValue("ملاحظات", it) }
+                } else {
+                    PreviewDropdown("اسم الجمعية", listOf("اختاري الجمعية"), value("اسم الجمعية").ifBlank { "اختاري الجمعية" }) { setValue("اسم الجمعية", it) }
+                    PreviewInput("الشهر / رقم القسط", value("الشهر / رقم القسط")) { setValue("الشهر / رقم القسط", it) }
+                    PreviewInput("قيمة القسط أو القبض", value("قيمة القسط أو القبض"), numeric = true) { setValue("قيمة القسط أو القبض", it) }
+                    PreviewDateInput("التاريخ", value("التاريخ")) { setValue("التاريخ", it) }
+                }
+            }
             "vehicles" -> when (tabId) {
                 "fuel" -> {
+                    PreviewDropdown("السيارة", listOf("اختاري السيارة"), value("السيارة").ifBlank { "اختاري السيارة" }) { setValue("السيارة", it) }
                     PreviewDropdown("نوع الوقود / مصدر الطاقة", vehicleFuel, value("نوع الوقود").ifBlank { "بنزين 92" }) { setValue("نوع الوقود", it) }
                     PreviewInput("الكمية / عدد اللترات", value("الكمية"), numeric = true) { setValue("الكمية", it) }
-                    PreviewInput("قراءة عداد السيارة", value("العداد"), numeric = true) { setValue("العداد", it) }
-                    PreviewInput("تاريخ ووقت التزوّد", value("التاريخ والوقت")) { setValue("التاريخ والوقت", it) }
-                    Text("سعر الوحدة والإجمالي يعرضان هنا وفق سعر الوقود المختار بعد تفعيل الحسابات.", color = CostMuted, fontSize = 11.sp)
+                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        PreviewInput("قراءة عداد السيارة", value("العداد"), numeric = true) { setValue("العداد", it) }
+                        IconButton(onClick = { }) { Icon(Icons.Outlined.CameraAlt, contentDescription = "تصوير قراءة العداد", tint = CostGoldDark) }
+                    }
+                    PreviewDateInput("تاريخ ووقت التزوّد", value("التاريخ والوقت")) { setValue("التاريخ والوقت", it) }
+                    Text("زر الكاميرا مخصص لقراءة العداد تلقائيًا عند تنفيذ وظائف الكاميرا لاحقًا.", color = CostMuted, fontSize = 10.sp)
+                    Text("سعر الوحدة والإجمالي يظهران بعد تفعيل الحسابات.", color = CostMuted, fontSize = 11.sp)
                 }
                 "maintenance" -> {
+                    PreviewDropdown("السيارة", listOf("اختاري السيارة"), value("السيارة").ifBlank { "اختاري السيارة" }) { setValue("السيارة", it) }
                     PreviewDropdown("نوع الصيانة", maintenanceTypes, value("نوع الصيانة").ifBlank { maintenanceTypes.first() }) { setValue("نوع الصيانة", it) }
                     PreviewInput("وصف الصيانة", value("وصف الصيانة"), multiline = true) { setValue("وصف الصيانة", it) }
                     PreviewInput("اسم المستلزم أو قطعة الغيار", value("قطعة الغيار")) { setValue("قطعة الغيار", it) }
                     PreviewInput("سعر المستلزمات", value("سعر المستلزمات"), numeric = true) { setValue("سعر المستلزمات", it) }
                     PreviewInput("وصف الأجور", value("وصف الأجور")) { setValue("وصف الأجور", it) }
                     PreviewInput("قيمة الأجور", value("قيمة الأجور"), numeric = true) { setValue("قيمة الأجور", it) }
-                    PreviewInput("التاريخ", value("التاريخ")) { setValue("التاريخ", it) }
-                    Text("إجمالي الصيانة = المستلزمات + الأجور (يُفعّل الحساب في المرحلة الثانية).", color = CostMuted, fontSize = 11.sp)
+                    PreviewDateInput("التاريخ", value("التاريخ")) { setValue("التاريخ", it) }
                 }
                 "oils" -> {
-                    Text("نوع السجل", color = CostInk, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                    PreviewDropdown("السيارة", listOf("اختاري السيارة"), value("السيارة").ifBlank { "اختاري السيارة" }) { setValue("السيارة", it) }
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        listOf("الزيوت", "الفلاتر").forEach { mode ->
-                            OutlinedButton(onClick = { oilMode = mode }, modifier = Modifier.weight(1f), colors = ButtonDefaults.outlinedButtonColors(containerColor = if (oilMode == mode) CostInk else Color.White, contentColor = if (oilMode == mode) CostGold else CostInk), border = BorderStroke(1.dp, CostGold), shape = RoundedCornerShape(11.dp)) { Text(mode, fontWeight = FontWeight.Bold) }
-                        }
+                        listOf("الزيوت", "الفلاتر").forEach { mode -> OutlinedButton(onClick = { oilMode = mode }, modifier = Modifier.weight(1f), colors = ButtonDefaults.outlinedButtonColors(containerColor = if (oilMode == mode) CostInk else Color.White, contentColor = if (oilMode == mode) CostGold else CostInk), border = BorderStroke(1.dp, CostGold)) { Text(mode) } }
                     }
-                    val serviceOptions = if (oilMode == "الزيوت") oilTypes.filter { it.contains("زيت") || it.contains("غسيل") || it.contains("سائل") || it.contains("تشحيم") } else listOf("تغيير فلتر زيت المحرك", "تغيير فلتر زيت الفتيس", "تغيير فلتر هواء المحرك", "تغيير فلتر تكييف الصالون", "تغيير فلتر الوقود (بنزين / سولار)")
+                    val serviceOptions = if (oilMode == "الزيوت") oilTypes.filter { it.contains("زيت") || it.contains("غسيل") || it.contains("سائل") || it.contains("تشحيم") } else oilTypes.filter { it.contains("فلتر") }
                     PreviewDropdown("نوع الخدمة", serviceOptions, value("نوع الخدمة").ifBlank { serviceOptions.first() }) { setValue("نوع الخدمة", it) }
                     if (oilMode == "الزيوت" && value("نوع الخدمة").ifBlank { serviceOptions.first() } == "تغيير زيت المحرك") {
-                        PreviewDropdown("نوع تغيير زيت المحرك", listOf("زيت 5,000 كم", "زيت 10,000 كم"), value("فترة التغيير").ifBlank { "زيت 5,000 كم" }) { setValue("فترة التغيير", it) }
-                        PreviewDropdown("نوع / ماركة الزيت", oilBrands, value("العلامة التجارية").ifBlank { oilBrands.first() }) { setValue("العلامة التجارية", it) }
-                        if (value("العلامة التجارية") == "أخرى") PreviewInput("اسم العلامة التجارية", value("اسم العلامة التجارية")) { setValue("اسم العلامة التجارية", it) }
+                        PreviewDropdown("فترة تغيير الزيت", listOf("5,000 كم", "10,000 كم"), value("فترة التغيير").ifBlank { "5,000 كم" }) { setValue("فترة التغيير", it) }
+                        PreviewDropdown("ماركة الزيت", oilBrands, value("العلامة التجارية").ifBlank { oilBrands.first() }) { setValue("العلامة التجارية", it) }
                     }
-                    PreviewInput("اسم المنتج / الموديل (اختياري)", value("اسم المنتج")) { setValue("اسم المنتج", it) }
+                    PreviewInput("اسم المنتج", value("اسم المنتج")) { setValue("اسم المنتج", it) }
                     PreviewInput("الكمية", value("الكمية"), numeric = true) { setValue("الكمية", it) }
                     PreviewInput("السعر", value("السعر"), numeric = true) { setValue("السعر", it) }
-                    PreviewInput("قراءة العداد", value("العداد"), numeric = true) { setValue("العداد", it) }
-                    PreviewInput("التاريخ", value("التاريخ")) { setValue("التاريخ", it) }
+                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        PreviewInput("قراءة العداد", value("العداد"), numeric = true) { setValue("العداد", it) }
+                        IconButton(onClick = { }) { Icon(Icons.Outlined.CameraAlt, contentDescription = "تصوير قراءة العداد", tint = CostGoldDark) }
+                    }
+                    PreviewDateInput("التاريخ", value("التاريخ")) { setValue("التاريخ", it) }
                     PreviewInput("ملاحظات", value("ملاحظات"), multiline = true) { setValue("ملاحظات", it) }
                 }
                 "accidents" -> {
+                    PreviewDropdown("السيارة", listOf("اختاري السيارة"), value("السيارة").ifBlank { "اختاري السيارة" }) { setValue("السيارة", it) }
                     PreviewInput("عنوان الحادث", value("عنوان الحادث")) { setValue("عنوان الحادث", it) }
-                    PreviewInput("التاريخ", value("التاريخ")) { setValue("التاريخ", it) }
+                    PreviewDateInput("التاريخ", value("التاريخ")) { setValue("التاريخ", it) }
                     PreviewInput("الوقت", value("الوقت")) { setValue("الوقت", it) }
                     PreviewInput("الموقع (اختياري)", value("الموقع")) { setValue("الموقع", it) }
                     PreviewInput("تقدير الضرر — ليس مبلغًا مدفوعًا", value("تقدير الضرر"), numeric = true) { setValue("تقدير الضرر", it) }
                     PreviewInput("ملاحظات", value("ملاحظات"), multiline = true) { setValue("ملاحظات", it) }
                 }
                 else -> {
-                    PreviewInput("اسم / موديل السيارة", value("السيارة")) { setValue("السيارة", it) }
-                    PreviewInput("رقم اللوحة", value("رقم اللوحة")) { setValue("رقم اللوحة", it) }
+                    PreviewInput("اسم السيارة", value("اسم السيارة")) { setValue("اسم السيارة", it) }
+                    PreviewInput("الماركة", value("الماركة")) { setValue("الماركة", it) }
+                    PreviewInput("الطراز", value("الطراز")) { setValue("الطراز", it) }
+                    PreviewInput("الموديل", value("الموديل")) { setValue("الموديل", it) }
                     PreviewInput("سنة الصنع", value("سنة الصنع"), numeric = true) { setValue("سنة الصنع", it) }
-                    PreviewInput("ملاحظات", value("ملاحظات"), multiline = true) { setValue("ملاحظات", it) }
+                    PreviewInput("اللون", value("اللون")) { setValue("اللون", it) }
+                    PreviewInput("رقم اللوحة", value("رقم اللوحة")) { setValue("رقم اللوحة", it) }
+                    PreviewInput("رقم الشاسيه (اختياري)", value("رقم الشاسيه")) { setValue("رقم الشاسيه", it) }
+                }
+            }
+            "education" -> when (tabId) {
+                "student_add" -> {
+                    PreviewInput("اسم الطالب", value("اسم الطالب")) { setValue("اسم الطالب", it) }
+                    PreviewDropdown("المرحلة التعليمية", listOf("رياض أطفال", "ابتدائي", "إعدادي", "ثانوي", "جامعة"), value("المرحلة").ifBlank { "ابتدائي" }) { setValue("المرحلة", it) }
+                    PreviewInput("العمر", value("العمر"), numeric = true) { setValue("العمر", it) }
+                    PreviewInput("رقم مرجعي (اختياري)", value("رقم مرجعي")) { setValue("رقم مرجعي", it) }
+                }
+                "student_edit" -> {
+                    PreviewDropdown("اختاري الطالب المراد تعديله", listOf("لا يوجد طلاب مسجلون في المعاينة"), value("الطالب").ifBlank { "لا يوجد طلاب مسجلون في المعاينة" }) { setValue("الطالب", it) }
+                    Text("بعد ربط السجلات ستظهر أسماء الطلاب المسجلين هنا للاختيار ثم التعديل أو الحذف.", color = CostMuted, fontSize = 11.sp)
+                }
+                "student_expense_form" -> {
+                    PreviewDropdown("اختاري الطالب", listOf("لا يوجد طلاب مسجلون في المعاينة"), value("الطالب").ifBlank { "لا يوجد طلاب مسجلون في المعاينة" }) { setValue("الطالب", it) }
+                    PreviewDropdown("تصنيف المصروف", listOf("دروس خصوصية", "مصروفات مدرسية", "كتب ومذكرات", "أتوبيس المدرسة", "مستلزمات", "انتقالات", "أخرى"), value("تصنيف المصروف").ifBlank { "دروس خصوصية" }) { setValue("تصنيف المصروف", it) }
+                    PreviewInput("عنوان المصروف", value("عنوان المصروف")) { setValue("عنوان المصروف", it) }
+                    PreviewInput("المبلغ", value("المبلغ"), numeric = true) { setValue("المبلغ", it) }
+                    PreviewDateInput("التاريخ", value("التاريخ")) { setValue("التاريخ", it) }
+                }
+                else -> {
+                    Text("اختاري «إضافة طالب» لإنشاء ملف جديد، أو «تعديل طالب» لاختيار طالب مسجل، أو «إضافة مصروف طالب» لربط المصروف بطالب.", color = CostMuted, fontSize = 12.sp)
                 }
             }
             else -> {
                 fieldsFor(sectionId, tabId).forEach { field ->
                     val opts = choicesFor(sectionId, tabId)
-                    if (opts.isNotEmpty() && (field.contains("تصنيف") || field.contains("نوع") || field.contains("المرحلة") || field.contains("الدورية"))) {
-                        PreviewDropdown(field, opts, value(field).ifBlank { opts.first() }) { setValue(field, it) }
-                    } else {
-                        PreviewInput(field, value(field), numeric = field.contains("مبلغ") || field.contains("قيمة") || field.contains("تكلفة") || field.contains("العمر")) { setValue(field, it) }
-                    }
+                    if (opts.isNotEmpty() && (field.contains("تصنيف") || field.contains("نوع") || field.contains("المرحلة") || field.contains("الدورية"))) PreviewDropdown(field, opts, value(field).ifBlank { opts.first() }) { setValue(field, it) }
+                    else if (field.contains("تاريخ")) PreviewDateInput(field, value(field)) { setValue(field, it) }
+                    else PreviewInput(field, value(field), numeric = field.contains("مبلغ") || field.contains("قيمة") || field.contains("تكلفة") || field.contains("العمر")) { setValue(field, it) }
                 }
             }
         }
         Text("معاينة إدخال فقط — البيانات لا تُحفظ في المرحلة الأولى.", color = CostMuted, fontSize = 10.sp)
+    }
+}
+
+@Composable
+private fun PreviewDateInput(label: String, value: String, onValueChange: (String) -> Unit) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    OutlinedButton(
+        onClick = {
+            val calendar = Calendar.getInstance()
+            val parts = value.split("-")
+            if (parts.size == 3) {
+                parts[0].toIntOrNull()?.let { calendar.set(Calendar.YEAR, it) }
+                parts[1].toIntOrNull()?.let { calendar.set(Calendar.MONTH, it - 1) }
+                parts[2].toIntOrNull()?.let { calendar.set(Calendar.DAY_OF_MONTH, it) }
+            }
+            DatePickerDialog(context, { _, year, month, day ->
+                onValueChange(String.format("%04d-%02d-%02d", year, month + 1, day))
+            }, calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH)).show()
+        },
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        border = BorderStroke(1.dp, CostBorder),
+        colors = ButtonDefaults.outlinedButtonColors(contentColor = CostInk)
+    ) {
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Icon(Icons.Outlined.CalendarMonth, contentDescription = null, tint = CostGoldDark)
+            Spacer(Modifier.width(9.dp))
+            Column(Modifier.weight(1f), horizontalAlignment = Alignment.Start) {
+                Text(label, color = CostMuted, fontSize = 10.sp)
+                Text(value.ifBlank { "اختاري التاريخ من التقويم" }, color = CostInk, fontSize = 14.sp)
+            }
+        }
     }
 }
 
