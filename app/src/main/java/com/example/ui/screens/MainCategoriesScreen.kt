@@ -43,6 +43,7 @@ fun MainCategoriesScreen(
     onAccountClick: () -> Unit = {},
     onLogout: () -> Unit = {}
 ) {
+    var showAddCategoryNotice by remember { mutableStateOf(false) }
     val groups = listOf(
         CategoryGroup("المصروفات", "الأقسام المتخصصة لتسجيل ومراجعة التكاليف", Icons.Outlined.ReceiptLong, listOf(
             CategoryTile("home_expenses", "المنزل", "مصروفات البيت والاحتياجات اليومية", Icons.Outlined.Home),
@@ -116,13 +117,24 @@ fun MainCategoriesScreen(
                     }
                 }
                 item {
-                    OutlinedButton(onClick = onAddNewCategory, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(14.dp), border = BorderStroke(1.dp, CategoryPalette.gold)) {
+                    OutlinedButton(onClick = { showAddCategoryNotice = true; onAddNewCategory() }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(14.dp), border = BorderStroke(1.dp, CategoryPalette.gold)) {
                         Icon(Icons.Default.Add, null, tint = CategoryPalette.ink)
                         Spacer(Modifier.width(8.dp))
                         Text("إضافة قسم مالي", color = CategoryPalette.ink, fontWeight = FontWeight.Bold)
                     }
                 }
             }
+        }
+        if (showAddCategoryNotice) {
+            AlertDialog(
+                onDismissRequest = { showAddCategoryNotice = false },
+                title = { Text("إضافة قسم مالي", fontWeight = FontWeight.Bold) },
+                text = { Text("سيتم تفعيل إنشاء الأقسام وتخصيصها في المرحلة الثانية. هذا الزر معروض الآن لمراجعة التصميم.") },
+                confirmButton = {
+                    TextButton(onClick = { showAddCategoryNotice = false }) { Text("حسنًا") }
+                },
+                containerColor = Color.White
+            )
         }
     }
 }
