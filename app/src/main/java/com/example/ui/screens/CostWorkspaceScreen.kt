@@ -135,6 +135,7 @@ fun CostWorkspaceScreen(
                         }
                     }
                 }
+                item { DashboardSummaryDesign { showDesignNotice = true } }
                 costSections.groupBy { it.group }.forEach { (groupName, sections) ->
                     item {
                         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -238,6 +239,35 @@ fun CostWorkspaceScreen(
 
     if (showDesignNotice) {
         AlertDialog(onDismissRequest = { showDesignNotice = false }, title = { Text("معاينة المرحلة الأولى") }, text = { Text("هذا العنصر معروض لمراجعة التصميم فقط. سيتم تفعيل الحفظ والعمليات والحسابات في المرحلة الثانية بعد اعتماد الشاشات.") }, confirmButton = { TextButton(onClick = { showDesignNotice = false }) { Text("حسنًا") } }, containerColor = Color.White)
+    }
+}
+
+@Composable
+private fun DashboardSummaryDesign(onAction: () -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+            Text("لوحة المعلومات المالية", color = CostInk, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+            OutlinedButton(onClick = onAction, border = BorderStroke(1.dp, CostGold), contentPadding = PaddingValues(horizontal = 10.dp, vertical = 5.dp)) {
+                Text("الشهر الحالي", color = CostInk, fontSize = 10.sp)
+            }
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            SummaryMetric("إجمالي الدخل", "—", Modifier.weight(1f))
+            SummaryMetric("إجمالي المصروفات", "—", Modifier.weight(1f))
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            SummaryMetric("صافي الدخل", "—", Modifier.weight(1f))
+            SummaryMetric("نسبة الادخار", "—", Modifier.weight(1f))
+        }
+        Card(colors = CardDefaults.cardColors(containerColor = Color.White), border = BorderStroke(1.dp, CostBorder), shape = RoundedCornerShape(14.dp)) {
+            Column(Modifier.padding(13.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text("توزيع المصروفات", color = CostInk, fontWeight = FontWeight.Bold)
+                Text("المنزل • الطبي • العمل • الشخصي • المركبات • التعليم", color = CostMuted, fontSize = 10.sp)
+                Text("أحدث العمليات", color = CostInk, fontWeight = FontWeight.Bold)
+                Text("التاريخ  |  البيان  |  القسم  |  المبلغ", color = CostMuted, fontSize = 10.sp)
+                Text("ستظهر القيم والسجلات الفعلية بعد ربط البيانات في المرحلة الثانية.", color = CostMuted, fontSize = 10.sp)
+            }
+        }
     }
 }
 
