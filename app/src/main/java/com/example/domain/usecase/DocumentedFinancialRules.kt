@@ -54,13 +54,13 @@ object DocumentedFinancialRules {
     fun savingsRatePercent(monthlyIncomePiastres: Long, netIncomePiastres: Long): Int {
         if (monthlyIncomePiastres <= 0L) return 0
         return (netIncomePiastres.toDouble() / monthlyIncomePiastres.toDouble() * 100.0)
-            .toInt().coerceIn(0, 100)
+            .let { kotlin.math.round(it).toInt() }.coerceIn(0, 100)
     }
 
     fun expenseRatioPercent(monthlyIncomePiastres: Long, monthlyExpensesPiastres: Long): Int {
         if (monthlyIncomePiastres <= 0L) return 100
         return (monthlyExpensesPiastres.toDouble() / monthlyIncomePiastres.toDouble() * 100.0)
-            .toInt().coerceAtMost(100)
+            .let { kotlin.math.round(it).toInt() }.coerceAtMost(100)
     }
 
     /** Deposits are positive and withdrawals negative; callers pass positive stored amounts. */
