@@ -1297,16 +1297,16 @@ private fun SubCategoriesDropdownSection(
 
     val subCategories = remember {
         listOf(
-            SubCategoryItem("تموين ومشتريات غذائية", "مصروفات المنزل", "expenses", Icons.Default.ReceiptLong),
-            SubCategoryItem("فواتير ومرافق", "مصروفات المنزل", "expenses", Icons.Default.ReceiptLong),
-            SubCategoryItem("أدوية وصيدليات", "الرعاية الصحية", "expenses", Icons.Default.ReceiptLong),
-            SubCategoryItem("كشوفات واستشارات طبية", "الرعاية الصحية", "expenses", Icons.Default.ReceiptLong),
-            SubCategoryItem("ملابس وأناقة", "المصروفات الشخصية", "expenses", Icons.Default.ReceiptLong),
-            SubCategoryItem("عناية ومظهر شخصي", "المصروفات الشخصية", "expenses", Icons.Default.ReceiptLong),
-            SubCategoryItem("وقود وتعبئات", "المركبات", "vehicles", Icons.Default.DirectionsCar),
-            SubCategoryItem("صيانة دورية وإصلاحات", "المركبات", "vehicles", Icons.Default.DirectionsCar),
-            SubCategoryItem("رسوم دراسية", "التعليم", "expenses", Icons.Default.ReceiptLong),
-            SubCategoryItem("شهادات الدخل والأرباح", "الإيرادات", "income_accounts", Icons.Default.AttachMoney)
+            SubCategoryItem("تموين ومشتريات غذائية", "مصروفات المنزل", "home_expenses", Icons.Default.ReceiptLong),
+            SubCategoryItem("فواتير ومرافق", "مصروفات المنزل", "home_expenses", Icons.Default.ReceiptLong),
+            SubCategoryItem("أدوية وصيدليات", "الرعاية الصحية", "medical_expenses", Icons.Default.ReceiptLong),
+            SubCategoryItem("كشوفات واستشارات طبية", "الرعاية الصحية", "medical_expenses", Icons.Default.ReceiptLong),
+            SubCategoryItem("ملابس وأناقة", "المصروفات الشخصية", "personal_expenses", Icons.Default.ReceiptLong),
+            SubCategoryItem("عناية ومظهر شخصي", "المصروفات الشخصية", "personal_expenses", Icons.Default.ReceiptLong),
+            SubCategoryItem("وقود وتعبئات", "المركبات", "vehicle_fuel", Icons.Default.DirectionsCar),
+            SubCategoryItem("صيانة دورية وإصلاحات", "المركبات", "vehicle_maintenance", Icons.Default.DirectionsCar),
+            SubCategoryItem("رسوم دراسية", "التعليم", "education", Icons.Default.ReceiptLong),
+            SubCategoryItem("شهادات الدخل والأرباح", "الإيرادات", "certificates", Icons.Default.AttachMoney)
         )
     }
 
