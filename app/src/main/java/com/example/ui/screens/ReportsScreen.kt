@@ -174,7 +174,7 @@ fun ReportsScreen(
                         Icon(Icons.Default.Category, contentDescription = null, tint = GoldAccent)
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            "تفصيل المصروفات حسب الأقسام الخمسة",
+                            "تفصيل المصروفات حسب الأقسام المالية",
                             style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold, color = BlackPrimary)
                         )
                     }
