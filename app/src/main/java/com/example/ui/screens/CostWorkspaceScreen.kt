@@ -5,6 +5,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -48,12 +49,12 @@ private val costSections = listOf(
 )
 
 private fun tabsFor(id: String): List<CostTab> = when (id) {
-    "vehicles" -> listOf(CostTab("fuel", "الوقود"), CostTab("maintenance", "الصيانة"), CostTab("oils", "الزيوت والفلاتر"), CostTab("accidents", "الحوادث"))
-    "education" -> listOf(CostTab("students", "ملفات الطلاب"), CostTab("student_expenses", "مصروفات الطلاب"))
+    "vehicles" -> listOf(CostTab("records", "سجلات المركبات"), CostTab("fuel", "الوقود"), CostTab("maintenance", "الصيانة"), CostTab("oils", "الزيوت والفلاتر"), CostTab("accidents", "الحوادث"))
+    "education" -> listOf(CostTab("students", "سجلات الطلاب"), CostTab("student_form", "بيانات طالب"), CostTab("student_expenses", "مصروفات الطلاب"))
     "certificates" -> listOf(CostTab("list", "الشهادات المسجلة"), CostTab("form", "بيانات الشهادة"), CostTab("payouts", "العوائد"))
-    "associations" -> listOf(CostTab("association_list", "الجمعيات"), CostTab("installments", "الأقساط"), CostTab("payouts", "القبض"))
-    "current_account" -> listOf(CostTab("movements", "كل الحركات"), CostTab("deposits", "الإيداعات"), CostTab("withdrawals", "السحوبات"))
-    "car_income" -> listOf(CostTab("trips", "سجل الرحلات"), CostTab("trip_report", "تقرير الرحلات"))
+    "associations" -> listOf(CostTab("association_list", "سجلات الجمعيات"), CostTab("form", "جمعية جديدة"), CostTab("installments", "الأقساط"), CostTab("payouts", "القبض"))
+    "current_account" -> listOf(CostTab("movements", "كل الحركات"), CostTab("deposits", "إضافة إيداع"), CostTab("withdrawals", "إضافة سحب"))
+    "car_income" -> listOf(CostTab("trips", "سجل الرحلات"), CostTab("add_trip", "تسجيل رحلة"), CostTab("trip_report", "تقرير الرحلات"))
     "reports" -> listOf(CostTab("daily", "يومي"), CostTab("weekly", "أسبوعي"), CostTab("monthly", "شهري"))
     "backup" -> listOf(CostTab("export", "تصدير نسخة"), CostTab("restore", "استعادة نسخة"))
     else -> listOf(CostTab("records", "السجلات"), CostTab("form", "نموذج الإدخال"))
@@ -64,17 +65,17 @@ private fun fieldsFor(sectionId: String, tabId: String): List<String> = when (se
     "medical" -> listOf("فرد الأسرة", "اسم المنشأة الطبية", "نوع المنشأة الطبية", "الحالة", "التشخيص", "تكلفة الكشف أو الفحص", "تكلفة الدواء", "التاريخ", "ملاحظات طبية")
     "work" -> listOf("نوع المصروف", "نوع مخصص", "المبلغ", "التاريخ", "الملاحظات")
     "personal" -> listOf("التصنيف", "تصنيف مخصص (عند الحاجة)", "المبلغ", "التاريخ", "طريقة الدفع", "الملاحظات")
-    "associations" -> if (tabId == "association_list") listOf("اسم الجمعية", "قيمة الجمعية", "عدد الأفراد", "القسط", "رقم الدور", "تاريخ البداية", "تاريخ القبض", "ملاحظات") else listOf("اسم الجمعية", "الشهر", "قيمة القسط أو القبض", "التاريخ", "ملاحظات")
+    "associations" -> if (tabId == "form") listOf("اسم الجمعية", "قيمة الجمعية", "عدد الأفراد", "القسط", "رقم الدور", "تاريخ البداية", "تاريخ القبض", "ملاحظات") else listOf("اسم الجمعية", "الشهر", "قيمة القسط أو القبض", "التاريخ", "ملاحظات")
     "vehicles" -> when (tabId) {
         "fuel" -> listOf("المركبة", "نوع الوقود", "الكمية أو اللترات", "سعر الوحدة", "إجمالي التكلفة", "قراءة العداد", "التاريخ والوقت", "ملاحظات")
         "maintenance" -> listOf("المركبة", "نوع الصيانة", "وصف الصيانة", "اسم المستلزم أو قطعة الغيار", "سعر المستلزمات", "وصف الأجور", "قيمة الأجور", "التاريخ", "الإجمالي")
         "oils" -> listOf("المركبة", "نوع الخدمة", "العلامة التجارية", "اسم المنتج", "الكمية", "السعر", "قراءة العداد", "فترة التغيير أو المسافة المقترحة", "التاريخ", "ملاحظات")
         else -> listOf("المركبة (اختياري)", "عنوان الحادث", "صورة الحادث", "التاريخ", "الوقت", "الموقع (اختياري)", "تقدير الضرر — ليس مبلغًا مدفوعًا تلقائيًا", "ملاحظات")
     }
-    "education" -> if (tabId == "students") listOf("اسم الطالب", "المرحلة التعليمية", "العمر", "الرقم القومي أو المرجعي — 14 رقمًا") else listOf("الطالب", "تصنيف المصروف", "عنوان المصروف", "المبلغ", "التاريخ")
+    "education" -> if (tabId == "student_form") listOf("اسم الطالب", "المرحلة التعليمية", "العمر", "الرقم القومي أو المرجعي — 14 رقمًا") else listOf("الطالب", "تصنيف المصروف", "عنوان المصروف", "المبلغ", "التاريخ")
     "income" -> listOf("اسم مصدر الدخل", "المبلغ", "التاريخ", "نوع الدخل", "ملاحظات")
     "certificates" -> if (tabId == "payouts") listOf("الشهادة", "تاريخ صرف العائد", "قيمة العائد", "ملاحظات") else listOf("اسم البنك", "رقم الشهادة", "المبلغ الأصلي", "معدل العائد السنوي", "مدة الشهادة", "دورية صرف العائد", "تاريخ الإصدار", "تاريخ الاستحقاق", "الملاحظات")
-    "current_account" -> listOf("نوع الحركة: إيداع أو سحب", "الوصف", "المبلغ", "التاريخ")
+    "current_account" -> listOf(if (tabId == "deposits") "نوع الحركة: إيداع" else "نوع الحركة: سحب", "الوصف", "المبلغ", "التاريخ")
     "car_income" -> if (tabId == "trip_report") listOf("تاريخ البداية", "تاريخ النهاية", "نوع الرحلة", "بحث") else listOf("تاريخ الرحلة", "نوع الرحلة", "الأجرة", "ملاحظات الرحلة")
     "reports" -> listOf("تاريخ البداية", "تاريخ النهاية", "القسم", "الطالب (عند الحاجة)")
     "backup" -> listOf("ملف النسخة الاحتياطية", "إصدار المخطط", "تاريخ التصدير", "المجموعات التي ستُستبدل")
@@ -186,8 +187,8 @@ fun CostWorkspaceScreen(
                 }
                 if (tabs.size > 1) {
                     item {
-                        Row(horizontalArrangement = Arrangement.spacedBy(5.dp), modifier = Modifier.fillMaxWidth()) {
-                            tabs.forEach { tab -> FilterChip(selected = activeTab?.id == tab.id, onClick = { selectedTab = tab.id }, label = { Text(tab.title, fontSize = 10.sp) }) }
+                        LazyRow(horizontalArrangement = Arrangement.spacedBy(5.dp), modifier = Modifier.fillMaxWidth()) {
+                            items(tabs) { tab -> FilterChip(selected = activeTab?.id == tab.id, onClick = { selectedTab = tab.id }, label = { Text(tab.title, fontSize = 10.sp) }) }
                         }
                     }
                 }
@@ -210,7 +211,7 @@ fun CostWorkspaceScreen(
                     val formTitle = "نموذج البيانات — " + (activeTab?.title ?: "السجلات")
                     Text(if (section.id == "reports") "معاينة التقرير" else if (section.id == "backup") "إجراءات النسخ الاحتياطي" else formTitle, color = CostInk, fontSize = 16.sp, fontWeight = FontWeight.Bold)
                 }
-                if (activeTab?.id == "records" || activeTab?.id == "list" || activeTab?.id == "trips") {
+                if (activeTab?.id in setOf("records", "list", "trips", "students", "association_list", "movements")) {
                     item { RecordsPreviewDesign(section.title, activeTab?.title.orEmpty()) }
                 } else if (section.id == "reports") {
                     item { ReportPreviewDesign { showDesignNotice = true } }
