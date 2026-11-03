@@ -29,6 +29,7 @@ fun FinancialPreviewScreen(
     sectionId: String,
     onBack: () -> Unit
 ) {
+    var showPhaseTwoNotice by remember { mutableStateOf(false) }
     val isAssociation = sectionId == "gamaeya"
     val title = if (isAssociation) "الجمعيات" else "الحساب الجاري"
     val subtitle = if (isAssociation)
@@ -104,7 +105,7 @@ fun FinancialPreviewScreen(
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         actions.forEachIndexed { index, action ->
                             OutlinedButton(
-                                onClick = {},
+                                onClick = { showPhaseTwoNotice = true },
                                 modifier = Modifier.fillMaxWidth(),
                                 shape = RoundedCornerShape(13.dp),
                                 border = BorderStroke(1.dp, PreviewGold),
@@ -136,6 +137,17 @@ fun FinancialPreviewScreen(
                     }
                 }
             }
+        }
+        if (showPhaseTwoNotice) {
+            AlertDialog(
+                onDismissRequest = { showPhaseTwoNotice = false },
+                title = { Text("الوظيفة في المرحلة الثانية", fontWeight = FontWeight.Bold) },
+                text = { Text("هذه الأزرار معروضة لمراجعة التصميم فقط. سيتم تفعيل التسجيل والحفظ والحسابات بعد اعتماد جميع الشاشات.") },
+                confirmButton = {
+                    TextButton(onClick = { showPhaseTwoNotice = false }) { Text("حسنًا") }
+                },
+                containerColor = Color.White
+            )
         }
     }
 }
