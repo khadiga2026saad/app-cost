@@ -150,10 +150,10 @@ fun CostWorkspaceScreen(
             LazyColumn(Modifier.fillMaxSize().padding(padding).padding(horizontal = 16.dp), contentPadding = PaddingValues(top = 14.dp, bottom = 26.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 item {
                     Surface(shape = RoundedCornerShape(20.dp), color = CostInk, modifier = Modifier.fillMaxWidth()) {
-                        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(7.dp)) {
-                            Text("SMART COST PRO", color = CostGold, fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                            Text("إدارة مالية متكاملة", color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Bold)
-                            Text("اختر القسم لعرض سجلاته ونماذج الإدخال والتقارير الخاصة به", color = Color(0xFFE7E3D8), fontSize = 12.sp)
+                        Column(Modifier.padding(15.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Text("SMART COST PRO", color = CostGold, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                            Text("إدارة مالية متكاملة", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                            Text("اختر القسم لعرض السجلات ونماذج الإدخال والتقارير الخاصة به", color = Color(0xFFE7E3D8), fontSize = 13.sp)
                             Row(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
                                 SummaryPill("المصروفات")
                                 SummaryPill("الدخل")
@@ -285,32 +285,44 @@ fun CostWorkspaceScreen(
 
 @Composable
 private fun DashboardSummaryDesign(onAction: () -> Unit) {
-    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(9.dp)) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-            Text("لوحة المعلومات المالية", color = CostInk, fontWeight = FontWeight.Bold, fontSize = 16.sp)
-            OutlinedButton(onClick = onAction, border = BorderStroke(1.dp, CostGold), contentPadding = PaddingValues(horizontal = 10.dp, vertical = 5.dp)) {
-                Text("الشهر الحالي", color = CostInk, fontSize = 10.sp)
+            Text("لوحة المعلومات المالية", color = CostInk, fontWeight = FontWeight.Bold, fontSize = 17.sp)
+            OutlinedButton(onClick = onAction, border = BorderStroke(1.dp, CostGold), contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)) {
+                Text("الشهر الحالي", color = CostInk, fontSize = 12.sp)
             }
         }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            SummaryMetric("إجمالي الدخل", "—", Modifier.weight(1f))
-            SummaryMetric("إجمالي المصروفات", "—", Modifier.weight(1f))
+            SummaryMetric("إجمالي الدخل", "يُحسب تلقائيًا", Modifier.weight(1f))
+            SummaryMetric("إجمالي المصروفات", "يُحسب تلقائيًا", Modifier.weight(1f))
         }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            SummaryMetric("صافي الدخل", "—", Modifier.weight(1f))
-            SummaryMetric("نسبة الادخار", "—", Modifier.weight(1f))
+            SummaryMetric("صافي الدخل", "الدخل − المصروفات", Modifier.weight(1f))
+            SummaryMetric("نسبة الادخار", "تُحسب تلقائيًا", Modifier.weight(1f))
         }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            SummaryMetric("نسبة المصروفات", "—", Modifier.weight(1f))
-            SummaryMetric("تكاليف المركبات", "—", Modifier.weight(1f))
+            SummaryMetric("نسبة المصروفات", "تُحسب تلقائيًا", Modifier.weight(1f))
+            SummaryMetric("تكاليف المركبات", "تُحسب تلقائيًا", Modifier.weight(1f))
         }
         Card(colors = CardDefaults.cardColors(containerColor = Color.White), border = BorderStroke(1.dp, CostBorder), shape = RoundedCornerShape(14.dp)) {
-            Column(Modifier.padding(13.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text("توزيع المصروفات", color = CostInk, fontWeight = FontWeight.Bold)
-                Text("المنزل • الطبي • العمل • الشخصي • المركبات • التعليم", color = CostMuted, fontSize = 10.sp)
-                Text("أحدث العمليات", color = CostInk, fontWeight = FontWeight.Bold)
-                Text("التاريخ  |  البيان  |  القسم  |  المبلغ", color = CostMuted, fontSize = 10.sp)
-                Text("ستظهر القيم والسجلات الفعلية بعد ربط البيانات في المرحلة الثانية.", color = CostMuted, fontSize = 10.sp)
+            Column(Modifier.fillMaxWidth().padding(13.dp), verticalArrangement = Arrangement.spacedBy(9.dp)) {
+                Text("توزيع المصروفات", color = CostInk, fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                Text("تصنيف المصروفات حسب القسم", color = CostMuted, fontSize = 12.sp)
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    items(listOf("المنزل", "الطبي", "العمل", "الشخصي", "المركبات", "التعليم")) { label ->
+                        Surface(shape = RoundedCornerShape(18.dp), color = Color(0xFFF8F1D9), border = BorderStroke(1.dp, CostBorder)) {
+                            Text(label, color = CostInk, fontSize = 11.sp, modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp))
+                        }
+                    }
+                }
+                Divider(color = CostBorder)
+                Text("أحدث العمليات", color = CostInk, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    Text("التاريخ", color = CostMuted, fontSize = 11.sp)
+                    Text("البيان والقسم", color = CostMuted, fontSize = 11.sp)
+                    Text("المبلغ", color = CostMuted, fontSize = 11.sp)
+                }
+                Text("ستظهر العمليات الفعلية هنا بعد ربط البيانات في المرحلة الثانية.", color = CostMuted, fontSize = 11.sp)
             }
         }
     }
@@ -416,9 +428,9 @@ private fun BackupPreviewDesign(tabId: String, onAction: () -> Unit) {
 @Composable
 private fun SummaryMetric(label: String, value: String, modifier: Modifier) {
     Card(modifier = modifier, colors = CardDefaults.cardColors(containerColor = Color.White), border = BorderStroke(1.dp, CostBorder), shape = RoundedCornerShape(12.dp)) {
-        Column(Modifier.padding(9.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
-            Text(label, color = CostMuted, fontSize = 9.sp)
-            Text(value, color = CostInk, fontSize = 17.sp, fontWeight = FontWeight.Bold)
+        Column(Modifier.fillMaxWidth().padding(10.dp), verticalArrangement = Arrangement.spacedBy(7.dp)) {
+            Text(label, color = CostMuted, fontSize = 11.sp, fontWeight = FontWeight.Medium, maxLines = 2, minLines = 2)
+            Text(value, color = CostInk, fontSize = 12.sp, fontWeight = FontWeight.Bold, maxLines = 2)
         }
     }
 }
