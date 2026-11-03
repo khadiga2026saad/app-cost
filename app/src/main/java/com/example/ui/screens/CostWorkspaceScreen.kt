@@ -37,7 +37,7 @@ private val costSections = listOf(
     CostSection("work", "العمل", "تكاليف ومصروفات العمل", Icons.Outlined.Work, "المصروفات"),
     CostSection("personal", "المصروفات الشخصية", "المصروفات اليومية والالتزامات الشخصية", Icons.Outlined.Person, "المصروفات"),
     CostSection("associations", "الجمعيات", "قيمة الجمعية والأقساط والقبض", Icons.Outlined.Groups, "المصروفات"),
-    CostSection("vehicles", "المركبات", "الوقود والصيانة والزيوت والحوادث", Icons.Outlined.DirectionsCar, "المركبات"),
+    CostSection("vehicles", "السيارات", "السيارات والوقود والصيانة والزيوت والحوادث", Icons.Outlined.DirectionsCar, "السيارات"),
     CostSection("education", "التعليم والطلاب", "ملفات الطلاب ومصروفاتهم", Icons.Outlined.MenuBook, "المصروفات"),
     CostSection("income", "الدخل", "مصادر الدخل والإيرادات", Icons.Outlined.TrendingUp, "الأموال والحسابات"),
     CostSection("certificates", "الشهادات البنكية", "بيانات الشهادات والعوائد والاستحقاقات", Icons.Outlined.AccountBalance, "الأموال والحسابات"),
@@ -147,41 +147,24 @@ fun CostWorkspaceScreen(
         }
     ) { padding ->
         if (section == null) {
-            LazyColumn(Modifier.fillMaxSize().padding(padding).padding(horizontal = 16.dp), contentPadding = PaddingValues(top = 14.dp, bottom = 26.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            LazyColumn(Modifier.fillMaxSize().padding(padding).padding(horizontal = 16.dp), contentPadding = PaddingValues(top = 14.dp, bottom = 26.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 item {
-                    Surface(shape = RoundedCornerShape(20.dp), color = CostInk, modifier = Modifier.fillMaxWidth()) {
-                        Column(Modifier.padding(15.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                            Text("SMART COST PRO", color = CostGold, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                            Text("إدارة مالية متكاملة", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                            Text("اختر القسم لعرض السجلات ونماذج الإدخال والتقارير الخاصة به", color = Color(0xFFE7E3D8), fontSize = 13.sp)
-                            Row(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
-                                SummaryPill("المصروفات")
-                                SummaryPill("الدخل")
-                                SummaryPill("المتابعة")
-                            }
-                        }
+                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text("كل الأقسام", color = CostInk, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                        Text("اختاري القسم المطلوب لعرض بطاقاته الفرعية وسجلاته ونماذج الإدخال.", color = CostMuted, fontSize = 12.sp)
+                        Text("13 قسمًا رئيسيًا", color = CostGoldDark, fontSize = 11.sp, fontWeight = FontWeight.Bold)
                     }
                 }
-                item { DashboardSummaryDesign { showDesignNotice = true } }
-                costSections.groupBy { it.group }.forEach { (groupName, sections) ->
+                costSections.chunked(2).forEach { rowSections ->
                     item {
-                        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(groupName, color = CostInk, fontSize = 17.sp, fontWeight = FontWeight.Bold)
-                                Spacer(Modifier.width(8.dp))
-                                Text(sections.size.toString() + " أقسام", color = CostMuted, fontSize = 10.sp)
-                            }
-                            sections.chunked(2).forEach { rowSections ->
-                                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                                    rowSections.forEach { item ->
-                                        CostSectionCard(item, Modifier.weight(1f)) {
-                                            selectedSection = item.id
-                                            selectedTab = tabsFor(item.id).firstOrNull()?.id.orEmpty()
-                                        }
-                                    }
-                                    if (rowSections.size == 1) Spacer(Modifier.weight(1f))
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                            rowSections.forEach { sectionItem ->
+                                CostSectionCard(sectionItem, Modifier.weight(1f)) {
+                                    selectedSection = sectionItem.id
+                                    selectedTab = tabsFor(sectionItem.id).firstOrNull()?.id.orEmpty()
                                 }
                             }
+                            if (rowSections.size == 1) Spacer(Modifier.weight(1f))
                         }
                     }
                 }
