@@ -504,21 +504,26 @@ private fun ExpenseEntryPreview(sectionId: String, tabId: String) {
 
 @Composable
 private fun PreviewDateInput(label: String, value: String, onValueChange: (String) -> Unit) {
-    var showPicker by remember(label) { mutableStateOf(false) }
-    val initialMillis = remember(value) {
+    var showPicker by remember { mutableStateOf(false) }
+    val parsedDate = remember(value) {
         val parts = value.split("-")
         if (parts.size == 3) {
-            val year = parts[0].toIntOrNull()
-            val month = parts[1].toIntOrNull()
-            val day = parts[2].toIntOrNull()
-            if (year != null && month != null && day != null) {
-                Calendar.getInstance().apply { set(year, month - 1, day, 12, 0, 0); set(Calendar.MILLISECOND, 0) }.timeInMillis
-            } else null
+            val y = parts[0].toIntOrNull()
+            val m = parts[1].toIntOrNull()
+            val d = parts[2].toIntOrNull()
+            if (y != null && m != null && d != null && m in 1..12 && d in 1..31) Triple(y, m - 1, d) else null
         } else null
     }
-    val pickerState = rememberDatePickerState(initialSelectedDateMillis = initialMillis)
+    val today = remember { Calendar.getInstance() }
+    var displayedYear by remember { mutableIntStateOf(parsedDate?.first ?: today.get(Calendar.YEAR)) }
+    var displayedMonth by remember { mutableIntStateOf(parsedDate?.second ?: today.get(Calendar.MONTH)) }
+
     OutlinedButton(
-        onClick = { showPicker = true },
+        onClick = {
+            displayedYear = parsedDate?.first ?: today.get(Calendar.YEAR)
+            displayedMonth = parsedDate?.second ?: today.get(Calendar.MONTH)
+            showPicker = true
+        },
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
         border = BorderStroke(1.dp, CostBorder),
@@ -533,24 +538,65 @@ private fun PreviewDateInput(label: String, value: String, onValueChange: (Strin
             }
         }
     }
+
     if (showPicker) {
-        DatePickerDialog(
+        val monthNames = listOf("يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر")
+        val firstDayOffset = Calendar.getInstance().apply {
+            set(displayedYear, displayedMonth, 1, 12, 0, 0)
+            set(Calendar.MILLISECOND, 0)
+        }.get(Calendar.DAY_OF_WEEK) - Calendar.SUNDAY
+        val daysInMonth = Calendar.getInstance().apply {
+            set(displayedYear, displayedMonth, 1, 12, 0, 0)
+        }.getActualMaximum(Calendar.DAY_OF_MONTH)
+        val cells: List<Int?> = List(firstDayOffset) { null } + (1..daysInMonth).map { it }
+
+        AlertDialog(
             onDismissRequest = { showPicker = false },
-            confirmButton = {
-                TextButton(onClick = {
-                    pickerState.selectedDateMillis?.let { millis ->
-                        val calendar = Calendar.getInstance().apply { timeInMillis = millis }
-                        onValueChange(String.format(java.util.Locale.US, "%04d-%02d-%02d", calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH) + 1, calendar.get(Calendar.DAY_OF_MONTH)))
+            title = { Text("اختيار $label", color = CostInk) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
+                        IconButton(onClick = {
+                            if (displayedMonth == 0) { displayedMonth = 11; displayedYear-- } else displayedMonth--
+                        }) { Icon(Icons.Outlined.ChevronLeft, contentDescription = "الشهر السابق") }
+                        Text("${monthNames[displayedMonth]} $displayedYear", color = CostInk, fontWeight = FontWeight.Bold)
+                        IconButton(onClick = {
+                            if (displayedMonth == 11) { displayedMonth = 0; displayedYear++ } else displayedMonth++
+                        }) { Icon(Icons.Outlined.ChevronRight, contentDescription = "الشهر التالي") }
                     }
-                    showPicker = false
-                }) { Text("اختيار") }
+                    Row(Modifier.fillMaxWidth()) {
+                        listOf("ح", "ن", "ث", "ر", "خ", "ج", "س").forEach { day ->
+                            Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                                Text(day, color = CostMuted, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    }
+                    cells.chunked(7).forEach { week ->
+                        Row(Modifier.fillMaxWidth()) {
+                            (week + List(7 - week.size) { null }).forEach { day ->
+                                Box(Modifier.weight(1f).height(40.dp), contentAlignment = Alignment.Center) {
+                                    if (day != null) {
+                                        TextButton(
+                                            onClick = {
+                                                onValueChange(String.format(java.util.Locale.US, "%04d-%02d-%02d", displayedYear, displayedMonth + 1, day))
+                                                showPicker = false
+                                            },
+                                            contentPadding = PaddingValues(0.dp)
+                                        ) {
+                                            Text(day.toString(), color = CostInk, fontSize = 13.sp)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             },
-            dismissButton = {
-                TextButton(onClick = { showPicker = false }) { Text("إلغاء") }
-            }
-        ) {
-            DatePicker(state = pickerState, showModeToggle = false)
-        }
+            confirmButton = {
+                TextButton(onClick = { showPicker = false }) { Text("إغلاق") }
+            },
+            containerColor = Color.White
+        )
     }
 }
 
