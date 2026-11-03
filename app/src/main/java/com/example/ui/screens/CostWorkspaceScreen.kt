@@ -50,7 +50,7 @@ private val costSections = listOf(
 private fun tabsFor(id: String): List<CostTab> = when (id) {
     "vehicles" -> listOf(CostTab("fuel", "الوقود"), CostTab("maintenance", "الصيانة"), CostTab("oils", "الزيوت والفلاتر"), CostTab("accidents", "الحوادث"))
     "education" -> listOf(CostTab("students", "ملفات الطلاب"), CostTab("student_expenses", "مصروفات الطلاب"))
-    "certificates" -> listOf(CostTab("certificates", "الشهادات"), CostTab("payouts", "العوائد"))
+    "certificates" -> listOf(CostTab("list", "الشهادات المسجلة"), CostTab("form", "بيانات الشهادة"), CostTab("payouts", "العوائد"))
     "associations" -> listOf(CostTab("association_list", "الجمعيات"), CostTab("installments", "الأقساط"), CostTab("payouts", "القبض"))
     "current_account" -> listOf(CostTab("movements", "كل الحركات"), CostTab("deposits", "الإيداعات"), CostTab("withdrawals", "السحوبات"))
     "car_income" -> listOf(CostTab("trips", "سجل الرحلات"), CostTab("trip_report", "تقرير الرحلات"))
@@ -73,9 +73,9 @@ private fun fieldsFor(sectionId: String, tabId: String): List<String> = when (se
     }
     "education" -> if (tabId == "students") listOf("اسم الطالب", "المرحلة التعليمية", "العمر", "الرقم القومي أو المرجعي — 14 رقمًا") else listOf("الطالب", "تصنيف المصروف", "عنوان المصروف", "المبلغ", "التاريخ")
     "income" -> listOf("اسم مصدر الدخل", "المبلغ", "التاريخ", "نوع الدخل", "ملاحظات")
-    "certificates" -> listOf("اسم البنك", "رقم الشهادة", "المبلغ الأصلي", "معدل العائد السنوي", "مدة الشهادة", "دورية صرف العائد", "تاريخ الإصدار", "تاريخ الاستحقاق", "الملاحظات")
+    "certificates" -> if (tabId == "payouts") listOf("الشهادة", "تاريخ صرف العائد", "قيمة العائد", "ملاحظات") else listOf("اسم البنك", "رقم الشهادة", "المبلغ الأصلي", "معدل العائد السنوي", "مدة الشهادة", "دورية صرف العائد", "تاريخ الإصدار", "تاريخ الاستحقاق", "الملاحظات")
     "current_account" -> listOf("نوع الحركة: إيداع أو سحب", "الوصف", "المبلغ", "التاريخ")
-    "car_income" -> listOf("تاريخ الرحلة", "نوع الرحلة", "الأجرة", "ملاحظات الرحلة")
+    "car_income" -> if (tabId == "trip_report") listOf("تاريخ البداية", "تاريخ النهاية", "نوع الرحلة", "بحث") else listOf("تاريخ الرحلة", "نوع الرحلة", "الأجرة", "ملاحظات الرحلة")
     "reports" -> listOf("تاريخ البداية", "تاريخ النهاية", "القسم", "الطالب (عند الحاجة)")
     "backup" -> listOf("ملف النسخة الاحتياطية", "إصدار المخطط", "تاريخ التصدير", "المجموعات التي ستُستبدل")
     else -> listOf("التصنيف", "المبلغ", "التاريخ", "طريقة الدفع", "الملاحظات")
@@ -92,7 +92,6 @@ fun CostWorkspaceScreen(
     var selectedSection by remember { mutableStateOf<String?>(null) }
     var selectedTab by remember { mutableStateOf("") }
     var showDesignNotice by remember { mutableStateOf(false) }
-    var searchText by remember { mutableStateOf("") }
     val section = costSections.firstOrNull { it.id == selectedSection }
     val tabs = section?.let { tabsFor(it.id) }.orEmpty()
     val activeTab = tabs.firstOrNull { it.id == selectedTab } ?: tabs.firstOrNull()
@@ -100,7 +99,6 @@ fun CostWorkspaceScreen(
     BackHandler(enabled = selectedSection != null) {
         selectedSection = null
         selectedTab = ""
-        searchText = ""
     }
 
     Scaffold(
@@ -112,7 +110,6 @@ fun CostWorkspaceScreen(
                     if (selectedSection != null) {
                         selectedSection = null
                         selectedTab = ""
-                        searchText = ""
                     } else onNavigateBack()
                 }) { Text("‹", color = CostInk, fontSize = 30.sp, fontWeight = FontWeight.Bold) }
                 Column(Modifier.weight(1f)) {
@@ -195,7 +192,7 @@ fun CostWorkspaceScreen(
                     }
                 }
                 item {
-                    OutlinedTextField(value = searchText, onValueChange = { searchText = it }, modifier = Modifier.fillMaxWidth(), singleLine = true, label = { Text("بحث في " + section.title) }, placeholder = { Text("الاسم أو التصنيف أو الملاحظات") }, shape = RoundedCornerShape(13.dp))
+                    OutlinedTextField(value = "", onValueChange = {}, readOnly = true, modifier = Modifier.fillMaxWidth(), singleLine = true, label = { Text("بحث في " + section.title) }, placeholder = { Text("سيُفعّل البحث في المرحلة الثانية") }, shape = RoundedCornerShape(13.dp))
                 }
                 item {
                     Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.fillMaxWidth()) {
@@ -213,7 +210,9 @@ fun CostWorkspaceScreen(
                     val formTitle = "نموذج البيانات — " + (activeTab?.title ?: "السجلات")
                     Text(if (section.id == "reports") "معاينة التقرير" else if (section.id == "backup") "إجراءات النسخ الاحتياطي" else formTitle, color = CostInk, fontSize = 16.sp, fontWeight = FontWeight.Bold)
                 }
-                if (section.id == "reports") {
+                if (activeTab?.id == "records" || activeTab?.id == "list" || activeTab?.id == "trips") {
+                    item { RecordsPreviewDesign(section.title, activeTab?.title.orEmpty()) }
+                } else if (section.id == "reports") {
                     item { ReportPreviewDesign { showDesignNotice = true } }
                 } else if (section.id == "backup") {
                     item { BackupPreviewDesign(activeTab?.id.orEmpty()) { showDesignNotice = true } }
@@ -242,6 +241,28 @@ fun CostWorkspaceScreen(
 
     if (showDesignNotice) {
         AlertDialog(onDismissRequest = { showDesignNotice = false }, title = { Text("معاينة المرحلة الأولى") }, text = { Text("هذا العنصر معروض لمراجعة التصميم فقط. سيتم تفعيل الحفظ والعمليات والحسابات في المرحلة الثانية بعد اعتماد الشاشات.") }, confirmButton = { TextButton(onClick = { showDesignNotice = false }) { Text("حسنًا") } }, containerColor = Color.White)
+    }
+}
+
+@Composable
+private fun RecordsPreviewDesign(sectionTitle: String, tabTitle: String) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        border = BorderStroke(1.dp, CostBorder),
+        shape = RoundedCornerShape(15.dp)
+    ) {
+        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(9.dp)) {
+            Text(tabTitle + " — " + sectionTitle, color = CostInk, fontWeight = FontWeight.Bold)
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Text("التاريخ", color = CostMuted, fontSize = 10.sp)
+                Text("البيان", color = CostMuted, fontSize = 10.sp)
+                Text("المبلغ", color = CostMuted, fontSize = 10.sp)
+            }
+            Divider(color = CostBorder)
+            Text("لا توجد سجلات فعلية معروضة في معاينة التصميم.", color = CostMuted, fontSize = 11.sp)
+            Text("سيظهر هنا جدول السجلات مع إجراءات العرض والتعديل والحذف بعد تفعيل المرحلة الثانية.", color = CostMuted, fontSize = 10.sp)
+        }
     }
 }
 
