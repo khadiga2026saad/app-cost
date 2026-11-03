@@ -48,13 +48,18 @@ private val costSections = listOf(
 )
 
 private fun tabsFor(id: String): List<CostTab> = when (id) {
+    "house" -> listOf(CostTab("records", "سجلات المنزل"), CostTab("form", "إضافة مصروف منزلي"), CostTab("categories", "تصنيفات المنزل"))
+    "medical" -> listOf(CostTab("records", "السجلات الطبية"), CostTab("form", "إضافة سجل طبي"))
+    "work" -> listOf(CostTab("records", "سجلات العمل"), CostTab("form", "إضافة مصروف عمل"))
+    "personal" -> listOf(CostTab("records", "السجلات الشخصية"), CostTab("form", "إضافة مصروف شخصي"))
+    "associations" -> listOf(CostTab("association_list", "سجلات الجمعيات"), CostTab("form", "جمعية جديدة"), CostTab("installments", "الأقساط"), CostTab("payouts", "القبض"))
     "vehicles" -> listOf(CostTab("records", "بيانات السيارة"), CostTab("fuel", "الوقود"), CostTab("maintenance", "الصيانة"), CostTab("oils", "تغيير الزيت والفلاتر"), CostTab("accidents", "الحوادث"))
     "education" -> listOf(CostTab("students", "سجلات الطلاب"), CostTab("student_form", "بيانات طالب"), CostTab("student_expenses", "مصروفات الطلاب"))
+    "income" -> listOf(CostTab("sources", "مصادر الدخل"), CostTab("form", "إضافة مصدر دخل"))
     "certificates" -> listOf(CostTab("list", "الشهادات المسجلة"), CostTab("form", "بيانات الشهادة"), CostTab("payouts", "العوائد"))
-    "associations" -> listOf(CostTab("association_list", "سجلات الجمعيات"), CostTab("form", "جمعية جديدة"), CostTab("installments", "الأقساط"), CostTab("payouts", "القبض"))
     "current_account" -> listOf(CostTab("movements", "كل الحركات"), CostTab("deposits", "إضافة إيداع"), CostTab("withdrawals", "إضافة سحب"))
     "car_income" -> listOf(CostTab("trips", "سجل الرحلات"), CostTab("add_trip", "تسجيل رحلة"), CostTab("trip_report", "تقرير الرحلات"))
-    "reports" -> listOf(CostTab("daily", "يومي"), CostTab("weekly", "أسبوعي"), CostTab("monthly", "شهري"))
+    "reports" -> listOf(CostTab("daily", "تقرير يومي"), CostTab("weekly", "تقرير أسبوعي"), CostTab("monthly", "تقرير شهري"))
     "backup" -> listOf(CostTab("export", "تصدير نسخة"), CostTab("restore", "استعادة نسخة"))
     else -> listOf(CostTab("records", "السجلات"), CostTab("form", "نموذج الإدخال"))
 }
@@ -92,15 +97,15 @@ private fun fieldsFor(sectionId: String, tabId: String): List<String> = when (se
 }
 
 private fun choicesFor(sectionId: String, tabId: String): List<String> = when (sectionId) {
-    "house" -> listOf("إفطار", "غداء", "عشاء", "إصلاحات", "أجهزة منزلية", "أثاث", "فواتير", "منظفات", "أخرى")
-    "work" -> listOf("أدوات مكتبية", "صيانة أجهزة", "اشتراكات برامج", "ضيافة", "انتقالات", "شحن وتوصيل", "أخرى")
-    "personal" -> listOf("مأكولات ومشروبات", "انتقالات", "ملابس", "صحة وعناية", "ترفيه", "هدايا", "اشتراكات", "فواتير", "أخرى")
+    "house" -> listOf("إفطار", "غداء", "عشاء", "إصلاحات كهرباء وسباكة ودهانات", "أجهزة منزلية", "أثاث ومفروشات", "فواتير", "منظفات ومستلزمات", "أخرى", "نقدي", "Visa / Mastercard", "تحويل بنكي / Instapay", "محفظة إلكترونية", "شيك / آجل")
+    "work" -> listOf("أدوات مكتبية", "صيانة أجهزة العمل", "اشتراكات برامج", "ضيافة واجتماعات", "انتقالات العمل", "شحن وتوصيل", "أخرى")
+    "personal" -> listOf("مأكولات ومشروبات", "انتقالات", "ملابس", "صحة وعناية شخصية", "ترفيه", "هدايا", "اشتراكات شخصية", "فواتير واتصالات", "أخرى", "نقدي", "Visa / Mastercard", "تحويل بنكي / Instapay", "محفظة إلكترونية", "شيك / آجل")
     "vehicles" -> when (tabId) {
         "fuel" -> listOf("بنزين 80", "بنزين 92", "بنزين 95", "سولار", "غاز طبيعي", "شحن كهربائي")
         "oils" -> listOf("زيوت", "فلاتر", "Mobil", "متابعة 5,000 كم")
         else -> emptyList()
     }
-    "education" -> if (tabId == "student_form") listOf("رياض أطفال", "ابتدائي", "إعدادي", "ثانوي", "جامعة") else listOf("دروس", "شخصي", "انتقالات", "مدرسة", "كتب")
+    "education" -> if (tabId == "student_form") listOf("رياض أطفال", "ابتدائي", "إعدادي", "ثانوي", "جامعة") else listOf("دروس خصوصية", "شخصي", "انتقالات", "مصروفات مدرسية", "كتب ومذكرات", "أتوبيس المدرسة", "مستلزمات", "أخرى")
     "income" -> listOf("راتب", "دخل إضافي", "مكافأة", "استثمار", "أخرى")
     "certificates" -> if (tabId == "form") listOf("6 أشهر", "سنة", "سنتان", "3 سنوات", "5 سنوات", "شهري", "ربع سنوي", "نصف سنوي", "سنوي", "عند الاستحقاق") else emptyList()
     "car_income" -> if (tabId == "add_trip") listOf("نقدي", "Uber", "DiDi", "inDrive", "خاص") else if (tabId == "trip_report") listOf("الكل", "نقدي", "Uber", "DiDi", "inDrive", "خاص") else emptyList()
