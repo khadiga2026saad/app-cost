@@ -436,7 +436,7 @@ private fun ExpenseEntryPreview(sectionId: String, tabId: String) {
                     PreviewInput("السعر", value("السعر"), numeric = true) { setValue("السعر", it) }
                     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         PreviewInput("قراءة العداد", value("العداد"), numeric = true, modifier = Modifier.weight(1f)) { setValue("العداد", it) }
-                        IconButton(onClick = { }) { Icon(Icons.Outlined.CameraAlt, contentDescription = "تصوير قراءة العداد", tint = CostGoldDark) }
+                        IconButton(onClick = { }, enabled = false) { Icon(Icons.Outlined.CameraAlt, contentDescription = "تصوير قراءة العداد — يتفعل في مرحلة لاحقة", tint = CostGoldDark) }
                     }
                     PreviewDateInput("التاريخ", value("التاريخ")) { setValue("التاريخ", it) }
                     PreviewInput("ملاحظات", value("ملاحظات"), multiline = true) { setValue("ملاحظات", it) }
@@ -520,7 +520,8 @@ private fun ExpenseEntryPreview(sectionId: String, tabId: String) {
                     PreviewInput("اسم الطالب", value("اسم الطالب")) { setValue("اسم الطالب", it) }
                     PreviewDropdown("المرحلة التعليمية", listOf("رياض أطفال", "ابتدائي", "إعدادي", "ثانوي", "جامعة"), value("المرحلة").ifBlank { "ابتدائي" }) { setValue("المرحلة", it) }
                     PreviewInput("العمر", value("العمر"), numeric = true) { setValue("العمر", it) }
-                    PreviewInput("رقم مرجعي (اختياري)", value("رقم مرجعي")) { setValue("رقم مرجعي", it) }
+                    PreviewInput("الرقم القومي أو المرجعي — 14 رقمًا", value("الرقم القومي أو المرجعي"), numeric = true) { setValue("الرقم القومي أو المرجعي", it.filter(Char::isDigit).take(14)) }
+                    Text("هذا الرقم مطلوب ويتكون من 14 رقمًا.", color = CostMuted, fontSize = 10.sp)
                 }
                 "student_edit" -> {
                     PreviewDropdown("اختاري الطالب المراد تعديله", listOf("لا يوجد طلاب مسجلون في المعاينة"), value("الطالب").ifBlank { "لا يوجد طلاب مسجلون في المعاينة" }) { setValue("الطالب", it) }
