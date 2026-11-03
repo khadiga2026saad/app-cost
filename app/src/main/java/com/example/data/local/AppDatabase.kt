@@ -6,8 +6,6 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
-import com.example.core.DateUtils
-import com.example.core.MoneyUtils
 import com.example.data.local.dao.CertificateDao
 import com.example.data.local.dao.CurrentAccountDao
 import com.example.data.local.dao.ExpenseDao
@@ -35,9 +33,6 @@ import com.example.data.local.entities.VehicleFuelLogEntity
 import com.example.data.local.entities.VehicleMaintenanceLogEntity
 import com.example.data.local.entities.VehicleOilLogEntity
 import com.example.data.local.entities.UserEntity
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 
 @Database(
     entities = [
@@ -99,7 +94,6 @@ abstract class AppDatabase : RoomDatabase() {
                     "smart_cost_pro_database"
                 )
                     .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
-                    .addCallback(DatabaseCallback())
                     .build()
                 INSTANCE = instance
                 instance
