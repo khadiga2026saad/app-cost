@@ -94,6 +94,7 @@ fun VehiclesScreen(
 
     var showAddFuelDialog by remember { mutableStateOf(false) }
     var showAddMaintenanceDialog by remember { mutableStateOf(false) }
+    var showOilDesignNotice by remember { mutableStateOf(false) }
     var logToDelete by remember { mutableStateOf<VehicleLogItem?>(null) }
 
     val currentVehicle = vehicles.getOrNull(selectedVehicleIndex)
@@ -280,36 +281,46 @@ fun VehiclesScreen(
                     }
                 }
 
-                // Action buttons: Add Fuel, Add Maintenance
+                // UI-only action row: oil tracking is presented now and activated in phase two.
                 item {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        Button(
-                            onClick = { showAddFuelDialog = true },
-                            colors = ButtonDefaults.buttonColors(containerColor = BlackPrimary, contentColor = Color.White),
-                            shape = RoundedCornerShape(12.dp),
-                            modifier = Modifier
-                                .weight(1f)
-                                .testTag("btn_add_fuel_log")
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            Icon(Icons.Default.LocalGasStation, contentDescription = null, tint = GoldPrimary, modifier = Modifier.size(18.dp))
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text("تسجيل وقود")
-                        }
-
-                        Button(
-                            onClick = { showAddMaintenanceDialog = true },
-                            colors = ButtonDefaults.buttonColors(containerColor = GoldPrimary, contentColor = BlackPrimary),
-                            shape = RoundedCornerShape(12.dp),
-                            modifier = Modifier
-                                .weight(1f)
-                                .testTag("btn_add_maintenance_log")
-                        ) {
-                            Icon(Icons.Default.Build, contentDescription = null, tint = BlackPrimary, modifier = Modifier.size(18.dp))
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text("تسجيل صيانة")
+                            Button(
+                                onClick = { showAddFuelDialog = true },
+                                colors = ButtonDefaults.buttonColors(containerColor = BlackPrimary, contentColor = Color.White),
+                                shape = RoundedCornerShape(12.dp),
+                                modifier = Modifier.weight(1f).testTag("btn_add_fuel_log"),
+                                contentPadding = PaddingValues(horizontal = 6.dp, vertical = 10.dp)
+                            ) {
+                                Icon(Icons.Default.LocalGasStation, contentDescription = null, tint = GoldPrimary, modifier = Modifier.size(17.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("وقود", maxLines = 1)
+                            }
+                            Button(
+                                onClick = { showAddMaintenanceDialog = true },
+                                colors = ButtonDefaults.buttonColors(containerColor = GoldPrimary, contentColor = BlackPrimary),
+                                shape = RoundedCornerShape(12.dp),
+                                modifier = Modifier.weight(1f).testTag("btn_add_maintenance_log"),
+                                contentPadding = PaddingValues(horizontal = 6.dp, vertical = 10.dp)
+                            ) {
+                                Icon(Icons.Default.Build, contentDescription = null, tint = BlackPrimary, modifier = Modifier.size(17.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("صيانة", maxLines = 1)
+                            }
+                            OutlinedButton(
+                                onClick = { showOilDesignNotice = true },
+                                shape = RoundedCornerShape(12.dp),
+                                border = BorderStroke(1.dp, GoldPrimary),
+                                modifier = Modifier.weight(1f).testTag("btn_add_oil_log"),
+                                contentPadding = PaddingValues(horizontal = 6.dp, vertical = 10.dp)
+                            ) {
+                                Icon(Icons.Default.Opacity, contentDescription = null, tint = GoldDark, modifier = Modifier.size(17.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("زيوت", maxLines = 1, color = BlackPrimary)
+                            }
                         }
                     }
                 }
@@ -317,7 +328,7 @@ fun VehiclesScreen(
                 // Logs list header
                 item {
                     Text(
-                        text = "سجل عمليات الوقود والصيانة",
+                        text = "سجل عمليات الوقود والصيانة والزيوت",
                         style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold, color = BlackPrimary)
                     )
                 }
@@ -391,6 +402,15 @@ fun VehiclesScreen(
     }
 
     // Add Maintenance Log Dialog
+    if (showOilDesignNotice) {
+        AlertDialog(
+            onDismissRequest = { showOilDesignNotice = false },
+            title = { Text("سجل الزيوت", fontWeight = FontWeight.Bold) },
+            text = { Text("تمت إضافة موضع سجل الزيوت إلى التصميم. سيتم تفعيل التسجيل والحفظ وربطه بالمركبة في المرحلة الثانية.") },
+            confirmButton = { TextButton(onClick = { showOilDesignNotice = false }) { Text("حسنًا") } }
+        )
+    }
+
     if (showAddMaintenanceDialog && currentVehicle != null) {
         MaintenanceLogFormDialog(
             vehicle = currentVehicle,
