@@ -324,15 +324,7 @@ fun SmartCostProApp(
             )
         } else if (showingCostCategories) {
             CostWorkspaceScreen(
-                viewModel = viewModel,
-                onNavigateBack = { showingCostCategories = false; currentScreen = Screen.DASHBOARD },
-                onAccountClick = { showingCostCategories = false; showingAccountSettings = true },
-                onLogout = {
-                    FirebaseAuth.getInstance().signOut()
-                    authPrefs.edit().putBoolean("guest_mode", false).apply()
-                    isInWorkspace = false
-                    showingCostCategories = false
-                }
+                onNavigateBack = { showingCostCategories = false; currentScreen = Screen.DASHBOARD }
             )
         } else if (currentScreen == Screen.DASHBOARD) {
             HomeScreen(
