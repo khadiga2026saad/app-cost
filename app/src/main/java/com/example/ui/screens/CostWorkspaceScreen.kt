@@ -93,7 +93,8 @@ private fun choicesFor(sectionId: String, tabId: String): List<String> = when (s
     "education" -> if (tabId == "student_form") listOf("رياض أطفال", "ابتدائي", "إعدادي", "ثانوي", "جامعة") else listOf("دروس", "شخصي", "انتقالات", "مدرسة", "كتب")
     "income" -> listOf("راتب", "دخل إضافي", "مكافأة", "استثمار", "أخرى")
     "certificates" -> if (tabId == "form") listOf("6 أشهر", "سنة", "سنتان", "3 سنوات", "5 سنوات", "شهري", "ربع سنوي", "نصف سنوي", "سنوي", "عند الاستحقاق") else emptyList()
-    "car_income" -> if (tabId == "add_trip") listOf("نقدي", "Uber", "DiDi", "inDrive", "خاص") else emptyList()
+    "car_income" -> if (tabId == "add_trip") listOf("نقدي", "Uber", "DiDi", "inDrive", "خاص") else if (tabId == "trip_report") listOf("الكل", "نقدي", "Uber", "DiDi", "inDrive", "خاص") else emptyList()
+    "reports" -> listOf("الكل", "الدخل", "المنزل", "الشخصي", "الجمعيات", "المركبات", "التعليم")
     else -> emptyList()
 }
 
@@ -276,6 +277,10 @@ private fun DashboardSummaryDesign(onAction: () -> Unit) {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             SummaryMetric("صافي الدخل", "—", Modifier.weight(1f))
             SummaryMetric("نسبة الادخار", "—", Modifier.weight(1f))
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            SummaryMetric("نسبة المصروفات", "—", Modifier.weight(1f))
+            SummaryMetric("تكاليف المركبات", "—", Modifier.weight(1f))
         }
         Card(colors = CardDefaults.cardColors(containerColor = Color.White), border = BorderStroke(1.dp, CostBorder), shape = RoundedCornerShape(14.dp)) {
             Column(Modifier.padding(13.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
