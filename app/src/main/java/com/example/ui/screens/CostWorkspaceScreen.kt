@@ -341,6 +341,7 @@ private fun DashboardSummaryDesign(onAction: () -> Unit) {
 @Composable
 private fun ExpenseEntryPreview(sectionId: String, tabId: String) {
     var values by remember(sectionId, tabId) { mutableStateOf(emptyMap<String, String>()) }
+    var oilMode by remember(sectionId, tabId) { mutableStateOf("الزيوت") }
     fun value(label: String) = values[label].orEmpty()
     fun setValue(label: String, newValue: String) { values = values + (label to newValue) }
 
@@ -388,11 +389,20 @@ private fun ExpenseEntryPreview(sectionId: String, tabId: String) {
                     Text("إجمالي الصيانة = المستلزمات + الأجور (يُفعّل الحساب في المرحلة الثانية).", color = CostMuted, fontSize = 11.sp)
                 }
                 "oils" -> {
-                    PreviewDropdown("نوع خدمة الزيت أو الفلتر", oilTypes, value("نوع الخدمة").ifBlank { oilTypes.first() }) { setValue("نوع الخدمة", it) }
-                    PreviewDropdown("العلامة التجارية", oilBrands, value("العلامة التجارية").ifBlank { oilBrands.first() }) { setValue("العلامة التجارية", it) }
-                    if (value("العلامة التجارية") == "أخرى") PreviewInput("اسم العلامة التجارية", value("اسم العلامة التجارية")) { setValue("اسم العلامة التجارية", it) }
-                    PreviewInput("اسم المنتج", value("اسم المنتج")) { setValue("اسم المنتج", it) }
-                    PreviewDropdown("فترة التغيير المقترحة", listOf("5,000 كم", "10,000 كم"), value("فترة التغيير").ifBlank { "5,000 كم" }) { setValue("فترة التغيير", it) }
+                    Text("نوع السجل", color = CostInk, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        listOf("الزيوت", "الفلاتر").forEach { mode ->
+                            OutlinedButton(onClick = { oilMode = mode }, modifier = Modifier.weight(1f), colors = ButtonDefaults.outlinedButtonColors(containerColor = if (oilMode == mode) CostInk else Color.White, contentColor = if (oilMode == mode) CostGold else CostInk), border = BorderStroke(1.dp, CostGold), shape = RoundedCornerShape(11.dp)) { Text(mode, fontWeight = FontWeight.Bold) }
+                        }
+                    }
+                    val serviceOptions = if (oilMode == "الزيوت") oilTypes.filter { it.contains("زيت") || it.contains("غسيل") || it.contains("سائل") || it.contains("تشحيم") } else listOf("تغيير فلتر زيت المحرك", "تغيير فلتر زيت الفتيس", "تغيير فلتر هواء المحرك", "تغيير فلتر تكييف الصالون", "تغيير فلتر الوقود (بنزين / سولار)")
+                    PreviewDropdown("نوع الخدمة", serviceOptions, value("نوع الخدمة").ifBlank { serviceOptions.first() }) { setValue("نوع الخدمة", it) }
+                    if (oilMode == "الزيوت" && value("نوع الخدمة").ifBlank { serviceOptions.first() } == "تغيير زيت المحرك") {
+                        PreviewDropdown("نوع تغيير زيت المحرك", listOf("زيت 5,000 كم", "زيت 10,000 كم"), value("فترة التغيير").ifBlank { "زيت 5,000 كم" }) { setValue("فترة التغيير", it) }
+                        PreviewDropdown("نوع / ماركة الزيت", oilBrands, value("العلامة التجارية").ifBlank { oilBrands.first() }) { setValue("العلامة التجارية", it) }
+                        if (value("العلامة التجارية") == "أخرى") PreviewInput("اسم العلامة التجارية", value("اسم العلامة التجارية")) { setValue("اسم العلامة التجارية", it) }
+                    }
+                    PreviewInput("اسم المنتج / الموديل (اختياري)", value("اسم المنتج")) { setValue("اسم المنتج", it) }
                     PreviewInput("الكمية", value("الكمية"), numeric = true) { setValue("الكمية", it) }
                     PreviewInput("السعر", value("السعر"), numeric = true) { setValue("السعر", it) }
                     PreviewInput("قراءة العداد", value("العداد"), numeric = true) { setValue("العداد", it) }
