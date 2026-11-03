@@ -373,7 +373,7 @@ private fun ExpenseEntryPreview(sectionId: String, tabId: String) {
                 PreviewInput("الملاحظات", value("الملاحظات"), multiline = true) { setValue("الملاحظات", it) }
             }
             "medical" -> {
-                PreviewDropdown("فرد الأسرة", listOf("اختاري فرد الأسرة", "إضافة فرد أسرة لاحقًا"), value("فرد الأسرة").ifBlank { "اختاري فرد الأسرة" }) { setValue("فرد الأسرة", it) }
+                PreviewInput("اسم الشخص", value("اسم الشخص")) { setValue("اسم الشخص", it) }
                 PreviewInput("التشخيص", value("التشخيص"), multiline = true) { setValue("التشخيص", it) }
                 PreviewInput("تكلفة الكشف أو الفحص", value("تكلفة الكشف أو الفحص"), numeric = true) { setValue("تكلفة الكشف أو الفحص", it) }
                 PreviewInput("تكلفة الدواء / العلاج", value("تكلفة الدواء / العلاج"), numeric = true) { setValue("تكلفة الدواء / العلاج", it) }
@@ -452,14 +452,20 @@ private fun ExpenseEntryPreview(sectionId: String, tabId: String) {
                     PreviewInput("ملاحظات", value("ملاحظات"), multiline = true) { setValue("ملاحظات", it) }
                 }
                 else -> {
-                    PreviewInput("اسم السيارة", value("اسم السيارة")) { setValue("اسم السيارة", it) }
-                    PreviewInput("الماركة", value("الماركة")) { setValue("الماركة", it) }
-                    PreviewInput("الطراز", value("الطراز")) { setValue("الطراز", it) }
+                    PreviewInput("اسم السيارة / اللقب", value("اسم السيارة")) { setValue("اسم السيارة", it) }
+                    PreviewInput("الماركة / الشركة المصنعة", value("الماركة")) { setValue("الماركة", it) }
+                    PreviewInput("الطراز / الفئة", value("الطراز")) { setValue("الطراز", it) }
                     PreviewInput("الموديل", value("الموديل")) { setValue("الموديل", it) }
                     PreviewInput("سنة الصنع", value("سنة الصنع"), numeric = true) { setValue("سنة الصنع", it) }
                     PreviewInput("اللون", value("اللون")) { setValue("اللون", it) }
+                    PreviewDropdown("نوع السيارة", listOf("سيدان", "هاتشباك", "SUV", "MPV", "نقل", "ميكروباص", "أخرى"), value("نوع السيارة").ifBlank { "سيدان" }) { setValue("نوع السيارة", it) }
+                    PreviewDropdown("ناقل الحركة", listOf("مانيوال", "أوتوماتيك", "CVT", "أخرى"), value("ناقل الحركة").ifBlank { "مانيوال" }) { setValue("ناقل الحركة", it) }
+                    PreviewDropdown("نوع الوقود", vehicleFuel, value("نوع الوقود").ifBlank { "بنزين 92" }) { setValue("نوع الوقود", it) }
+                    PreviewInput("سعة المحرك (اختياري)", value("سعة المحرك"), numeric = true) { setValue("سعة المحرك", it) }
                     PreviewInput("رقم اللوحة", value("رقم اللوحة")) { setValue("رقم اللوحة", it) }
                     PreviewInput("رقم الشاسيه (اختياري)", value("رقم الشاسيه")) { setValue("رقم الشاسيه", it) }
+                    PreviewInput("قراءة العداد الحالية", value("قراءة العداد الحالية"), numeric = true) { setValue("قراءة العداد الحالية", it) }
+                    PreviewInput("ملاحظات", value("ملاحظات"), multiline = true) { setValue("ملاحظات", it) }
                 }
             }
             "education" -> when (tabId) {
@@ -499,20 +505,21 @@ private fun ExpenseEntryPreview(sectionId: String, tabId: String) {
 
 @Composable
 private fun PreviewDateInput(label: String, value: String, onValueChange: (String) -> Unit) {
-    val context = androidx.compose.ui.platform.LocalContext.current
+    var showPicker by remember(label) { mutableStateOf(false) }
+    val initialMillis = remember(value) {
+        val parts = value.split("-")
+        if (parts.size == 3) {
+            val year = parts[0].toIntOrNull()
+            val month = parts[1].toIntOrNull()
+            val day = parts[2].toIntOrNull()
+            if (year != null && month != null && day != null) {
+                Calendar.getInstance().apply { set(year, month - 1, day, 12, 0, 0); set(Calendar.MILLISECOND, 0) }.timeInMillis
+            } else null
+        } else null
+    }
+    val pickerState = rememberDatePickerState(initialSelectedDateMillis = initialMillis)
     OutlinedButton(
-        onClick = {
-            val calendar = Calendar.getInstance()
-            val parts = value.split("-")
-            if (parts.size == 3) {
-                parts[0].toIntOrNull()?.let { calendar.set(Calendar.YEAR, it) }
-                parts[1].toIntOrNull()?.let { calendar.set(Calendar.MONTH, it - 1) }
-                parts[2].toIntOrNull()?.let { calendar.set(Calendar.DAY_OF_MONTH, it) }
-            }
-            DatePickerDialog(context, { _, year, month, day ->
-                onValueChange(String.format("%04d-%02d-%02d", year, month + 1, day))
-            }, calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH)).show()
-        },
+        onClick = { showPicker = true },
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
         border = BorderStroke(1.dp, CostBorder),
@@ -525,6 +532,25 @@ private fun PreviewDateInput(label: String, value: String, onValueChange: (Strin
                 Text(label, color = CostMuted, fontSize = 10.sp)
                 Text(value.ifBlank { "اختاري التاريخ من التقويم" }, color = CostInk, fontSize = 14.sp)
             }
+        }
+    }
+    if (showPicker) {
+        DatePickerDialog(
+            onDismissRequest = { showPicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    pickerState.selectedDateMillis?.let { millis ->
+                        val calendar = Calendar.getInstance().apply { timeInMillis = millis }
+                        onValueChange(String.format(java.util.Locale.US, "%04d-%02d-%02d", calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH) + 1, calendar.get(Calendar.DAY_OF_MONTH)))
+                    }
+                    showPicker = false
+                }) { Text("اختيار") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showPicker = false }) { Text("إلغاء") }
+            }
+        ) {
+            DatePicker(state = pickerState, showModeToggle = false)
         }
     }
 }
