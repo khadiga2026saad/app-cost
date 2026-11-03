@@ -354,6 +354,7 @@ fun SmartCostProApp(
                     }
                 },
                 onAddNewCategory = { /* Requires approved category persistence before activation. */ },
+                onAccountClick = { showingCostCategories = false; showingAccountSettings = true },
                 onLogout = { FirebaseAuth.getInstance().signOut(); authPrefs.edit().putBoolean("guest_mode", false).apply(); isInWorkspace = false; showingCostCategories = false }
             )
         } else if (currentScreen == Screen.DASHBOARD) {
