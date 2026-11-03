@@ -40,6 +40,7 @@ fun MainCategoriesScreen(
     onNavigateBack: () -> Unit = {},
     onCategoryClick: (String) -> Unit = {},
     onAddNewCategory: () -> Unit = {},
+    onAccountClick: () -> Unit = {},
     onLogout: () -> Unit = {}
 ) {
     val groups = listOf(
@@ -73,7 +74,7 @@ fun MainCategoriesScreen(
                     NavigationBarItem(selected = false, onClick = onNavigateBack, icon = { Icon(Icons.Outlined.Home, null) }, label = { Text("الرئيسية") })
                     NavigationBarItem(selected = true, onClick = {}, icon = { Icon(Icons.Outlined.ReceiptLong, null) }, label = { Text("الأقسام") })
                     NavigationBarItem(selected = false, onClick = { onCategoryClick("reports") }, icon = { Icon(Icons.Outlined.BarChart, null) }, label = { Text("التقارير") })
-                    NavigationBarItem(selected = false, onClick = {}, icon = { Icon(Icons.Outlined.Person, null) }, label = { Text("الحساب") })
+                    NavigationBarItem(selected = false, onClick = onAccountClick, icon = { Icon(Icons.Outlined.Person, null) }, label = { Text("الحساب") })
                 }
             }
         ) { padding ->
