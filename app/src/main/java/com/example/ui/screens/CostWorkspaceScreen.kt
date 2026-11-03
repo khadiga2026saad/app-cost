@@ -59,6 +59,16 @@ private fun tabsFor(id: String): List<CostTab> = when (id) {
     else -> listOf(CostTab("records", "السجلات"), CostTab("form", "نموذج الإدخال"))
 }
 
+private fun exportActionsFor(sectionId: String, tabId: String): List<String> = when (sectionId) {
+    "house", "work", "personal" -> listOf("تصدير CSV", "طباعة")
+    "medical" -> listOf("تصدير Excel", "طباعة")
+    "vehicles" -> if (tabId == "oils") listOf("PDF", "Excel", "Word", "طباعة") else emptyList()
+    "education" -> listOf("تصدير HTML / XLS", "طباعة")
+    "car_income" -> listOf("Excel", "Word", "طباعة", "نسخ نص التقرير")
+    "reports" -> listOf("CSV", "طباعة", "حفظ في الخزنة", "إغلاق")
+    else -> emptyList()
+}
+
 private fun fieldsFor(sectionId: String, tabId: String): List<String> = when (sectionId) {
     "house" -> listOf("التصنيف", "تصنيف مخصص (عند الحاجة)", "المبلغ", "التاريخ", "طريقة الدفع", "نوع الدفع: مستلزمات أو أجور", "الملاحظات")
     "medical" -> listOf("فرد الأسرة", "اسم المنشأة الطبية", "نوع المنشأة الطبية", "الحالة", "التشخيص", "تكلفة الكشف أو الفحص", "تكلفة الدواء", "التاريخ", "ملاحظات طبية")
@@ -209,17 +219,27 @@ fun CostWorkspaceScreen(
                 item {
                     OutlinedTextField(value = "", onValueChange = {}, readOnly = true, modifier = Modifier.fillMaxWidth(), singleLine = true, label = { Text("بحث في " + section.title) }, placeholder = { Text("سيُفعّل البحث في المرحلة الثانية") }, shape = RoundedCornerShape(13.dp))
                 }
-                item {
-                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.fillMaxWidth()) {
-                        ActionOutline("إضافة", Modifier.weight(1f)) { showDesignNotice = true }
-                        ActionOutline("تعديل", Modifier.weight(1f)) { showDesignNotice = true }
-                        ActionOutline("حذف", Modifier.weight(1f)) { showDesignNotice = true }
+                if (section.id != "reports" && section.id != "backup") {
+                    item {
+                        LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.fillMaxWidth()) {
+                            items(listOf("إضافة", "تعديل", "حذف", "تصفية")) { action ->
+                                OutlinedButton(onClick = { showDesignNotice = true }, border = BorderStroke(1.dp, CostGold), contentPadding = PaddingValues(horizontal = 12.dp, vertical = 7.dp)) {
+                                    Text(action, color = CostInk, fontSize = 11.sp)
+                                }
+                            }
+                        }
                     }
-                    Spacer(Modifier.height(5.dp))
-                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.fillMaxWidth()) {
-                        ActionOutline("تصفية", Modifier.weight(1f)) { showDesignNotice = true }
-                        ActionOutline("تصدير", Modifier.weight(1f)) { showDesignNotice = true }
-                        ActionOutline("طباعة", Modifier.weight(1f)) { showDesignNotice = true }
+                }
+                val exportActions = exportActionsFor(section.id, activeTab?.id.orEmpty())
+                if (exportActions.isNotEmpty()) {
+                    item {
+                        LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.fillMaxWidth()) {
+                            items(exportActions) { action ->
+                                OutlinedButton(onClick = { showDesignNotice = true }, border = BorderStroke(1.dp, CostBorder), contentPadding = PaddingValues(horizontal = 10.dp, vertical = 7.dp)) {
+                                    Text(action, color = CostInk, fontSize = 10.sp)
+                                }
+                            }
+                        }
                     }
                 }
                 item {
