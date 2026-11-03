@@ -81,6 +81,22 @@ private fun fieldsFor(sectionId: String, tabId: String): List<String> = when (se
     else -> listOf("التصنيف", "المبلغ", "التاريخ", "طريقة الدفع", "الملاحظات")
 }
 
+private fun choicesFor(sectionId: String, tabId: String): List<String> = when (sectionId) {
+    "house" -> listOf("إفطار", "غداء", "عشاء", "إصلاحات", "أجهزة منزلية", "أثاث", "فواتير", "منظفات", "أخرى")
+    "work" -> listOf("أدوات مكتبية", "صيانة أجهزة", "اشتراكات برامج", "ضيافة", "انتقالات", "شحن وتوصيل", "أخرى")
+    "personal" -> listOf("مأكولات ومشروبات", "انتقالات", "ملابس", "صحة وعناية", "ترفيه", "هدايا", "اشتراكات", "فواتير", "أخرى")
+    "vehicles" -> when (tabId) {
+        "fuel" -> listOf("بنزين 80", "بنزين 92", "بنزين 95", "سولار", "غاز طبيعي", "شحن كهربائي")
+        "oils" -> listOf("زيوت", "فلاتر", "Mobil", "متابعة 5,000 كم")
+        else -> emptyList()
+    }
+    "education" -> if (tabId == "student_form") listOf("رياض أطفال", "ابتدائي", "إعدادي", "ثانوي", "جامعة") else listOf("دروس", "شخصي", "انتقالات", "مدرسة", "كتب")
+    "income" -> listOf("راتب", "دخل إضافي", "مكافأة", "استثمار", "أخرى")
+    "certificates" -> if (tabId == "form") listOf("6 أشهر", "سنة", "سنتان", "3 سنوات", "5 سنوات", "شهري", "ربع سنوي", "نصف سنوي", "سنوي", "عند الاستحقاق") else emptyList()
+    "car_income" -> if (tabId == "add_trip") listOf("نقدي", "Uber", "DiDi", "inDrive", "خاص") else emptyList()
+    else -> emptyList()
+}
+
 @Composable
 fun CostWorkspaceScreen(
     onNavigateBack: () -> Unit,
@@ -218,6 +234,7 @@ fun CostWorkspaceScreen(
                     items(fieldsFor(section.id, activeTab?.id.orEmpty())) { field ->
                         OutlinedTextField(value = "", onValueChange = {}, modifier = Modifier.fillMaxWidth(), readOnly = true, label = { Text(field) }, placeholder = { Text("يظهر الحقل عند تفعيل الإدخال", fontSize = 10.sp) }, singleLine = !field.contains("ملاحظات"), minLines = if (field.contains("ملاحظات")) 2 else 1, shape = RoundedCornerShape(13.dp))
                     }
+                    item { OptionsPreview(choicesFor(section.id, activeTab?.id.orEmpty())) }
                     item {
                         Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Color.White), border = BorderStroke(1.dp, CostBorder), shape = RoundedCornerShape(15.dp)) {
                             Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -266,6 +283,24 @@ private fun DashboardSummaryDesign(onAction: () -> Unit) {
                 Text("أحدث العمليات", color = CostInk, fontWeight = FontWeight.Bold)
                 Text("التاريخ  |  البيان  |  القسم  |  المبلغ", color = CostMuted, fontSize = 10.sp)
                 Text("ستظهر القيم والسجلات الفعلية بعد ربط البيانات في المرحلة الثانية.", color = CostMuted, fontSize = 10.sp)
+            }
+        }
+    }
+}
+
+@Composable
+private fun OptionsPreview(options: List<String>) {
+    if (options.isNotEmpty()) {
+        Card(colors = CardDefaults.cardColors(containerColor = Color.White), border = BorderStroke(1.dp, CostBorder), shape = RoundedCornerShape(14.dp)) {
+            Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(7.dp)) {
+                Text("الاختيارات المتاحة", color = CostInk, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    items(options) { option ->
+                        Surface(shape = RoundedCornerShape(20.dp), color = Color(0xFFF8F1D9), border = BorderStroke(1.dp, CostBorder)) {
+                            Text(option, color = CostInk, fontSize = 10.sp, modifier = Modifier.padding(horizontal = 10.dp, vertical = 7.dp))
+                        }
+                    }
+                }
             }
         }
     }
