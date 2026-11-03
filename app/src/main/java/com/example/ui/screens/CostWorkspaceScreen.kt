@@ -467,6 +467,54 @@ private fun ExpenseEntryPreview(sectionId: String, tabId: String) {
                     PreviewInput("ملاحظات", value("ملاحظات"), multiline = true) { setValue("ملاحظات", it) }
                 }
             }
+            "income" -> {
+                PreviewInput("اسم مصدر الدخل", value("اسم مصدر الدخل")) { setValue("اسم مصدر الدخل", it) }
+                PreviewInput("المبلغ", value("المبلغ"), numeric = true) { setValue("المبلغ", it) }
+                PreviewDateInput("التاريخ", value("التاريخ")) { setValue("التاريخ", it) }
+                val incomeTypes = listOf("راتب", "دخل إضافي", "مكافأة", "استثمار", "أخرى")
+                PreviewDropdown("نوع الدخل", incomeTypes, value("نوع الدخل").ifBlank { incomeTypes.first() }) { setValue("نوع الدخل", it) }
+                PreviewInput("ملاحظات", value("ملاحظات"), multiline = true) { setValue("ملاحظات", it) }
+            }
+            "certificates" -> if (tabId == "payouts") {
+                PreviewDropdown("الشهادة", listOf("اختاري الشهادة المسجلة"), value("الشهادة").ifBlank { "اختاري الشهادة المسجلة" }) { setValue("الشهادة", it) }
+                PreviewDateInput("تاريخ صرف العائد", value("تاريخ صرف العائد")) { setValue("تاريخ صرف العائد", it) }
+                PreviewInput("قيمة العائد", value("قيمة العائد"), numeric = true) { setValue("قيمة العائد", it) }
+                PreviewInput("ملاحظات", value("ملاحظات"), multiline = true) { setValue("ملاحظات", it) }
+            } else {
+                PreviewInput("اسم البنك", value("اسم البنك")) { setValue("اسم البنك", it) }
+                PreviewInput("رقم الشهادة", value("رقم الشهادة")) { setValue("رقم الشهادة", it) }
+                PreviewInput("المبلغ الأصلي", value("المبلغ الأصلي"), numeric = true) { setValue("المبلغ الأصلي", it) }
+                PreviewInput("معدل العائد السنوي (%)", value("معدل العائد السنوي"), numeric = true) { setValue("معدل العائد السنوي", it) }
+                val durations = listOf("6 أشهر", "سنة", "سنتان", "3 سنوات", "5 سنوات")
+                PreviewDropdown("مدة الشهادة", durations, value("مدة الشهادة").ifBlank { durations[1] }) { setValue("مدة الشهادة", it) }
+                val frequencies = listOf("شهري", "ربع سنوي", "نصف سنوي", "سنوي", "عند الاستحقاق")
+                PreviewDropdown("دورية صرف العائد", frequencies, value("دورية صرف العائد").ifBlank { frequencies.first() }) { setValue("دورية صرف العائد", it) }
+                PreviewDateInput("تاريخ الإصدار", value("تاريخ الإصدار")) { setValue("تاريخ الإصدار", it) }
+                PreviewDateInput("تاريخ الاستحقاق", value("تاريخ الاستحقاق")) { setValue("تاريخ الاستحقاق", it) }
+                PreviewInput("الملاحظات", value("الملاحظات"), multiline = true) { setValue("الملاحظات", it) }
+            }
+            "current_account" -> {
+                Text(if (tabId == "deposits") "تسجيل إيداع في الحساب الجاري" else "تسجيل سحب من الحساب الجاري", color = CostInk, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                PreviewInput("الوصف", value("الوصف")) { setValue("الوصف", it) }
+                PreviewInput("المبلغ", value("المبلغ"), numeric = true) { setValue("المبلغ", it) }
+                PreviewDateInput("التاريخ", value("التاريخ")) { setValue("التاريخ", it) }
+                Text(if (tabId == "deposits") "سيُسجل الإيداع كحركة موجبة." else "سيُسجل السحب كحركة سالبة مرة واحدة.", color = CostMuted, fontSize = 10.sp)
+            }
+            "car_income" -> if (tabId == "add_trip") {
+                PreviewDateInput("تاريخ الرحلة", value("تاريخ الرحلة")) { setValue("تاريخ الرحلة", it) }
+                val tripTypes = listOf("نقدي", "Uber", "DiDi", "inDrive", "خاص")
+                PreviewDropdown("نوع الرحلة", tripTypes, value("نوع الرحلة").ifBlank { tripTypes.first() }) { setValue("نوع الرحلة", it) }
+                PreviewInput("الأجرة", value("الأجرة"), numeric = true) { setValue("الأجرة", it) }
+                PreviewInput("ملاحظات الرحلة", value("ملاحظات الرحلة"), multiline = true) { setValue("ملاحظات الرحلة", it) }
+            } else if (tabId == "trip_report") {
+                PreviewDateInput("تاريخ البداية", value("تاريخ البداية")) { setValue("تاريخ البداية", it) }
+                PreviewDateInput("تاريخ النهاية", value("تاريخ النهاية")) { setValue("تاريخ النهاية", it) }
+                PreviewDropdown("نوع الرحلة", listOf("الكل", "نقدي", "Uber", "DiDi", "inDrive", "خاص"), value("نوع الرحلة").ifBlank { "الكل" }) { setValue("نوع الرحلة", it) }
+                PreviewInput("بحث في الرحلات", value("بحث")) { setValue("بحث", it) }
+                Text("التقرير يعرض إجمالي الأجرة ومتوسطها وأعلى وأقل أجرة وعدد الرحلات؛ لا يُفترض حساب صافي ربح دون بيانات تكلفة موثقة.", color = CostMuted, fontSize = 10.sp)
+            } else {
+                Text("سيظهر سجل الرحلات المسجلة هنا مع إمكانية فتح الرحلة للتعديل أو الحذف.", color = CostMuted, fontSize = 11.sp)
+            }
             "education" -> when (tabId) {
                 "student_add" -> {
                     PreviewInput("اسم الطالب", value("اسم الطالب")) { setValue("اسم الطالب", it) }
