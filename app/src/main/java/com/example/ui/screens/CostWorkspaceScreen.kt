@@ -275,7 +275,7 @@ fun CostWorkspaceScreen(
                         Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Color.White), border = BorderStroke(1.dp, CostBorder), shape = RoundedCornerShape(15.dp)) {
                             Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                                 Text("السجلات المسجلة", color = CostInk, fontWeight = FontWeight.Bold)
-                                Text("مكان عرض السجلات ونتائجها بعد تفعيل الحفظ في المرحلة الثانية.", color = CostMuted, fontSize = 11.sp)
+                                Text("ستُعرض أحدث 10 سجلات في هذا القسم، مع إمكانية فتح السجل للتفاصيل بعد تفعيل البيانات.", color = CostMuted, fontSize = 11.sp)
                                 Text("المعاينة الحالية لا تحفظ أي بيانات.", color = CostMuted, fontSize = 10.sp)
                             }
                         }
@@ -404,8 +404,8 @@ private fun ExpenseEntryPreview(sectionId: String, tabId: String) {
                     PreviewDropdown("نوع الوقود / مصدر الطاقة", vehicleFuel, value("نوع الوقود").ifBlank { "بنزين 92" }) { setValue("نوع الوقود", it) }
                     PreviewInput("الكمية / عدد اللترات", value("الكمية"), numeric = true) { setValue("الكمية", it) }
                     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        PreviewInput("قراءة عداد السيارة", value("العداد"), numeric = true) { setValue("العداد", it) }
-                        IconButton(onClick = { }) { Icon(Icons.Outlined.CameraAlt, contentDescription = "تصوير قراءة العداد", tint = CostGoldDark) }
+                        PreviewInput("قراءة عداد السيارة", value("العداد"), numeric = true, modifier = Modifier.weight(1f)) { setValue("العداد", it) }
+                        IconButton(onClick = { }, enabled = false) { Icon(Icons.Outlined.CameraAlt, contentDescription = "تصوير قراءة العداد — يتفعل لاحقًا", tint = CostGoldDark) }
                     }
                     PreviewDateInput("تاريخ ووقت التزوّد", value("التاريخ والوقت")) { setValue("التاريخ والوقت", it) }
                     Text("زر الكاميرا مخصص لقراءة العداد تلقائيًا عند تنفيذ وظائف الكاميرا لاحقًا.", color = CostMuted, fontSize = 10.sp)
@@ -436,7 +436,7 @@ private fun ExpenseEntryPreview(sectionId: String, tabId: String) {
                     PreviewInput("الكمية", value("الكمية"), numeric = true) { setValue("الكمية", it) }
                     PreviewInput("السعر", value("السعر"), numeric = true) { setValue("السعر", it) }
                     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        PreviewInput("قراءة العداد", value("العداد"), numeric = true) { setValue("العداد", it) }
+                        PreviewInput("قراءة العداد", value("العداد"), numeric = true, modifier = Modifier.weight(1f)) { setValue("العداد", it) }
                         IconButton(onClick = { }) { Icon(Icons.Outlined.CameraAlt, contentDescription = "تصوير قراءة العداد", tint = CostGoldDark) }
                     }
                     PreviewDateInput("التاريخ", value("التاريخ")) { setValue("التاريخ", it) }
