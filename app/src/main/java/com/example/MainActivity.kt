@@ -184,6 +184,7 @@ fun SmartCostProApp(
     var currentScreen by remember { mutableStateOf(Screen.DASHBOARD) }
     var showingCostCategories by remember { mutableStateOf(false) }
     var showingAccountSettings by remember { mutableStateOf(false) }
+    var previewSection by remember { mutableStateOf<String?>(null) }
 
     // Dialog trigger flags when navigating from quick actions
     var triggerAddExpense by remember { mutableStateOf(false) }
@@ -228,8 +229,9 @@ fun SmartCostProApp(
         )
         val profile by profileViewModel.profile.collectAsStateWithLifecycle()
         // Handle Android system Back button: if not on DASHBOARD, return to DASHBOARD
-        BackHandler(enabled = showingAccountSettings || showingCostCategories || currentScreen != Screen.DASHBOARD) {
-            if (showingAccountSettings) showingAccountSettings = false
+        BackHandler(enabled = previewSection != null || showingAccountSettings || showingCostCategories || currentScreen != Screen.DASHBOARD) {
+            if (previewSection != null) previewSection = null
+            else if (showingAccountSettings) showingAccountSettings = false
             else if (showingCostCategories) showingCostCategories = false
             else currentScreen = Screen.DASHBOARD
         }
@@ -295,7 +297,12 @@ fun SmartCostProApp(
             }
             Box(Modifier.weight(1f)) {
         // When on DASHBOARD, HomeScreen provides its full dedicated Executive Header & Navigation
-        if (showingAccountSettings) {
+        if (previewSection != null) {
+            FinancialPreviewScreen(
+                sectionId = previewSection ?: "current_account",
+                onBack = { previewSection = null }
+            )
+        } else if (showingAccountSettings) {
             AccountSettingsScreen(
                 biometricActivity = biometricActivity,
                 profileViewModel = profileViewModel,
@@ -338,8 +345,10 @@ fun SmartCostProApp(
                             showingCostCategories = false
                             currentScreen = Screen.EXPENSES
                         }
-                        // Current account and rotating associations receive dedicated
-                        // presentation screens in the next UI-only design pass.
+                        "current_account", "gamaeya" -> {
+                            showingCostCategories = false
+                            previewSection = id
+                        }
                     }
                 },
                 onAddNewCategory = { /* Requires approved category persistence before activation. */ },
