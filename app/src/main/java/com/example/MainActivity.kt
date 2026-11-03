@@ -70,6 +70,7 @@ import com.example.ui.screens.AccountSettingsScreen
 import com.example.ui.screens.LoginScreen
 import com.example.ui.screens.DashboardScreen
 import com.example.ui.screens.ExpensesScreen
+import com.example.ui.screens.FinancialPreviewScreen
 import com.example.ui.screens.ExecutiveHeader
 import com.example.ui.screens.MainCategoriesScreen
 import com.example.ui.screens.HomeScreen
