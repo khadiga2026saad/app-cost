@@ -7,6 +7,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -74,6 +75,7 @@ fun MainCategoriesScreen(
                 NavigationBar(containerColor = CategoryPalette.white) {
                     NavigationBarItem(selected = false, onClick = onNavigateBack, icon = { Icon(Icons.Outlined.Home, null) }, label = { Text("الرئيسية") })
                     NavigationBarItem(selected = true, onClick = {}, icon = { Icon(Icons.Outlined.ReceiptLong, null) }, label = { Text("الأقسام") })
+                    NavigationBarItem(selected = false, onClick = {}, enabled = false, icon = { Icon(Icons.Filled.AutoAwesome, null) }, label = { Text("المستشار الذكي") })
                     NavigationBarItem(selected = false, onClick = { onCategoryClick("reports") }, icon = { Icon(Icons.Outlined.BarChart, null) }, label = { Text("التقارير") })
                     NavigationBarItem(selected = false, onClick = onAccountClick, icon = { Icon(Icons.Outlined.Person, null) }, label = { Text("الحساب") })
                 }
