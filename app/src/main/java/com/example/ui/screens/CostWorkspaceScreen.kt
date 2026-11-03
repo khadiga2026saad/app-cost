@@ -376,13 +376,6 @@ private fun CostSectionCard(section: CostSection, modifier: Modifier, onClick: (
 }
 
 @Composable
-private fun ActionOutline(label: String, modifier: Modifier, onClick: () -> Unit) {
-    OutlinedButton(onClick = onClick, modifier = modifier, contentPadding = PaddingValues(horizontal = 4.dp, vertical = 9.dp), shape = RoundedCornerShape(11.dp), border = BorderStroke(1.dp, CostGold)) {
-        Text(label, color = CostInk, fontSize = 10.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
-    }
-}
-
-@Composable
 private fun ReportPreviewDesign(onAction: () -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(9.dp)) {
         Row(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
