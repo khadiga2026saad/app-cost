@@ -124,7 +124,7 @@ fun CostWorkspaceScreen(
                         selectedSection = null
                         selectedTab = ""
                     } else onNavigateBack()
-                }) { Text("‹", color = CostInk, fontSize = 30.sp, fontWeight = FontWeight.Bold) }
+                }) { Icon(Icons.Outlined.ArrowForward, contentDescription = "رجوع", tint = CostInk) }
                 Column(Modifier.weight(1f)) {
                     Text(section?.title ?: "قسم التكاليف", color = CostInk, fontSize = 18.sp, fontWeight = FontWeight.Bold)
                     Text(section?.subtitle ?: "إدارة المصروفات والدخل والحسابات في مكان واحد", color = CostMuted, fontSize = 10.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
@@ -214,6 +214,7 @@ fun CostWorkspaceScreen(
                         ActionOutline("تعديل", Modifier.weight(1f)) { showDesignNotice = true }
                         ActionOutline("حذف", Modifier.weight(1f)) { showDesignNotice = true }
                     }
+                    Spacer(Modifier.height(5.dp))
                     Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.fillMaxWidth()) {
                         ActionOutline("تصفية", Modifier.weight(1f)) { showDesignNotice = true }
                         ActionOutline("تصدير", Modifier.weight(1f)) { showDesignNotice = true }
