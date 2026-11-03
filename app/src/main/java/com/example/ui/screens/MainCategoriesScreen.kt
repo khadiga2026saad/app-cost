@@ -1,171 +1,141 @@
 package com.example.ui.screens
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
-import androidx.compose.foundation.basicMarquee
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowForward
-import androidx.compose.material.icons.filled.AutoAwesome
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.example.R
 import com.example.ui.viewmodel.FinanceViewModel
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
-import kotlinx.coroutines.delay
 
 private object CategoryPalette {
- val background=Color(0xFFF9F9FF); val white=Color.White; val border=Color(0xFFE2E8F0)
- val ink=Color(0xFF0F172A); val muted=Color(0xFF64748B); val blue=Color(0xFF0284C7)
- val gold=Color(0xFFD4AF37); val green=Color(0xFF10B981)
+    val background = Color(0xFFF7F6F2)
+    val white = Color.White
+    val border = Color(0xFFE8DFC9)
+    val ink = Color(0xFF171717)
+    val muted = Color(0xFF77736A)
+    val gold = Color(0xFFD4AF37)
+    val goldSoft = Color(0xFFF8F1D9)
 }
-private data class CategoryTile(val id:String,val title:String,val subtitle:String,val icon:ImageVector)
+private data class CategoryTile(val id: String, val title: String, val subtitle: String, val icon: ImageVector)
+private data class CategoryGroup(val title: String, val subtitle: String, val icon: ImageVector, val items: List<CategoryTile>)
 
 @Composable
 fun MainCategoriesScreen(
- viewModel: FinanceViewModel? = null,
- onNavigateBack:()->Unit = {},
- onCategoryClick:(String)->Unit = {},
- onAddNewCategory:()->Unit = {},
- onLogout:()->Unit = {}
+    viewModel: FinanceViewModel? = null,
+    onNavigateBack: () -> Unit = {},
+    onCategoryClick: (String) -> Unit = {},
+    onAddNewCategory: () -> Unit = {},
+    onLogout: () -> Unit = {}
 ) {
- val items=remember { listOf(
-  CategoryTile("personal_expenses","المصروفات الشخصية","المصروفات الشخصية",Icons.Outlined.Person),
-  CategoryTile("reports","التقارير","التقارير والتحليلات",Icons.Outlined.BarChart),
-  CategoryTile("my_car","سيارتي","مصاريف السيارات",Icons.Outlined.DirectionsCar),
-  CategoryTile("income_certificates","الدخل والشهادات","الدخل والشهادات البنكية",Icons.Outlined.AttachMoney),
-  CategoryTile("home_expenses","مصروفات المنزل","كل مصروفات المنزل",Icons.Outlined.Home),
-  CategoryTile("education","التعليم","مصاريف التعليم",Icons.Outlined.MenuBook)
- ) }
- val summary=viewModel?.currentMonthSummary?.collectAsStateWithLifecycle()?.value
- // No fabricated records or amounts: the reference mockup's example figures are deliberately omitted.
- CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
- Scaffold(containerColor=CategoryPalette.background,
-  bottomBar={
-   NavigationBar(containerColor=CategoryPalette.white) {
-    NavigationBarItem(selected=false,onClick=onNavigateBack,icon={Icon(Icons.Outlined.GridView,null)},label={Text("الرئيسية")})
-    NavigationBarItem(selected=true,onClick={},icon={Icon(Icons.Outlined.ReceiptLong,null)},label={Text("التكاليف")})
-    NavigationBarItem(selected=false,onClick={},enabled=false,icon={Icon(Icons.Default.AutoAwesome,null)},label={Text("المستشار الذكي")})
-    NavigationBarItem(selected=false,onClick={onCategoryClick.let { { it("reports") } }},icon={Icon(Icons.Outlined.BarChart,null)},label={Text("التقارير")})
-    NavigationBarItem(selected=false,onClick={},enabled=false,icon={Icon(Icons.Outlined.Person,null)},label={Text("الحساب")})
-   }
-  }
- ) { padding ->
-  LazyColumn(Modifier.fillMaxSize().padding(padding).padding(horizontal=14.dp),verticalArrangement=Arrangement.spacedBy(13.dp)) {
-   item {
-    Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween,verticalAlignment=Alignment.CenterVertically) {
-     Text("الأفرع والأقسام الرئيسية",fontSize=17.sp,fontWeight=FontWeight.Bold,color=CategoryPalette.ink)
-     Surface(shape=RoundedCornerShape(12.dp),color=Color(0xFFF0F3FF)) {
-      Text("٦ أقسام نشطة",Modifier.padding(horizontal=10.dp,vertical=5.dp),fontSize=11.sp,color=CategoryPalette.ink)
-     }
+    val groups = listOf(
+        CategoryGroup("المصروفات", "الأقسام المتخصصة لتسجيل ومراجعة التكاليف", Icons.Outlined.ReceiptLong, listOf(
+            CategoryTile("home_expenses", "المنزل", "مصروفات البيت والاحتياجات اليومية", Icons.Outlined.Home),
+            CategoryTile("personal_expenses", "الشخصي", "المصروفات والالتزامات الشخصية", Icons.Outlined.Person),
+            CategoryTile("medical_expenses", "الطبي", "العلاج والأدوية والخدمات الطبية", Icons.Outlined.MedicalServices),
+            CategoryTile("education", "التعليم", "مصاريف الدراسة والطلاب", Icons.Outlined.MenuBook),
+            CategoryTile("work_expenses", "العمل", "تكاليف ومصروفات العمل", Icons.Outlined.Work)
+        )),
+        CategoryGroup("المركبات", "متابعة تكاليف كل مركبة بصورة مستقلة", Icons.Outlined.DirectionsCar, listOf(
+            CategoryTile("vehicle_fuel", "الوقود", "تسجيل ومراجعة استهلاك الوقود", Icons.Outlined.LocalGasStation),
+            CategoryTile("vehicle_maintenance", "الصيانة", "الصيانة والإصلاحات وقطع الغيار", Icons.Outlined.Build),
+            CategoryTile("vehicle_oil", "الزيوت", "تغيير الزيت ومواعيد المتابعة", Icons.Outlined.Opacity)
+        )),
+        CategoryGroup("الأموال والحسابات", "مصادر الدخل والأوعية والحسابات المالية", Icons.Outlined.AccountBalance, listOf(
+            CategoryTile("income", "الإيرادات", "مصادر الدخل والإيرادات", Icons.Outlined.TrendingUp),
+            CategoryTile("certificates", "الشهادات البنكية", "الشهادات والعوائد والاستحقاقات", Icons.Outlined.AccountBalance),
+            CategoryTile("current_account", "الحساب الجاري", "الحركات والأرصدة والتحويلات", Icons.Outlined.AccountBalanceWallet),
+            CategoryTile("gamaeya", "الجمعيات", "الأقساط والقبض ومواعيد الاستحقاق", Icons.Outlined.Groups)
+        )),
+        CategoryGroup("المتابعة والتحليل", "عرض الأداء المالي ومراجعة النتائج", Icons.Outlined.Analytics, listOf(
+            CategoryTile("reports", "التقارير والتحليلات", "ملخصات ومقارنات الفترات المالية", Icons.Outlined.BarChart)
+        ))
+    )
+    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
+        Scaffold(
+            containerColor = CategoryPalette.background,
+            bottomBar = {
+                NavigationBar(containerColor = CategoryPalette.white) {
+                    NavigationBarItem(selected = false, onClick = onNavigateBack, icon = { Icon(Icons.Outlined.Home, null) }, label = { Text("الرئيسية") })
+                    NavigationBarItem(selected = true, onClick = {}, icon = { Icon(Icons.Outlined.ReceiptLong, null) }, label = { Text("الأقسام") })
+                    NavigationBarItem(selected = false, onClick = { onCategoryClick("reports") }, icon = { Icon(Icons.Outlined.BarChart, null) }, label = { Text("التقارير") })
+                    NavigationBarItem(selected = false, onClick = {}, icon = { Icon(Icons.Outlined.Person, null) }, label = { Text("الحساب") })
+                }
+            }
+        ) { padding ->
+            LazyColumn(
+                modifier = Modifier.fillMaxSize().padding(padding).padding(horizontal = 16.dp),
+                contentPadding = PaddingValues(top = 14.dp, bottom = 20.dp),
+                verticalArrangement = Arrangement.spacedBy(18.dp)
+            ) {
+                item {
+                    Surface(shape = RoundedCornerShape(20.dp), color = CategoryPalette.ink, modifier = Modifier.fillMaxWidth()) {
+                        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Text("الأقسام المالية", color = CategoryPalette.gold, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                            Text("كل أموالك في مكان واحد", color = Color.White, fontSize = 21.sp, fontWeight = FontWeight.Bold)
+                            Text("اختر القسم المطلوب للوصول إلى شاشته ومراجعة تفاصيله", color = Color(0xFFE7E3D8), fontSize = 12.sp)
+                        }
+                    }
+                }
+                groups.forEach { group ->
+                    item {
+                        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Surface(shape = RoundedCornerShape(10.dp), color = CategoryPalette.goldSoft) {
+                                    Icon(group.icon, null, Modifier.padding(9.dp).size(21.dp), tint = CategoryPalette.ink)
+                                }
+                                Spacer(Modifier.width(10.dp))
+                                Column(Modifier.weight(1f)) {
+                                    Text(group.title, color = CategoryPalette.ink, fontSize = 17.sp, fontWeight = FontWeight.Bold)
+                                    Text(group.subtitle, color = CategoryPalette.muted, fontSize = 11.sp)
+                                }
+                                Text("${group.items.size}", color = CategoryPalette.muted, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                            }
+                            group.items.chunked(2).forEach { rowItems ->
+                                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                                    rowItems.forEach { item -> CategoryTileCard(item, Modifier.weight(1f)) { onCategoryClick(item.id) } }
+                                    if (rowItems.size == 1) Spacer(Modifier.weight(1f))
+                                }
+                            }
+                        }
+                    }
+                }
+                item {
+                    OutlinedButton(onClick = onAddNewCategory, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(14.dp), border = BorderStroke(1.dp, CategoryPalette.gold)) {
+                        Icon(Icons.Default.Add, null, tint = CategoryPalette.ink)
+                        Spacer(Modifier.width(8.dp))
+                        Text("إضافة قسم مالي", color = CategoryPalette.ink, fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
+        }
     }
-   }
-   item {
-    Column(verticalArrangement=Arrangement.spacedBy(12.dp)) {
-     items.chunked(2).forEach { pair ->
-      Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(12.dp)) {
-       pair.forEach { item ->
-        CategoryTileCard(item,Modifier.weight(1f),onClick={onCategoryClick(item.id)})
-       }
-      }
-     }
-    }
-   }
-   item {
-    Surface(onClick=onAddNewCategory,modifier=Modifier.fillMaxWidth(),shape=RoundedCornerShape(18.dp),color=CategoryPalette.white,shadowElevation=2.dp,border=BorderStroke(1.dp,CategoryPalette.border)) {
-     Row(Modifier.padding(16.dp),verticalAlignment=Alignment.CenterVertically) {
-      Icon(Icons.Default.Add,null,tint=CategoryPalette.ink)
-      Column(Modifier.weight(1f),horizontalAlignment=Alignment.CenterHorizontally) {
-       Text("إضافة قسم مالي جديد",fontWeight=FontWeight.Bold,fontSize=14.sp,color=CategoryPalette.ink)
-       Text("تخصيص تصنيف، ميزانية، أو بطاقة مصروف",fontSize=10.sp,color=CategoryPalette.muted)
-      }
-      Icon(Icons.Default.ArrowBack,null,tint=CategoryPalette.muted)
-     }
-    }
-    Spacer(Modifier.height(12.dp))
-   }
-  }
- }
- }
 }
-@Composable private fun CategoryTileCard(item:CategoryTile,modifier:Modifier=Modifier,onClick:()->Unit) {
- Surface(onClick=onClick,modifier=modifier.heightIn(min=139.dp),shape=RoundedCornerShape(18.dp),color=CategoryPalette.white,border=BorderStroke(1.dp,CategoryPalette.border),shadowElevation=1.dp) {
-  Column(Modifier.fillMaxWidth().padding(12.dp)) {
-   Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween,verticalAlignment=Alignment.CenterVertically) {
-    Surface(shape=RoundedCornerShape(10.dp),color=Color(0xFFE0F2FE)) {
-     Icon(item.icon,item.title,Modifier.padding(9.dp).size(20.dp),tint=CategoryPalette.blue)
+
+@Composable
+private fun CategoryTileCard(item: CategoryTile, modifier: Modifier = Modifier, onClick: () -> Unit) {
+    Surface(onClick = onClick, modifier = modifier.heightIn(min = 132.dp), shape = RoundedCornerShape(16.dp), color = CategoryPalette.white, border = BorderStroke(1.dp, CategoryPalette.border), shadowElevation = 1.dp) {
+        Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(7.dp)) {
+            Surface(shape = RoundedCornerShape(10.dp), color = CategoryPalette.goldSoft) {
+                Icon(item.icon, item.title, Modifier.padding(8.dp).size(20.dp), tint = CategoryPalette.ink)
+            }
+            Text(item.title, color = CategoryPalette.ink, fontSize = 14.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(item.subtitle, color = CategoryPalette.muted, fontSize = 10.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            Text("فتح القسم", color = CategoryPalette.gold, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+        }
     }
-    Text(if(item.id=="reports") "قيد الإعداد" else "—",fontSize=11.sp,fontWeight=FontWeight.Bold,color=CategoryPalette.ink)
-   }
-   Spacer(Modifier.height(12.dp))
-   Text(item.title,fontSize=14.sp,fontWeight=FontWeight.Bold,color=CategoryPalette.ink,maxLines=2,overflow=TextOverflow.Ellipsis)
-   Spacer(Modifier.height(3.dp))
-   Text(item.subtitle,fontSize=10.sp,color=CategoryPalette.muted,maxLines=1,overflow=TextOverflow.Ellipsis)
-   Spacer(Modifier.height(9.dp))
-   Text("البيانات قيد الربط",fontSize=9.sp,color=CategoryPalette.muted)
-  }
- }
-}
-@Composable private fun CategoryHeader(onLogout:()->Unit) {
- var now by remember { mutableStateOf(Date()) }
- var menu by remember { mutableStateOf(false) }
- LaunchedEffect(Unit) { while(true) { now=Date();delay(1000) } }
- Surface(color=CategoryPalette.white,shadowElevation=1.dp) {
-  Row(Modifier.fillMaxWidth().padding(horizontal=14.dp,vertical=10.dp),horizontalArrangement=Arrangement.SpaceBetween,verticalAlignment=Alignment.CenterVertically) {
-   Row(verticalAlignment=Alignment.CenterVertically) {
-    Surface(shape=CircleShape,color=Color(0xFFE0F2FE)) { Icon(Icons.Default.Person,null,Modifier.padding(9.dp),tint=CategoryPalette.ink) }
-    Spacer(Modifier.width(6.dp))
-    Column { Text("مرحباً بك",fontSize=13.sp,fontWeight=FontWeight.Bold);Text("لوحة الإدارة المالية",fontSize=10.sp,color=CategoryPalette.blue) }
-   }
-   Column(horizontalAlignment=Alignment.CenterHorizontally) {
-    Text(SimpleDateFormat("hh:mm:ss a",Locale("ar")).format(now),fontSize=10.sp,fontWeight=FontWeight.Bold)
-    Text(SimpleDateFormat("d MMMM yyyy",Locale("ar")).format(now),fontSize=9.sp,color=CategoryPalette.muted)
-   }
-   Box {
-    IconButton(onClick={menu=true}) { Icon(Icons.Outlined.Settings,"الإعدادات") }
-    DropdownMenu(expanded=menu,onDismissRequest={menu=false}) {
-     DropdownMenuItem(text={Text("تسجيل الخروج")},onClick={menu=false;onLogout()})
-    }
-   }
-  }
- }
-}
-@Composable private fun CategoryTicker() {
- Row(Modifier.fillMaxWidth().height(48.dp),verticalAlignment=Alignment.CenterVertically) {
-  Surface(shape=RoundedCornerShape(12.dp),color=Color(0xFFE0F2FE),border=BorderStroke(1.dp,Color(0xFFBAE6FD))) {
-   Row(Modifier.padding(horizontal=8.dp,vertical=4.dp),verticalAlignment=Alignment.CenterVertically) {
-    androidx.compose.foundation.Image(painterResource(R.drawable.ic_smart_cost_logo),"Smart Cost Pro",Modifier.size(30.dp),contentScale=ContentScale.Fit)
-    Spacer(Modifier.width(5.dp))
-    Text("نبض القسم",fontSize=11.sp,fontWeight=FontWeight.Bold,color=CategoryPalette.ink)
-   }
-  }
-  Spacer(Modifier.width(8.dp))
-  Surface(Modifier.weight(1f),shape=RoundedCornerShape(12.dp),color=CategoryPalette.white,border=BorderStroke(1.dp,CategoryPalette.border)) {
-   Text("✦ SMART COST PRO • تابع تحديثات قسم التكاليف والمصروفات أولاً بأول • ",Modifier.fillMaxWidth().padding(horizontal=10.dp,vertical=8.dp).basicMarquee(iterations=Int.MAX_VALUE,velocity=38.dp),maxLines=1,fontSize=12.5.sp,fontWeight=FontWeight.Bold,color=CategoryPalette.ink)
-  }
- }
 }
