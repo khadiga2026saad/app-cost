@@ -12,8 +12,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.ui.text.input.KeyboardType
-import android.app.DatePickerDialog
-import java.util.Calendar
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -263,7 +261,7 @@ fun CostWorkspaceScreen(
                     val formTitle = "نموذج البيانات — " + (activeTab?.title ?: "السجلات")
                     Text(if (section.id == "reports") "معاينة التقرير" else if (section.id == "backup") "إجراءات النسخ الاحتياطي" else formTitle, color = CostInk, fontSize = 16.sp, fontWeight = FontWeight.Bold)
                 }
-                if (activeTab?.id?.let { it in setOf("records", "list", "trips", "students", "student_expenses", "association_list", "movements", "sources", "installments", "payouts") } == true) {
+                if (activeTab?.id?.let { it in setOf("records", "list", "trips", "students", "student_expenses", "association_list", "movements", "sources", "installments", "payouts") } == true && !(section.id == "vehicles" && activeTab?.id == "records")) {
                     item { RecordsPreviewDesign(section.title, activeTab?.title.orEmpty()) }
                 } else if (section.id == "reports") {
                     item { ReportPreviewDesign { showDesignNotice = true } }
