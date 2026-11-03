@@ -52,7 +52,7 @@ private val costSections = listOf(
 )
 
 private fun tabsFor(id: String): List<CostTab> = when (id) {
-    "house" -> listOf(CostTab("records", "سجلات المنزل"), CostTab("form", "إضافة مصروف منزلي"), CostTab("categories", "إدارة تصنيفات المنزل"))
+    "house" -> listOf(CostTab("records", "سجلات المنزل"), CostTab("form", "إضافة مصروف منزلي"))
     "medical" -> listOf(CostTab("records", "السجلات الطبية"), CostTab("form", "إضافة سجل طبي"))
     "work" -> listOf(CostTab("records", "سجلات العمل"), CostTab("form", "إضافة مصروف عمل"))
     "personal" -> listOf(CostTab("records", "السجلات الشخصية"), CostTab("form", "إضافة مصروف شخصي"))
@@ -551,11 +551,11 @@ private fun PreviewDropdown(label: String, options: List<String>, selected: Stri
 }
 
 @Composable
-private fun PreviewInput(label: String, value: String, numeric: Boolean = false, multiline: Boolean = false, onValueChange: (String) -> Unit) {
+private fun PreviewInput(label: String, value: String, numeric: Boolean = false, multiline: Boolean = false, modifier: Modifier = Modifier, onValueChange: (String) -> Unit) {
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         label = { Text(label) },
         singleLine = !multiline,
         minLines = if (multiline) 3 else 1,
