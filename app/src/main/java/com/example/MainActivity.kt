@@ -370,7 +370,7 @@ fun SmartCostProApp(
                 viewModel = viewModel,
                 onNavigateToGateway = { gatewayId ->
                     when (gatewayId) {
-                        "income_accounts" -> {
+                        "income_accounts", "income", "certificates" -> {
                             currentScreen = Screen.REVENUES
                             triggerAddRevenue = false
                         }
@@ -379,17 +379,29 @@ fun SmartCostProApp(
                             showingCostCategories = true
                             triggerAddExpense = false
                         }
-                        "vehicles" -> {
+                        "home_expenses", "medical_expenses", "personal_expenses",
+                        "education", "work_expenses" -> {
+                            val departmentFilter = when (gatewayId) {
+                                "home_expenses" -> "HOME"
+                                "medical_expenses" -> "MEDICAL"
+                                "personal_expenses" -> "PERSONAL"
+                                "education" -> "EDUCATION"
+                                else -> "WORK"
+                            }
+                            viewModel.setDepartmentFilter(departmentFilter)
+                            currentScreen = Screen.EXPENSES
+                        }
+                        "vehicles", "vehicle_fuel", "vehicle_maintenance", "vehicle_oil" -> {
                             currentScreen = Screen.VEHICLES
                         }
-                        "reports", "reports_analytics" -> {
+                        "current_account", "gamaeya" -> {
+                            previewSection = gatewayId
+                        }
+                        "reports", "reports_analytics", "budgets" -> {
                             currentScreen = Screen.REPORTS
                         }
                         "project_costing", "vendors_clients" -> {
                             currentScreen = Screen.EXPENSES
-                        }
-                        "budgets" -> {
-                            currentScreen = Screen.REPORTS
                         }
                         "settings_backup" -> {
                             isInWorkspace = false
