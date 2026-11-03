@@ -100,7 +100,5 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
-        // New installations start empty; no sample financial records are inserted.
-        private class DatabaseCallback : RoomDatabase.Callback()
     }
-}}
+}
