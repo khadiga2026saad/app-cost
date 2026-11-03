@@ -259,7 +259,7 @@ fun CostWorkspaceScreen(
                     val formTitle = "نموذج البيانات — " + (activeTab?.title ?: "السجلات")
                     Text(if (section.id == "reports") "معاينة التقرير" else if (section.id == "backup") "إجراءات النسخ الاحتياطي" else formTitle, color = CostInk, fontSize = 16.sp, fontWeight = FontWeight.Bold)
                 }
-                if (activeTab?.id?.let { it in setOf("records", "list", "trips", "students", "student_expenses", "association_list", "movements", "sources", "installments", "payouts", "deposits", "withdrawals") } == true) {
+                if (activeTab?.id?.let { it in setOf("records", "list", "trips", "students", "student_expenses", "association_list", "movements", "sources", "installments", "payouts") } == true) {
                     item { RecordsPreviewDesign(section.title, activeTab?.title.orEmpty()) }
                 } else if (section.id == "reports") {
                     item { ReportPreviewDesign { showDesignNotice = true } }
