@@ -332,15 +332,37 @@ fun VehiclesScreen(
                 // Logs list header
                 item {
                     Text(
-                        text = "سجل عمليات الوقود والصيانة والزيوت",
+                        text = "سجل عمليات المركبة",
                         style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold, color = BlackPrimary)
                     )
+                }
+
+                item {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                        shape = RoundedCornerShape(14.dp),
+                        border = BorderStroke(1.dp, GoldLight)
+                    ) {
+                        Row(
+                            Modifier.fillMaxWidth().padding(13.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(Icons.Default.Opacity, contentDescription = null, tint = GoldDark, modifier = Modifier.size(22.dp))
+                            Spacer(Modifier.width(10.dp))
+                            Column(Modifier.weight(1f)) {
+                                Text("سجل الزيوت والفلاتر", fontWeight = FontWeight.Bold, color = BlackPrimary)
+                                Text("مكان مخصص لمواعيد التغيير والعداد والتكلفة — التفعيل في المرحلة الثانية", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                            }
+                            Text("قريبًا", color = GoldDark, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+                        }
+                    }
                 }
 
                 if (currentVehicleLogs.isEmpty()) {
                     item {
                         EmptyStateCard(
-                            message = "لا توجد عمليات وقود أو صيانة مسجلة لهذه المركبة بعد.",
+                            message = "لا توجد عمليات مسجلة لهذه المركبة بعد.",
                             icon = Icons.Default.LocalGasStation
                         )
                     }
