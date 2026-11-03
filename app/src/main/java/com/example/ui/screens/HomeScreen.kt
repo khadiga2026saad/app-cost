@@ -1305,8 +1305,12 @@ private fun SubCategoriesDropdownSection(
             SubCategoryItem("عناية ومظهر شخصي", "المصروفات الشخصية", "personal_expenses", Icons.Default.ReceiptLong),
             SubCategoryItem("وقود وتعبئات", "المركبات", "vehicle_fuel", Icons.Default.DirectionsCar),
             SubCategoryItem("صيانة دورية وإصلاحات", "المركبات", "vehicle_maintenance", Icons.Default.DirectionsCar),
+            SubCategoryItem("تغيير زيوت وفلاتر", "المركبات", "vehicle_oil", Icons.Default.DirectionsCar),
             SubCategoryItem("رسوم دراسية", "التعليم", "education", Icons.Default.ReceiptLong),
-            SubCategoryItem("شهادات الدخل والأرباح", "الإيرادات", "certificates", Icons.Default.AttachMoney)
+            SubCategoryItem("مصروفات العمل", "العمل", "work_expenses", Icons.Default.ReceiptLong),
+            SubCategoryItem("شهادات الدخل والأرباح", "الإيرادات", "certificates", Icons.Default.AttachMoney),
+            SubCategoryItem("حركات الحساب الجاري", "الحسابات", "current_account", Icons.Default.AccountBalance),
+            SubCategoryItem("الأقساط والجمعيات", "الالتزامات", "gamaeya", Icons.Default.Group)
         )
     }
 
