@@ -54,7 +54,7 @@ private fun tabsFor(id: String): List<CostTab> = when (id) {
     "personal" -> listOf(CostTab("records", "السجلات الشخصية"), CostTab("form", "إضافة مصروف شخصي"))
     "associations" -> listOf(CostTab("association_list", "سجلات الجمعيات"), CostTab("form", "جمعية جديدة"), CostTab("installments", "الأقساط"), CostTab("payouts", "القبض"))
     "vehicles" -> listOf(CostTab("records", "بيانات السيارة"), CostTab("fuel", "الوقود"), CostTab("maintenance", "الصيانة"), CostTab("oils", "تغيير الزيت والفلاتر"), CostTab("accidents", "الحوادث"))
-    "education" -> listOf(CostTab("students", "سجلات الطلاب"), CostTab("student_form", "بيانات طالب"), CostTab("student_expenses", "مصروفات الطلاب"))
+    "education" -> listOf(CostTab("students", "سجلات الطلاب"), CostTab("student_form", "إضافة / تعديل طالب"), CostTab("student_expenses", "سجلات مصروفات الطلاب"), CostTab("student_expense_form", "إضافة مصروف طالب"))
     "income" -> listOf(CostTab("sources", "مصادر الدخل"), CostTab("form", "إضافة مصدر دخل"))
     "certificates" -> listOf(CostTab("list", "الشهادات المسجلة"), CostTab("form", "بيانات الشهادة"), CostTab("payouts", "العوائد"))
     "current_account" -> listOf(CostTab("movements", "كل الحركات"), CostTab("deposits", "إضافة إيداع"), CostTab("withdrawals", "إضافة سحب"))
@@ -259,7 +259,7 @@ fun CostWorkspaceScreen(
                     val formTitle = "نموذج البيانات — " + (activeTab?.title ?: "السجلات")
                     Text(if (section.id == "reports") "معاينة التقرير" else if (section.id == "backup") "إجراءات النسخ الاحتياطي" else formTitle, color = CostInk, fontSize = 16.sp, fontWeight = FontWeight.Bold)
                 }
-                if (activeTab?.id?.let { it in setOf("records", "list", "trips", "students", "association_list", "movements") } == true) {
+                if (activeTab?.id?.let { it in setOf("records", "list", "trips", "students", "student_expenses", "association_list", "movements", "sources", "installments", "payouts", "deposits", "withdrawals") } == true) {
                     item { RecordsPreviewDesign(section.title, activeTab?.title.orEmpty()) }
                 } else if (section.id == "reports") {
                     item { ReportPreviewDesign { showDesignNotice = true } }
