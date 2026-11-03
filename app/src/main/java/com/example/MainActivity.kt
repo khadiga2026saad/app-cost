@@ -106,12 +106,13 @@ class MainActivity : FragmentActivity() {
                 val locale = if (isEnglish) Locale("en") else Locale("ar")
                 val config = Configuration(currentConfig).apply {
                     setLocale(locale)
-                    setLayoutDirection(locale)
+                    setLayoutDirection(Locale("ar"))
                 }
                 currentContext.createConfigurationContext(config)
             }
 
-            val layoutDirection = if (isEnglish) LayoutDirection.Ltr else LayoutDirection.Rtl
+            // Keep the entire app RTL regardless of the selected display language.
+            val layoutDirection = LayoutDirection.Rtl
 
             SmartCostProTheme {
                 CompositionLocalProvider(
