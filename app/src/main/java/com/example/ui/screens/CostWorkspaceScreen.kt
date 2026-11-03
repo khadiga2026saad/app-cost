@@ -216,8 +216,10 @@ fun CostWorkspaceScreen(
                         }
                     }
                 }
-                item {
-                    OutlinedTextField(value = "", onValueChange = {}, readOnly = true, modifier = Modifier.fillMaxWidth(), singleLine = true, label = { Text("بحث في " + section.title) }, placeholder = { Text("سيُفعّل البحث في المرحلة الثانية") }, shape = RoundedCornerShape(13.dp))
+                if (section.id != "reports" && section.id != "backup") {
+                    item {
+                        OutlinedTextField(value = "", onValueChange = {}, readOnly = true, modifier = Modifier.fillMaxWidth(), singleLine = true, label = { Text("بحث في " + section.title) }, placeholder = { Text("سيُفعّل البحث في المرحلة الثانية") }, shape = RoundedCornerShape(13.dp))
+                    }
                 }
                 if (section.id != "reports" && section.id != "backup") {
                     item {
@@ -389,6 +391,7 @@ private fun ReportPreviewDesign(onAction: () -> Unit) {
         Card(colors = CardDefaults.cardColors(containerColor = Color.White), border = BorderStroke(1.dp, CostBorder)) {
             Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text("تفاصيل التقرير", color = CostInk, fontWeight = FontWeight.Bold)
+                OptionsPreview(listOf("الكل", "الدخل", "المنزل", "الشخصي", "الجمعيات", "المركبات", "التعليم"))
                 Text("التاريخ • البيان • القسم • المبلغ • النوع", color = CostMuted, fontSize = 11.sp)
                 Text("ستظهر صفوف التقرير بعد تحديد الفترة وتفعيل مصادر البيانات.", color = CostMuted, fontSize = 10.sp)
             }
