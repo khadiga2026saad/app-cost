@@ -72,7 +72,7 @@ import com.example.ui.screens.DashboardScreen
 import com.example.ui.screens.ExpensesScreen
 import com.example.ui.screens.FinancialPreviewScreen
 import com.example.ui.screens.ExecutiveHeader
-import com.example.ui.screens.MainCategoriesScreen
+import com.example.ui.screens.CostWorkspaceScreen
 import com.example.ui.screens.HomeScreen
 import com.example.ui.screens.LiveFinancialTickerBar
 import com.example.ui.screens.ReportsScreen
@@ -323,46 +323,16 @@ fun SmartCostProApp(
                 }
             )
         } else if (showingCostCategories) {
-            MainCategoriesScreen(
+            CostWorkspaceScreen(
                 viewModel = viewModel,
                 onNavigateBack = { showingCostCategories = false; currentScreen = Screen.DASHBOARD },
-                onCategoryClick = { id ->
-                    // Route implemented screens directly; account and association previews remain UI-only in phase one.
-                    when (id) {
-                        "my_car", "vehicle_fuel", "vehicle_maintenance", "vehicle_oil" -> {
-                            showingCostCategories = false
-                            currentScreen = Screen.VEHICLES
-                        }
-                        "income", "certificates", "income_certificates" -> {
-                            showingCostCategories = false
-                            currentScreen = Screen.REVENUES
-                        }
-                        "reports" -> {
-                            showingCostCategories = false
-                            currentScreen = Screen.REPORTS
-                        }
-                        "personal_expenses", "home_expenses", "medical_expenses",
-                        "education", "work_expenses" -> {
-                            val departmentFilter = when (id) {
-                                "personal_expenses" -> "PERSONAL"
-                                "home_expenses" -> "HOME"
-                                "medical_expenses" -> "MEDICAL"
-                                "education" -> "EDUCATION"
-                                else -> "WORK"
-                            }
-                            viewModel.setDepartmentFilter(departmentFilter)
-                            showingCostCategories = false
-                            currentScreen = Screen.EXPENSES
-                        }
-                        "current_account", "gamaeya" -> {
-                            // Keep the category gateway underneath so Back returns to it.
-                            previewSection = id
-                        }
-                    }
-                },
-                onAddNewCategory = { /* Requires approved category persistence before activation. */ },
                 onAccountClick = { showingCostCategories = false; showingAccountSettings = true },
-                onLogout = { FirebaseAuth.getInstance().signOut(); authPrefs.edit().putBoolean("guest_mode", false).apply(); isInWorkspace = false; showingCostCategories = false }
+                onLogout = {
+                    FirebaseAuth.getInstance().signOut()
+                    authPrefs.edit().putBoolean("guest_mode", false).apply()
+                    isInWorkspace = false
+                    showingCostCategories = false
+                }
             )
         } else if (currentScreen == Screen.DASHBOARD) {
             HomeScreen(
