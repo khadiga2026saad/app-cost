@@ -48,7 +48,7 @@ private val costSections = listOf(
 )
 
 private fun tabsFor(id: String): List<CostTab> = when (id) {
-    "vehicles" -> listOf(CostTab("records", "سجلات المركبات"), CostTab("fuel", "الوقود"), CostTab("maintenance", "الصيانة"), CostTab("oils", "الزيوت والفلاتر"), CostTab("accidents", "الحوادث"))
+    "vehicles" -> listOf(CostTab("records", "بيانات السيارة"), CostTab("fuel", "الوقود"), CostTab("maintenance", "الصيانة"), CostTab("oils", "تغيير الزيت والفلاتر"), CostTab("accidents", "الحوادث"))
     "education" -> listOf(CostTab("students", "سجلات الطلاب"), CostTab("student_form", "بيانات طالب"), CostTab("student_expenses", "مصروفات الطلاب"))
     "certificates" -> listOf(CostTab("list", "الشهادات المسجلة"), CostTab("form", "بيانات الشهادة"), CostTab("payouts", "العوائد"))
     "associations" -> listOf(CostTab("association_list", "سجلات الجمعيات"), CostTab("form", "جمعية جديدة"), CostTab("installments", "الأقساط"), CostTab("payouts", "القبض"))
@@ -165,7 +165,7 @@ fun CostWorkspaceScreen(
                             rowSections.forEach { sectionItem ->
                                 CostSectionCard(sectionItem, Modifier.weight(1f)) {
                                     selectedSection = sectionItem.id
-                                    selectedTab = tabsFor(sectionItem.id).firstOrNull()?.id.orEmpty()
+                                    selectedTab = ""
                                 }
                             }
                             if (rowSections.size == 1) Spacer(Modifier.weight(1f))
