@@ -377,14 +377,14 @@ private fun SummaryPill(label: String) {
 
 @Composable
 private fun CostSectionCard(section: CostSection, modifier: Modifier, onClick: () -> Unit) {
-    Surface(onClick = onClick, modifier = modifier.height(145.dp), shape = RoundedCornerShape(16.dp), color = Color.White, border = BorderStroke(1.dp, CostBorder), shadowElevation = 1.dp) {
+    Surface(onClick = onClick, modifier = modifier.height(152.dp), shape = RoundedCornerShape(16.dp), color = Color.White, border = BorderStroke(1.dp, CostBorder), shadowElevation = 1.dp) {
         Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(7.dp)) {
             Surface(shape = RoundedCornerShape(10.dp), color = Color(0xFFF8F1D9)) {
                 Icon(section.icon, contentDescription = null, modifier = Modifier.padding(8.dp).size(21.dp), tint = CostInk)
             }
-            Text(section.title, color = CostInk, fontSize = 13.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            Text(section.subtitle, color = CostMuted, fontSize = 10.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
-            Text("فتح القسم  ←", color = CostGoldDark, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+            Text(section.title, color = CostInk, fontSize = 14.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(section.subtitle, color = CostMuted, fontSize = 11.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            Text("فتح القسم  ←", color = CostGoldDark, fontSize = 11.sp, fontWeight = FontWeight.Bold)
         }
     }
 }
