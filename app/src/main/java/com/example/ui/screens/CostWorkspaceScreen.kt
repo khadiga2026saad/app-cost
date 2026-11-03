@@ -11,6 +11,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -266,22 +268,19 @@ fun CostWorkspaceScreen(
                 } else if (section.id == "backup") {
                     item { BackupPreviewDesign(activeTab?.id.orEmpty()) { showDesignNotice = true } }
                 } else {
-                    items(fieldsFor(section.id, activeTab?.id.orEmpty())) { field ->
-                        OutlinedTextField(value = "", onValueChange = {}, modifier = Modifier.fillMaxWidth(), readOnly = true, label = { Text(field) }, placeholder = { Text("يظهر الحقل عند تفعيل الإدخال", fontSize = 10.sp) }, singleLine = !field.contains("ملاحظات"), minLines = if (field.contains("ملاحظات")) 2 else 1, shape = RoundedCornerShape(13.dp))
-                    }
-                    item { OptionsPreview(choicesFor(section.id, activeTab?.id.orEmpty())) }
+                    item { ExpenseEntryPreview(section.id, activeTab?.id.orEmpty()) }
                     item {
                         Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Color.White), border = BorderStroke(1.dp, CostBorder), shape = RoundedCornerShape(15.dp)) {
                             Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                                 Text("السجلات المسجلة", color = CostInk, fontWeight = FontWeight.Bold)
-                                Text("ستظهر هنا قائمة السجلات وتفاصيلها بعد تفعيل الوظائف في المرحلة الثانية.", color = CostMuted, fontSize = 11.sp)
-                                Text("لا توجد بيانات فعلية معروضة في معاينة التصميم.", color = CostMuted, fontSize = 10.sp)
+                                Text("مكان عرض السجلات ونتائجها بعد تفعيل الحفظ في المرحلة الثانية.", color = CostMuted, fontSize = 11.sp)
+                                Text("المعاينة الحالية لا تحفظ أي بيانات.", color = CostMuted, fontSize = 10.sp)
                             }
                         }
                     }
                     item {
-                        Button(onClick = { showDesignNotice = true }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = CostInk), shape = RoundedCornerShape(13.dp)) {
-                            Text("حفظ / اعتماد النموذج — مرحلة التصميم", color = CostGold, fontWeight = FontWeight.Bold)
+                        Button(onClick = { showDesignNotice = true }, modifier = Modifier.fillMaxWidth(), enabled = false, colors = ButtonDefaults.buttonColors(disabledContainerColor = Color(0xFFE9E6DE), disabledContentColor = CostMuted), shape = RoundedCornerShape(13.dp)) {
+                            Text("الحفظ غير مفعّل — المرحلة الثانية", fontWeight = FontWeight.Bold)
                         }
                     }
                 }
@@ -337,6 +336,133 @@ private fun DashboardSummaryDesign(onAction: () -> Unit) {
             }
         }
     }
+}
+
+@Composable
+private fun ExpenseEntryPreview(sectionId: String, tabId: String) {
+    var values by remember(sectionId, tabId) { mutableStateOf(emptyMap<String, String>()) }
+    fun value(label: String) = values[label].orEmpty()
+    fun setValue(label: String, newValue: String) { values = values + (label to newValue) }
+
+    val houseTypes = listOf("فطار", "غداء", "عشاء", "إصلاحات كهربائية", "إصلاحات سباكة", "إصلاحات دهان", "شراء أجهزة منزلية", "شراء مفروشات", "فواتير ومستحقات منزلية", "منظفات ومستلزمات", "أخرى (مخصص)")
+    val workTypes = listOf("أدوات مكتبية", "صيانة أجهزة العمل", "اشتراكات برمجيات وسيرفرات", "ضيافة واجتماعات", "تنقلات ومواصلات عمل", "شحن وتوصيل مستندات", "دورات تدريبية وتطوير", "أخرى (مخصص)")
+    val personalTypes = listOf("طعام ومشروبات", "مواصلات وتنقلات", "ملابس ومستلزمات شخصية", "صحة وعناية شخصية", "ترفيه وخروج", "هدايا ومناسبات", "اشتراكات شخصية", "فواتير واتصالات شخصية", "أخرى (مخصص)")
+    val vehicleFuel = listOf("بنزين 80", "بنزين 92", "بنزين 95", "سولار", "غاز طبيعي", "شحن كهربائي")
+    val maintenanceTypes = listOf("سمكرة وهيكل", "دوكو ودهان", "ميكانيكا", "كهرباء وإلكترونيات", "عفشة", "نظام التبريد والرادياتير", "شكمان ونظام العادم", "تكييف وتبريد الصالون", "ضبط زوايا وترصيص", "إصلاح وتغيير الإطارات", "فحص كمبيوتر وتشخيص أعطال", "تنجيد وفرش داخلي", "عناية وتلميع (ديتيلنج)", "زجاج")
+    val oilTypes = listOf("تغيير زيت المحرك", "تغيير فلتر زيت المحرك", "تغيير زيت الفتيس (ناقل الحركة)", "تغيير فلتر زيت الفتيس", "تغيير زيت الكورونة / الدفرنشيل", "تغيير / تزويد زيت الفرامل", "تغيير / تزويد زيت الباور (التوجيه)", "تغيير فلتر هواء المحرك", "تغيير فلتر تكييف الصالون", "تغيير فلتر الوقود (بنزين / سولار)", "غسيل دورة المحرك الداخلية (Engine Flush)", "تغيير / تزويد سائل الرادياتير", "تشحيم النقاط والمفصلات")
+    val oilBrands = listOf("موبيل", "شل", "كاسترول", "توتال", "فالفولين", "ليكوي مولي", "أخرى")
+
+    Column(verticalArrangement = Arrangement.spacedBy(11.dp)) {
+        when (sectionId) {
+            "house", "work", "personal" -> {
+                val options = when (sectionId) { "house" -> houseTypes; "work" -> workTypes; else -> personalTypes }
+                val label = if (sectionId == "work") "نوع مصروف العمل" else "تصنيف المصروف"
+                PreviewDropdown(label, options, value(label).ifBlank { options.first() }) { setValue(label, it) }
+                if (value(label).ifBlank { options.first() } == "أخرى (مخصص)") {
+                    PreviewInput("اكتب اسم المصروف", value("اكتب اسم المصروف")) { setValue("اكتب اسم المصروف", it) }
+                }
+                PreviewInput("المبلغ", value("المبلغ"), numeric = true) { setValue("المبلغ", it) }
+                PreviewInput("التاريخ", value("التاريخ")) { setValue("التاريخ", it) }
+                if (sectionId == "house") {
+                    Text("نوع الصرف", color = CostInk, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                    PreviewDropdown("اختر نوع الصرف", listOf("مشتريات ومستلزمات", "مصنعية وأجرة يد"), value("نوع الصرف").ifBlank { "مشتريات ومستلزمات" }) { setValue("نوع الصرف", it) }
+                }
+                PreviewInput("الملاحظات", value("الملاحظات"), multiline = true) { setValue("الملاحظات", it) }
+            }
+            "vehicles" -> when (tabId) {
+                "fuel" -> {
+                    PreviewDropdown("نوع الوقود / مصدر الطاقة", vehicleFuel, value("نوع الوقود").ifBlank { "بنزين 92" }) { setValue("نوع الوقود", it) }
+                    PreviewInput("الكمية / عدد اللترات", value("الكمية"), numeric = true) { setValue("الكمية", it) }
+                    PreviewInput("قراءة عداد السيارة", value("العداد"), numeric = true) { setValue("العداد", it) }
+                    PreviewInput("تاريخ ووقت التزوّد", value("التاريخ والوقت")) { setValue("التاريخ والوقت", it) }
+                    Text("سعر الوحدة والإجمالي يعرضان هنا وفق سعر الوقود المختار بعد تفعيل الحسابات.", color = CostMuted, fontSize = 11.sp)
+                }
+                "maintenance" -> {
+                    PreviewDropdown("نوع الصيانة", maintenanceTypes, value("نوع الصيانة").ifBlank { maintenanceTypes.first() }) { setValue("نوع الصيانة", it) }
+                    PreviewInput("وصف الصيانة", value("وصف الصيانة"), multiline = true) { setValue("وصف الصيانة", it) }
+                    PreviewInput("اسم المستلزم أو قطعة الغيار", value("قطعة الغيار")) { setValue("قطعة الغيار", it) }
+                    PreviewInput("سعر المستلزمات", value("سعر المستلزمات"), numeric = true) { setValue("سعر المستلزمات", it) }
+                    PreviewInput("وصف الأجور", value("وصف الأجور")) { setValue("وصف الأجور", it) }
+                    PreviewInput("قيمة الأجور", value("قيمة الأجور"), numeric = true) { setValue("قيمة الأجور", it) }
+                    PreviewInput("التاريخ", value("التاريخ")) { setValue("التاريخ", it) }
+                    Text("إجمالي الصيانة = المستلزمات + الأجور (يُفعّل الحساب في المرحلة الثانية).", color = CostMuted, fontSize = 11.sp)
+                }
+                "oils" -> {
+                    PreviewDropdown("نوع خدمة الزيت أو الفلتر", oilTypes, value("نوع الخدمة").ifBlank { oilTypes.first() }) { setValue("نوع الخدمة", it) }
+                    PreviewDropdown("العلامة التجارية", oilBrands, value("العلامة التجارية").ifBlank { oilBrands.first() }) { setValue("العلامة التجارية", it) }
+                    if (value("العلامة التجارية") == "أخرى") PreviewInput("اسم العلامة التجارية", value("اسم العلامة التجارية")) { setValue("اسم العلامة التجارية", it) }
+                    PreviewInput("اسم المنتج", value("اسم المنتج")) { setValue("اسم المنتج", it) }
+                    PreviewDropdown("فترة التغيير المقترحة", listOf("5,000 كم", "10,000 كم"), value("فترة التغيير").ifBlank { "5,000 كم" }) { setValue("فترة التغيير", it) }
+                    PreviewInput("الكمية", value("الكمية"), numeric = true) { setValue("الكمية", it) }
+                    PreviewInput("السعر", value("السعر"), numeric = true) { setValue("السعر", it) }
+                    PreviewInput("قراءة العداد", value("العداد"), numeric = true) { setValue("العداد", it) }
+                    PreviewInput("التاريخ", value("التاريخ")) { setValue("التاريخ", it) }
+                    PreviewInput("ملاحظات", value("ملاحظات"), multiline = true) { setValue("ملاحظات", it) }
+                }
+                "accidents" -> {
+                    PreviewInput("عنوان الحادث", value("عنوان الحادث")) { setValue("عنوان الحادث", it) }
+                    PreviewInput("التاريخ", value("التاريخ")) { setValue("التاريخ", it) }
+                    PreviewInput("الوقت", value("الوقت")) { setValue("الوقت", it) }
+                    PreviewInput("الموقع (اختياري)", value("الموقع")) { setValue("الموقع", it) }
+                    PreviewInput("تقدير الضرر — ليس مبلغًا مدفوعًا", value("تقدير الضرر"), numeric = true) { setValue("تقدير الضرر", it) }
+                    PreviewInput("ملاحظات", value("ملاحظات"), multiline = true) { setValue("ملاحظات", it) }
+                }
+                else -> {
+                    PreviewInput("اسم / موديل السيارة", value("السيارة")) { setValue("السيارة", it) }
+                    PreviewInput("رقم اللوحة", value("رقم اللوحة")) { setValue("رقم اللوحة", it) }
+                    PreviewInput("سنة الصنع", value("سنة الصنع"), numeric = true) { setValue("سنة الصنع", it) }
+                    PreviewInput("ملاحظات", value("ملاحظات"), multiline = true) { setValue("ملاحظات", it) }
+                }
+            }
+            else -> {
+                fieldsFor(sectionId, tabId).forEach { field ->
+                    val opts = choicesFor(sectionId, tabId)
+                    if (opts.isNotEmpty() && (field.contains("تصنيف") || field.contains("نوع") || field.contains("المرحلة") || field.contains("الدورية"))) {
+                        PreviewDropdown(field, opts, value(field).ifBlank { opts.first() }) { setValue(field, it) }
+                    } else {
+                        PreviewInput(field, value(field), numeric = field.contains("مبلغ") || field.contains("قيمة") || field.contains("تكلفة") || field.contains("العمر")) { setValue(field, it) }
+                    }
+                }
+            }
+        }
+        Text("معاينة إدخال فقط — البيانات لا تُحفظ في المرحلة الأولى.", color = CostMuted, fontSize = 10.sp)
+    }
+}
+
+@Composable
+private fun PreviewDropdown(label: String, options: List<String>, selected: String, onSelect: (String) -> Unit) {
+    var expanded by remember(label) { mutableStateOf(false) }
+    Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
+        Text(label, color = CostInk, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+        Box {
+            OutlinedButton(onClick = { expanded = true }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp), border = BorderStroke(1.dp, CostBorder), contentPadding = PaddingValues(horizontal = 12.dp, vertical = 13.dp)) {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                    Text(selected, color = CostInk, fontSize = 13.sp)
+                    Icon(Icons.Outlined.ArrowDropDown, contentDescription = "عرض الاختيارات", tint = CostGoldDark)
+                }
+            }
+            DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }, modifier = Modifier.fillMaxWidth(0.92f).heightIn(max = 320.dp).background(Color.White)) {
+                options.forEach { option ->
+                    DropdownMenuItem(text = { Text(option, color = CostInk, fontSize = 13.sp) }, onClick = { onSelect(option); expanded = false })
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun PreviewInput(label: String, value: String, numeric: Boolean = false, multiline: Boolean = false, onValueChange: (String) -> Unit) {
+    OutlinedTextField(
+        value = value,
+        onValueChange = onValueChange,
+        modifier = Modifier.fillMaxWidth(),
+        label = { Text(label) },
+        singleLine = !multiline,
+        minLines = if (multiline) 3 else 1,
+        keyboardOptions = KeyboardOptions(keyboardType = if (numeric) KeyboardType.Decimal else KeyboardType.Text),
+        shape = RoundedCornerShape(12.dp),
+        colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = CostGoldDark, focusedLabelColor = CostGoldDark)
+    )
 }
 
 @Composable
