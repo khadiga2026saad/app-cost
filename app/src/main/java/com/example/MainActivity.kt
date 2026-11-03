@@ -344,6 +344,14 @@ fun SmartCostProApp(
                         }
                         "personal_expenses", "home_expenses", "medical_expenses",
                         "education", "work_expenses" -> {
+                            val departmentFilter = when (id) {
+                                "personal_expenses" -> "PERSONAL"
+                                "home_expenses" -> "HOME"
+                                "medical_expenses" -> "MEDICAL"
+                                "education" -> "EDUCATION"
+                                else -> "WORK"
+                            }
+                            viewModel.setDepartmentFilter(departmentFilter)
                             showingCostCategories = false
                             currentScreen = Screen.EXPENSES
                         }
@@ -367,6 +375,7 @@ fun SmartCostProApp(
                             triggerAddRevenue = false
                         }
                         "daily_expenses", "expenses" -> {
+                            viewModel.setDepartmentFilter("ALL")
                             showingCostCategories = true
                             triggerAddExpense = false
                         }
