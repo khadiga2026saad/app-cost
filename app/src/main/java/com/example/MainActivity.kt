@@ -327,8 +327,7 @@ fun SmartCostProApp(
                 viewModel = viewModel,
                 onNavigateBack = { showingCostCategories = false; currentScreen = Screen.DASHBOARD },
                 onCategoryClick = { id ->
-                    // Financial submodules will be connected after their logic is audited.
-                    // Existing implemented screens remain accessible where applicable.
+                    // Route implemented screens directly; account and association previews remain UI-only in phase one.
                     when (id) {
                         "my_car", "vehicle_fuel", "vehicle_maintenance", "vehicle_oil" -> {
                             showingCostCategories = false
