@@ -321,12 +321,25 @@ fun SmartCostProApp(
                     // Financial submodules will be connected after their logic is audited.
                     // Existing implemented screens remain accessible where applicable.
                     when (id) {
-                        "my_car" -> { showingCostCategories = false; currentScreen = Screen.VEHICLES }
-                        "income_certificates" -> { showingCostCategories = false; currentScreen = Screen.REVENUES }
-                        "reports" -> { showingCostCategories = false; currentScreen = Screen.REPORTS }
-                        "personal_expenses", "home_expenses", "education" -> {
-                            showingCostCategories = false; currentScreen = Screen.EXPENSES
+                        "my_car", "vehicle_fuel", "vehicle_maintenance", "vehicle_oil" -> {
+                            showingCostCategories = false
+                            currentScreen = Screen.VEHICLES
                         }
+                        "income", "certificates", "income_certificates" -> {
+                            showingCostCategories = false
+                            currentScreen = Screen.REVENUES
+                        }
+                        "reports" -> {
+                            showingCostCategories = false
+                            currentScreen = Screen.REPORTS
+                        }
+                        "personal_expenses", "home_expenses", "medical_expenses",
+                        "education", "work_expenses" -> {
+                            showingCostCategories = false
+                            currentScreen = Screen.EXPENSES
+                        }
+                        // Current account and rotating associations receive dedicated
+                        // presentation screens in the next UI-only design pass.
                     }
                 },
                 onAddNewCategory = { /* Requires approved category persistence before activation. */ },
