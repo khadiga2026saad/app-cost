@@ -9,6 +9,7 @@ import com.example.core.MoneyUtils
 import com.example.data.local.entities.ExpenseEntity
 import com.example.data.local.entities.FinancialCertificateEntity
 import com.example.data.local.entities.GamaeyaEntity
+import com.example.data.local.entities.GamaeyaInstallmentEntity
 import com.example.data.local.entities.RevenueEntity
 import com.example.data.local.entities.StudentEntity
 import com.example.data.local.entities.VehicleEntity
@@ -210,6 +211,13 @@ class FinanceViewModel(
 
     // Gamaeyat
     val allGamaeyat: StateFlow<List<GamaeyaEntity>> = repository.getAllGamaeyat()
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList()
+        )
+
+    val allUnpaidGamaeyaInstallments: StateFlow<List<GamaeyaInstallmentEntity>> = repository.getAllUnpaidInstallments()
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
@@ -479,6 +487,18 @@ class FinanceViewModel(
     }
 
     // Gamaeyat: create the circle and its scheduled installments atomically in Room.
+    fun payGamaeyaInstallment(installmentId: Long) {
+        viewModelScope.launch {
+            repository.payGamaeyaInstallment(installmentId, DateUtils.currentEpochMillis())
+        }
+    }
+
+    fun collectGamaeyaPayout(gamaeyaId: Long) {
+        viewModelScope.launch {
+            repository.collectGamaeyaPayout(gamaeyaId, DateUtils.currentEpochMillis())
+        }
+    }
+
     fun saveGamaeya(
         name: String,
         totalPoolAmount: BigDecimal,
