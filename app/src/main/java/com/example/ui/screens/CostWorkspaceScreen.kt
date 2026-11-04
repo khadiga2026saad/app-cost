@@ -135,6 +135,7 @@ fun CostWorkspaceScreen(
     val financeViewModel: FinanceViewModel = viewModel(factory = FinanceViewModel.Factory)
     val savedExpenses by financeViewModel.allExpenses.collectAsState()
     val savedRevenues by financeViewModel.allRevenues.collectAsState()
+    val savedGamaeyat by financeViewModel.allGamaeyat.collectAsState()
     val section = costSections.firstOrNull { it.id == selectedSection }
     val tabs = section?.let { tabsFor(it.id) }.orEmpty()
     val activeTab = tabs.firstOrNull { it.id == selectedTab }
@@ -284,6 +285,22 @@ fun CostWorkspaceScreen(
                         }
                     } else if (section.id == "income") {
                         item { SavedRevenueRecords(records = savedRevenues) }
+                    } else if (section.id == "associations") {
+                        item {
+                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                if (savedGamaeyat.isEmpty()) {
+                                    Text("لا توجد جمعيات مسجلة حتى الآن.", color = CostMuted, fontSize = 12.sp)
+                                } else savedGamaeyat.forEach { gamaeya ->
+                                    Card(colors = CardDefaults.cardColors(containerColor = Color.White), border = BorderStroke(1.dp, CostBorder)) {
+                                        Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                            Text(gamaeya.name, color = CostInk, fontWeight = FontWeight.Bold)
+                                            Text("قيمة الجمعية: " + com.example.core.MoneyUtils.formatPiastresPlain(gamaeya.totalPoolValuePiastres) + " ج.م", color = CostMuted, fontSize = 11.sp)
+                                            Text("الأفراد: " + gamaeya.numberOfMembers + " • القسط: " + com.example.core.MoneyUtils.formatPiastresPlain(gamaeya.monthlyInstallmentPiastres) + " ج.م • الدور: " + gamaeya.myTurnOrder, color = CostMuted, fontSize = 10.sp)
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     } else {
                         item { RecordsPreviewDesign(section.title, activeTab?.title.orEmpty()) }
                     }
@@ -310,7 +327,28 @@ fun CostWorkspaceScreen(
                             onActionUnavailable = { showDesignNotice = true },
                             onSave = { values ->
                                 val date = runCatching { LocalDate.parse(values["التاريخ"].orEmpty()).atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli() }.getOrNull()
-                                if (section.id == "income") {
+                                if (section.id == "associations" && activeTab?.id == "form") {
+                                    val totalPool = runCatching { BigDecimal(values["قيمة الجمعية"].orEmpty().replace(',', '.')) }.getOrNull()
+                                    val monthlyInstallment = runCatching { BigDecimal(values["قيمة القسط الشهري"].orEmpty().replace(',', '.')) }.getOrNull()
+                                    val members = values["عدد الأفراد"].orEmpty().toIntOrNull()
+                                    val turnOrder = values["رقم الدور"].orEmpty().toIntOrNull()
+                                    val startDate = runCatching { LocalDate.parse(values["تاريخ البداية"].orEmpty()).atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli() }.getOrNull()
+                                    val payoutDate = runCatching { LocalDate.parse(values["تاريخ القبض"].orEmpty()).atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli() }.getOrNull()
+                                    if (!values["اسم الجمعية"].isNullOrBlank() && totalPool != null && monthlyInstallment != null && members != null && turnOrder != null && startDate != null && payoutDate != null && totalPool > BigDecimal.ZERO && monthlyInstallment > BigDecimal.ZERO && members > 0 && turnOrder in 1..members && payoutDate >= startDate) {
+                                        financeViewModel.saveGamaeya(
+                                            name = values["اسم الجمعية"].orEmpty(),
+                                            totalPoolAmount = totalPool,
+                                            numberOfMembers = members,
+                                            monthlyInstallment = monthlyInstallment,
+                                            myTurnOrder = turnOrder,
+                                            startDate = startDate,
+                                            expectedPayoutDate = payoutDate
+                                        )
+                                        selectedTab = "association_list"
+                                    } else {
+                                        showDesignNotice = true
+                                    }
+                                } else if (section.id == "income") {
                                     val amount = runCatching { BigDecimal(values["المبلغ"].orEmpty().replace(',', '.')) }.getOrNull()
                                     if (amount != null && amount > BigDecimal.ZERO && date != null) {
                                         financeViewModel.saveRevenue(
