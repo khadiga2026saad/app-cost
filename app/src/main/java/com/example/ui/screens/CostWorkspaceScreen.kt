@@ -366,7 +366,7 @@ fun CostWorkspaceScreen(
                                 val date = runCatching { LocalDate.parse(values["التاريخ"].orEmpty()).atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli() }.getOrNull()
                                 if (section.id == "associations" && activeTab?.id == "form") {
                                     val totalPool = runCatching { BigDecimal(values["قيمة الجمعية"].orEmpty().replace(',', '.')) }.getOrNull()
-                                    val monthlyInstallment = runCatching { BigDecimal(values["القسط الشهري"].orEmpty().replace(',', '.')) }.getOrNull()
+                                    val monthlyInstallment = runCatching { BigDecimal(values["قيمة القسط الشهري"].orEmpty().replace(',', '.')) }.getOrNull()
                                     val members = values["عدد الأفراد"].orEmpty().toIntOrNull()
                                     val turnOrder = values["رقم الدور"].orEmpty().toIntOrNull()
                                     val startDate = runCatching { LocalDate.parse(values["تاريخ البداية"].orEmpty()).atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli() }.getOrNull()
@@ -532,7 +532,6 @@ private fun ExpenseEntryPreview(sectionId: String, tabId: String, initialValues:
                     PreviewInput("اسم الجمعية", value("اسم الجمعية")) { setValue("اسم الجمعية", it) }
                     PreviewInput("قيمة الجمعية", value("قيمة الجمعية"), numeric = true) { setValue("قيمة الجمعية", it) }
                     PreviewInput("عدد الأفراد", value("عدد الأفراد"), numeric = true) { setValue("عدد الأفراد", it) }
-                    PreviewInput("عدد الأشهر", value("عدد الأشهر"), numeric = true) { setValue("عدد الأشهر", it) }
                     PreviewInput("قيمة القسط الشهري", value("قيمة القسط الشهري"), numeric = true) { setValue("قيمة القسط الشهري", it) }
                     PreviewInput("رقم الدور", value("رقم الدور"), numeric = true) { setValue("رقم الدور", it) }
                     PreviewDateInput("تاريخ البداية", value("تاريخ البداية")) { setValue("تاريخ البداية", it) }
