@@ -309,30 +309,44 @@ fun CostWorkspaceScreen(
                             }.orEmpty(),
                             onActionUnavailable = { showDesignNotice = true },
                             onSave = { values ->
-                                val amount = runCatching { BigDecimal(values["المبلغ"].orEmpty().replace(',', '.')) }.getOrNull()
                                 val date = runCatching { LocalDate.parse(values["التاريخ"].orEmpty()).atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli() }.getOrNull()
-                                val medicalAmount = listOf("تكلفة الكشف أو الفحص", "تكلفة الدواء / العلاج").sumOf { key ->
-                                    runCatching { BigDecimal(values[key].orEmpty().ifBlank { "0" }) }.getOrDefault(BigDecimal.ZERO)
-                                }
-                                val finalAmount = if (section.id == "medical") medicalAmount else (amount ?: BigDecimal.ZERO)
-                                val title = when (section.id) {
-                                    "medical" -> listOf(values["اسم الشخص"], values["التشخيص"]).filterNotNull().filter { it.isNotBlank() }.joinToString(" — ")
-                                    "personal" -> values["التصنيف"].orEmpty() + if (values["اسم الشخص"].isNullOrBlank()) "" else " — " + values["اسم الشخص"]
-                                    "work" -> values["نوع مصروف العمل"].orEmpty()
-                                    else -> values["التصنيف"].orEmpty()
-                                }.ifBlank { "مصروف ${section.title}" }
-                                if (finalAmount > BigDecimal.ZERO && date != null) {
-                                    financeViewModel.saveExpense(
-                                        id = editingExpense?.expenseId ?: 0L,
-                                        amount = finalAmount,
-                                        date = date,
-                                        department = section.id.uppercase(),
-                                        category = values["التصنيف"].orEmpty().ifBlank { values["نوع مصروف العمل"].orEmpty().ifBlank { "عام" } },
-                                        title = title,
-                                        notes = values["الملاحظات"].orEmpty()
-                                    )
-                                    editingExpense = null
-                                    selectedTab = "records"
+                                if (section.id == "income") {
+                                    val amount = runCatching { BigDecimal(values["المبلغ"].orEmpty().replace(',', '.')) }.getOrNull()
+                                    if (amount != null && amount > BigDecimal.ZERO && date != null) {
+                                        financeViewModel.saveRevenue(
+                                            amount = amount,
+                                            date = date,
+                                            category = values["نوع الدخل"].orEmpty().ifBlank { "OTHER_INCOME" },
+                                            title = values["اسم مصدر الدخل"].orEmpty().ifBlank { "مصدر دخل" },
+                                            notes = values["ملاحظات"].orEmpty()
+                                        )
+                                        selectedTab = "sources"
+                                    }
+                                } else {
+                                    val amount = runCatching { BigDecimal(values["المبلغ"].orEmpty().replace(',', '.')) }.getOrNull()
+                                    val medicalAmount = listOf("تكلفة الكشف أو الفحص", "تكلفة الدواء / العلاج").sumOf { key ->
+                                        runCatching { BigDecimal(values[key].orEmpty().ifBlank { "0" }) }.getOrDefault(BigDecimal.ZERO)
+                                    }
+                                    val finalAmount = if (section.id == "medical") medicalAmount else (amount ?: BigDecimal.ZERO)
+                                    val title = when (section.id) {
+                                        "medical" -> listOf(values["اسم الشخص"], values["التشخيص"]).filterNotNull().filter { it.isNotBlank() }.joinToString(" — ")
+                                        "personal" -> values["التصنيف"].orEmpty() + if (values["اسم الشخص"].isNullOrBlank()) "" else " — " + values["اسم الشخص"]
+                                        "work" -> values["نوع مصروف العمل"].orEmpty()
+                                        else -> values["التصنيف"].orEmpty()
+                                    }.ifBlank { "مصروف " + section.title }
+                                    if (finalAmount > BigDecimal.ZERO && date != null) {
+                                        financeViewModel.saveExpense(
+                                            id = editingExpense?.expenseId ?: 0L,
+                                            amount = finalAmount,
+                                            date = date,
+                                            department = section.id.uppercase(),
+                                            category = values["التصنيف"].orEmpty().ifBlank { values["نوع مصروف العمل"].orEmpty().ifBlank { "عام" } },
+                                            title = title,
+                                            notes = values["الملاحظات"].orEmpty()
+                                        )
+                                        editingExpense = null
+                                        selectedTab = "records"
+                                    }
                                 }
                             }
                         )
@@ -603,7 +617,7 @@ private fun ExpenseEntryPreview(sectionId: String, tabId: String, initialValues:
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(9.dp)) {
             Button(
                 onClick = {
-                    if (sectionId in setOf("house", "medical", "work", "personal")) onSave(values)
+                    if (sectionId in setOf("house", "medical", "work", "personal", "income")) onSave(values)
                     else onActionUnavailable()
                 },
                 modifier = Modifier.weight(1.15f),
