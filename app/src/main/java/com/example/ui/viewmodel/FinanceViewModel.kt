@@ -79,6 +79,13 @@ class FinanceViewModel(
         initialValue = FinancialSummary()
     )
 
+    // Complete local records used by the Cost workspace (not limited to the current month).
+    val allExpenses: StateFlow<List<ExpenseEntity>> = repository.getAllExpenses()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val allRevenues: StateFlow<List<RevenueEntity>> = repository.getAllRevenues()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
     // All expenses for current month with search and department filtering applied
     @OptIn(ExperimentalCoroutinesApi::class)
     val filteredExpenses: StateFlow<List<ExpenseEntity>> = combine(
