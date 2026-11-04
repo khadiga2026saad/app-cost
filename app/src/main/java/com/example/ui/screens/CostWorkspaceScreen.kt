@@ -316,7 +316,13 @@ fun CostWorkspaceScreen(
                                         financeViewModel.saveRevenue(
                                             amount = amount,
                                             date = date,
-                                            category = values["نوع الدخل"].orEmpty().ifBlank { "OTHER_INCOME" },
+                                            category = when (values["نوع الدخل"].orEmpty()) {
+                                                "راتب" -> "SALARY"
+                                                "مكافأة" -> "BONUSES"
+                                                "دخل إضافي" -> "ADDITIONAL_FREELANCE"
+                                                "استثمار", "أخرى", "" -> "OTHER_INCOME"
+                                                else -> "OTHER_INCOME"
+                                            },
                                             title = values["اسم مصدر الدخل"].orEmpty().ifBlank { "مصدر دخل" },
                                             notes = values["ملاحظات"].orEmpty()
                                         )
