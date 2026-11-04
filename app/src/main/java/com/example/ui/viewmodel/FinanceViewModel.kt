@@ -478,6 +478,35 @@ class FinanceViewModel(
         }
     }
 
+    // Gamaeyat: create the circle and its scheduled installments atomically in Room.
+    fun saveGamaeya(
+        name: String,
+        totalPoolAmount: BigDecimal,
+        numberOfMembers: Int,
+        monthlyInstallment: BigDecimal,
+        myTurnOrder: Int,
+        startDate: Long,
+        expectedPayoutDate: Long
+    ) {
+        viewModelScope.launch {
+            if (name.isBlank() || numberOfMembers <= 0 || myTurnOrder !in 1..numberOfMembers) return@launch
+            val totalPoolPiastres = MoneyUtils.egpToPiastres(totalPoolAmount)
+            val installmentPiastres = MoneyUtils.egpToPiastres(monthlyInstallment)
+            if (totalPoolPiastres <= 0L || installmentPiastres <= 0L || expectedPayoutDate < startDate) return@launch
+            repository.createGamaeyaWithInstallments(
+                GamaeyaEntity(
+                    name = name.trim(),
+                    totalPoolValuePiastres = totalPoolPiastres,
+                    numberOfMembers = numberOfMembers,
+                    monthlyInstallmentPiastres = installmentPiastres,
+                    myTurnOrder = myTurnOrder,
+                    startDate = startDate,
+                    expectedPayoutDate = expectedPayoutDate
+                )
+            )
+        }
+    }
+
     // Certificates
     fun saveCertificate(
         id: Long = 0,
