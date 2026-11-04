@@ -15,6 +15,13 @@ import androidx.compose.ui.text.input.KeyboardType
 import java.util.Calendar
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.*
+import java.time.ZoneId
+import java.time.LocalDate
+import java.math.BigDecimal
+import com.example.core.DateUtils
+import com.example.data.local.entities.ExpenseEntity
+import com.example.ui.viewmodel.FinanceViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -124,6 +131,10 @@ fun CostWorkspaceScreen(
     var selectedSection by remember { mutableStateOf<String?>(null) }
     var selectedTab by remember { mutableStateOf("") }
     var showDesignNotice by remember { mutableStateOf(false) }
+    var editingExpense by remember { mutableStateOf<ExpenseEntity?>(null) }
+    val financeViewModel: FinanceViewModel = viewModel(factory = FinanceViewModel.Factory)
+    val savedExpenses by financeViewModel.allExpenses.collectAsState()
+    val savedRevenues by financeViewModel.allRevenues.collectAsState()
     val section = costSections.firstOrNull { it.id == selectedSection }
     val tabs = section?.let { tabsFor(it.id) }.orEmpty()
     val activeTab = tabs.firstOrNull { it.id == selectedTab }
@@ -263,26 +274,67 @@ fun CostWorkspaceScreen(
                     Text(if (section.id == "reports") "معاينة التقرير" else if (section.id == "backup") "إجراءات النسخ الاحتياطي" else formTitle, color = CostInk, fontSize = 16.sp, fontWeight = FontWeight.Bold)
                 }
                 if (activeTab?.id?.let { it in setOf("records", "list", "trips", "students", "student_expenses", "association_list", "movements", "sources", "installments", "payouts") } == true && !(section.id == "vehicles" && activeTab?.id == "records")) {
-                    item { RecordsPreviewDesign(section.title, activeTab?.title.orEmpty()) }
+                    if (section.id in setOf("house", "medical", "work", "personal")) {
+                        item {
+                            SavedExpenseRecords(
+                                records = savedExpenses.filter { it.department.equals(section.id.uppercase(), ignoreCase = true) },
+                                onEdit = { record -> editingExpense = record; selectedTab = "form" },
+                                onDelete = { financeViewModel.deleteExpense(it.expenseId) }
+                            )
+                        }
+                    } else if (section.id == "income") {
+                        item { SavedRevenueRecords(records = savedRevenues) }
+                    } else {
+                        item { RecordsPreviewDesign(section.title, activeTab?.title.orEmpty()) }
+                    }
                 } else if (section.id == "reports") {
                     item { ReportPreviewDesign { showDesignNotice = true } }
                 } else if (section.id == "backup") {
                     item { BackupPreviewDesign(activeTab?.id.orEmpty()) { showDesignNotice = true } }
                 } else {
-                    item { ExpenseEntryPreview(section.id, activeTab?.id.orEmpty()) }
                     item {
-                        Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Color.White), border = BorderStroke(1.dp, CostBorder), shape = RoundedCornerShape(15.dp)) {
-                            Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                                Text("السجلات المسجلة", color = CostInk, fontWeight = FontWeight.Bold)
-                                Text("ستُعرض أحدث 10 سجلات في هذا القسم، مع إمكانية فتح السجل للتفاصيل بعد تفعيل البيانات.", color = CostMuted, fontSize = 11.sp)
-                                Text("المعاينة الحالية لا تحفظ أي بيانات.", color = CostMuted, fontSize = 10.sp)
+                        ExpenseEntryPreview(
+                            section.id,
+                            activeTab?.id.orEmpty(),
+                            initialValues = editingExpense?.let { record ->
+                                mapOf(
+                                    "المبلغ" to com.example.core.MoneyUtils.formatPiastresPlain(record.amountPiastres),
+                                    "التاريخ" to DateUtils.formatDateShort(record.date).replace('/', '-'),
+                                    "الملاحظات" to record.notes.orEmpty(),
+                                    "التصنيف" to record.subcategory,
+                                    "نوع مصروف العمل" to record.subcategory,
+                                    "اسم الشخص" to record.title,
+                                    "التشخيص" to record.title
+                                )
+                            }.orEmpty(),
+                            onSave = { values ->
+                                val amount = runCatching { BigDecimal(values["المبلغ"].orEmpty().replace(',', '.')) }.getOrNull()
+                                val date = runCatching { LocalDate.parse(values["التاريخ"].orEmpty()).atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli() }.getOrNull()
+                                val medicalAmount = listOf("تكلفة الكشف أو الفحص", "تكلفة الدواء / العلاج").sumOf { key ->
+                                    runCatching { BigDecimal(values[key].orEmpty().ifBlank { "0" }) }.getOrDefault(BigDecimal.ZERO)
+                                }
+                                val finalAmount = if (section.id == "medical") medicalAmount else (amount ?: BigDecimal.ZERO)
+                                val title = when (section.id) {
+                                    "medical" -> listOf(values["اسم الشخص"], values["التشخيص"]).filterNotNull().filter { it.isNotBlank() }.joinToString(" — ")
+                                    "personal" -> values["التصنيف"].orEmpty() + if (values["اسم الشخص"].isNullOrBlank()) "" else " — " + values["اسم الشخص"]
+                                    "work" -> values["نوع مصروف العمل"].orEmpty()
+                                    else -> values["التصنيف"].orEmpty()
+                                }.ifBlank { "مصروف ${section.title}" }
+                                if (finalAmount > BigDecimal.ZERO && date != null) {
+                                    financeViewModel.saveExpense(
+                                        id = editingExpense?.expenseId ?: 0L,
+                                        amount = finalAmount,
+                                        date = date,
+                                        department = section.id.uppercase(),
+                                        category = values["التصنيف"].orEmpty().ifBlank { values["نوع مصروف العمل"].orEmpty().ifBlank { "عام" } },
+                                        title = title,
+                                        notes = values["الملاحظات"].orEmpty()
+                                    )
+                                    editingExpense = null
+                                    selectedTab = "records"
+                                }
                             }
-                        }
-                    }
-                    item {
-                        Button(onClick = { showDesignNotice = true }, modifier = Modifier.fillMaxWidth(), enabled = false, colors = ButtonDefaults.buttonColors(disabledContainerColor = Color(0xFFE9E6DE), disabledContentColor = CostMuted), shape = RoundedCornerShape(13.dp)) {
-                            Text("الحفظ غير مفعّل — المرحلة الثانية", fontWeight = FontWeight.Bold)
-                        }
+                        )
                     }
                 }
             }
@@ -340,8 +392,8 @@ private fun DashboardSummaryDesign(onAction: () -> Unit) {
 }
 
 @Composable
-private fun ExpenseEntryPreview(sectionId: String, tabId: String) {
-    var values by remember(sectionId, tabId) { mutableStateOf(emptyMap<String, String>()) }
+private fun ExpenseEntryPreview(sectionId: String, tabId: String, initialValues: Map<String, String> = emptyMap(), onSave: (Map<String, String>) -> Unit = {}) {
+    var values by remember(sectionId, tabId, initialValues) { mutableStateOf(initialValues) }
     var oilMode by remember(sectionId, tabId) { mutableStateOf("الزيوت") }
     fun value(label: String) = values[label].orEmpty()
     fun setValue(label: String, newValue: String) { values = values + (label to newValue) }
@@ -547,7 +599,14 @@ private fun ExpenseEntryPreview(sectionId: String, tabId: String) {
                 }
             }
         }
-        Text("معاينة إدخال فقط — البيانات لا تُحفظ في المرحلة الأولى.", color = CostMuted, fontSize = 10.sp)
+        if (sectionId in setOf("house", "medical", "work", "personal")) {
+            Button(onClick = { onSave(values) }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = CostInk, contentColor = CostGold), shape = RoundedCornerShape(13.dp)) {
+                Text(if (initialValues.isEmpty()) "حفظ البيان" else "حفظ التعديلات", fontWeight = FontWeight.Bold)
+            }
+            Text("سيظهر البيان بعد الحفظ ضمن سجلات القسم ويمكن تعديله أو حذفه.", color = CostMuted, fontSize = 10.sp)
+        } else {
+            Text("هذا النموذج لم يتم توصيل حفظه بعد؛ لا تحفظي بيانات مهمة قبل تفعيل القسم.", color = CostMuted, fontSize = 10.sp)
+        }
     }
 }
 
@@ -698,6 +757,42 @@ private fun OptionsPreview(options: List<String>) {
                         }
                     }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SavedExpenseRecords(records: List<ExpenseEntity>, onEdit: (ExpenseEntity) -> Unit, onDelete: (ExpenseEntity) -> Unit) {
+    Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Color.White), border = BorderStroke(1.dp, CostBorder), shape = RoundedCornerShape(15.dp)) {
+        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(9.dp)) {
+            Text("البيانات المحفوظة", color = CostInk, fontWeight = FontWeight.Bold)
+            if (records.isEmpty()) Text("لا توجد بيانات محفوظة في هذا القسم حتى الآن.", color = CostMuted, fontSize = 12.sp)
+            records.sortedByDescending { it.date }.take(100).forEach { record ->
+                Divider(color = CostBorder)
+                Text(record.title, color = CostInk, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
+                Text("${DateUtils.formatDateArabic(record.date)} • ${record.subcategory}", color = CostMuted, fontSize = 10.sp)
+                Text("${record.amount} جنيه", color = CostGoldDark, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    TextButton(onClick = { onEdit(record) }) { Text("تعديل") }
+                    TextButton(onClick = { onDelete(record) }) { Text("حذف", color = Color(0xFFB3261E)) }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SavedRevenueRecords(records: List<com.example.data.local.entities.RevenueEntity>) {
+    Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Color.White), border = BorderStroke(1.dp, CostBorder), shape = RoundedCornerShape(15.dp)) {
+        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text("مصادر الدخل المحفوظة", color = CostInk, fontWeight = FontWeight.Bold)
+            if (records.isEmpty()) Text("لا توجد إيرادات محفوظة حتى الآن.", color = CostMuted, fontSize = 12.sp)
+            records.sortedByDescending { it.date }.take(100).forEach { record ->
+                Divider(color = CostBorder)
+                Text(record.title, color = CostInk, fontWeight = FontWeight.SemiBold)
+                Text("${DateUtils.formatDateArabic(record.date)} • ${record.sourceType}", color = CostMuted, fontSize = 10.sp)
+                Text("${com.example.core.MoneyUtils.formatPiastresPlain(record.amountPiastres)} جنيه", color = CostGoldDark, fontWeight = FontWeight.Bold)
             }
         }
     }
