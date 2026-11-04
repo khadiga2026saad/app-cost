@@ -307,6 +307,7 @@ fun CostWorkspaceScreen(
                                     "التشخيص" to record.title
                                 )
                             }.orEmpty(),
+                            onActionUnavailable = { showDesignNotice = true },
                             onSave = { values ->
                                 val amount = runCatching { BigDecimal(values["المبلغ"].orEmpty().replace(',', '.')) }.getOrNull()
                                 val date = runCatching { LocalDate.parse(values["التاريخ"].orEmpty()).atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli() }.getOrNull()
@@ -392,7 +393,7 @@ private fun DashboardSummaryDesign(onAction: () -> Unit) {
 }
 
 @Composable
-private fun ExpenseEntryPreview(sectionId: String, tabId: String, initialValues: Map<String, String> = emptyMap(), onSave: (Map<String, String>) -> Unit = {}) {
+private fun ExpenseEntryPreview(sectionId: String, tabId: String, initialValues: Map<String, String> = emptyMap(), onSave: (Map<String, String>) -> Unit = {}, onActionUnavailable: () -> Unit = {}) {
     var values by remember(sectionId, tabId, initialValues) { mutableStateOf(initialValues) }
     var oilMode by remember(sectionId, tabId) { mutableStateOf("الزيوت") }
     fun value(label: String) = values[label].orEmpty()
@@ -599,14 +600,35 @@ private fun ExpenseEntryPreview(sectionId: String, tabId: String, initialValues:
                 }
             }
         }
-        if (sectionId in setOf("house", "medical", "work", "personal")) {
-            Button(onClick = { onSave(values) }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = CostInk, contentColor = CostGold), shape = RoundedCornerShape(13.dp)) {
-                Text(if (initialValues.isEmpty()) "حفظ البيان" else "حفظ التعديلات", fontWeight = FontWeight.Bold)
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(9.dp)) {
+            Button(
+                onClick = {
+                    if (sectionId in setOf("house", "medical", "work", "personal")) onSave(values)
+                    else onActionUnavailable()
+                },
+                modifier = Modifier.weight(1.15f),
+                colors = ButtonDefaults.buttonColors(containerColor = CostInk, contentColor = CostGold),
+                shape = RoundedCornerShape(13.dp),
+                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 12.dp)
+            ) {
+                Icon(Icons.Outlined.Save, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(Modifier.width(6.dp))
+                Text(if (initialValues.isEmpty()) "حفظ البيان" else "حفظ التعديلات", fontWeight = FontWeight.Bold, fontSize = 12.sp)
             }
-            Text("سيظهر البيان بعد الحفظ ضمن سجلات القسم ويمكن تعديله أو حذفه.", color = CostMuted, fontSize = 10.sp)
-        } else {
-            Text("هذا النموذج لم يتم توصيل حفظه بعد؛ لا تحفظي بيانات مهمة قبل تفعيل القسم.", color = CostMuted, fontSize = 10.sp)
+            OutlinedButton(
+                onClick = onActionUnavailable,
+                modifier = Modifier.weight(0.85f),
+                border = BorderStroke(1.dp, CostGold),
+                shape = RoundedCornerShape(13.dp),
+                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 12.dp)
+            ) {
+                Icon(Icons.Outlined.FileDownload, contentDescription = null, tint = CostInk, modifier = Modifier.size(18.dp))
+                Spacer(Modifier.width(6.dp))
+                Text("تصدير", color = CostInk, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+            }
         }
+        Text("الحفظ والتصدير لبقية الأقسام سيُفعّلان في المرحلة الثانية؛ هذه الأزرار حاليًا لمعاينة التصميم.", color = CostMuted, fontSize = 10.sp)
+
     }
 }
 
