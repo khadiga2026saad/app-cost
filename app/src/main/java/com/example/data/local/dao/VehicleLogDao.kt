@@ -81,4 +81,23 @@ interface VehicleLogDao {
 
     @Query("DELETE FROM vehicle_maintenance_logs WHERE maintenanceLogId = :id")
     suspend fun deleteMaintenanceLogById(id: Long)
+
+    // --- Getters by id (additive queries, no schema change) ---
+    @Query("SELECT * FROM vehicle_fuel_logs WHERE fuelLogId = :id LIMIT 1")
+    suspend fun getFuelLogById(id: Long): VehicleFuelLogEntity?
+
+    @Query("SELECT * FROM vehicle_maintenance_logs WHERE maintenanceLogId = :id LIMIT 1")
+    suspend fun getMaintenanceLogById(id: Long): VehicleMaintenanceLogEntity?
+
+    @Query("SELECT * FROM vehicle_oil_logs WHERE oilLogId = :id LIMIT 1")
+    suspend fun getOilLogById(id: Long): VehicleOilLogEntity?
+
+    @Query("SELECT * FROM vehicle_accident_logs WHERE accidentLogId = :id LIMIT 1")
+    suspend fun getAccidentLogById(id: Long): VehicleAccidentLogEntity?
+
+    @Query("DELETE FROM vehicle_oil_logs WHERE oilLogId = :id")
+    suspend fun deleteOilLogById(id: Long)
+
+    @Query("DELETE FROM vehicle_accident_logs WHERE accidentLogId = :id")
+    suspend fun deleteAccidentLogById(id: Long)
 }

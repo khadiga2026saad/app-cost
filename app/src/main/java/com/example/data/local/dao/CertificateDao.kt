@@ -53,4 +53,11 @@ interface CertificateDao {
 
     @Query("UPDATE certificate_payout_schedules SET isCollected = 1, actualCollectedDate = :collectedDate, linkedRevenueId = :revenueId WHERE scheduleId = :id")
     suspend fun markScheduleCollected(id: Long, collectedDate: Long, revenueId: Long)
+
+    // --- Additive queries for settlement operations (no schema change) ---
+    @Query("SELECT * FROM certificate_payout_schedules WHERE certificateId = :certId ORDER BY cycleNumber ASC")
+    suspend fun getSchedulesForCertificateDirect(certId: Long): List<CertificatePayoutScheduleEntity>
+
+    @Query("DELETE FROM certificate_payout_schedules WHERE certificateId = :certId AND isCollected = 0")
+    suspend fun deleteUncollectedSchedules(certId: Long)
 }

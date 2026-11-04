@@ -94,6 +94,7 @@ interface FinanceRepository {
     fun getActiveCertificates(): Flow<List<FinancialCertificateEntity>>
     suspend fun getCertificateById(id: Long): FinancialCertificateEntity?
     suspend fun createCertificateWithSchedules(cert: FinancialCertificateEntity): Long
+    suspend fun redeemCertificate(certificateId: Long, redemptionDate: Long, isEarlyBreak: Boolean, penaltyPiastres: Long = 0L)
     suspend fun deleteCertificate(cert: FinancialCertificateEntity)
     fun getSchedulesForCertificate(certId: Long): Flow<List<CertificatePayoutScheduleEntity>>
     fun getDueUncollectedSchedules(now: Long): Flow<List<CertificatePayoutScheduleEntity>>
@@ -390,6 +391,19 @@ class FinanceRepositoryImpl(private val database: AppDatabase) : FinanceReposito
         log: VehicleAccidentLogEntity,
         vehicleName: String
     ): Long = database.withTransaction {
+        // Financial Constitution Section 7.5: the damage estimate never touches the
+        // treasury. The only deductible amount is the net user cost, and it must be
+        // derived strictly from the actual repair cost minus received insurance.
+        require(log.actualRepairCostPiastres >= 0L &&
+            log.insuranceCompensationPiastres >= 0L) {
+            "Accident repair cost and insurance compensation must not be negative"
+        }
+        val expectedNetUserCost = maxOf(0L, log.actualRepairCostPiastres -
+            log.insuranceCompensationPiastres)
+        require(log.netUserCostPiastres == expectedNetUserCost) {
+            "netUserCostPiastres must equal MAX(0, actualRepairCostPiastres - " +
+                "insuranceCompensationPiastres) per Section 7.5 of the Financial Constitution"
+        }
         var expenseId: Long? = null
         if (log.netUserCostPiastres > 0L) {
             val expense = ExpenseEntity(
@@ -412,14 +426,72 @@ class FinanceRepositoryImpl(private val database: AppDatabase) : FinanceReposito
         vehicleLogDao.insertAccidentLog(log.copy(linkedExpenseId = expenseId))
     }
 
-    override suspend fun deleteVehicleLogById(id: Long, logType: String): Unit = database.withTransaction {
-        if (logType.equals("MAINTENANCE", ignoreCase = true)) {
-            vehicleLogDao.deleteMaintenanceLogById(id)
-        } else {
-            vehicleLogDao.deleteFuelLogById(id)
-            vehicleLogDao.deleteMaintenanceLogById(id)
+    override suspend fun deleteVehicleLogById(id: Long, logType: String): Unit =
+        database.withTransaction {
+            // Financial Constitution Section 10: reverse the linked cash outflow atomically.
+            when (logType.uppercase()) {
+                "FUEL" -> {
+                    val log = vehicleLogDao.getFuelLogById(id) ?: return@withTransaction
+                    val expense = expenseDao.getExpenseById(log.linkedExpenseId)
+                    if (expense != null) {
+                        val account = currentAccountDao.getAccountDirect()
+                            ?: CurrentAccountEntity(accountId = 1L, currentBalancePiastres = 0L)
+                        currentAccountDao.updateBalance(
+                            account.currentBalancePiastres + expense.amountPiastres,
+                            DateUtils.currentEpochMillis()
+                        )
+                        expenseDao.deleteExpense(expense)
+                    } else {
+                        vehicleLogDao.deleteFuelLogById(id)
+                    }
+                }
+                "MAINTENANCE" -> {
+                    val log = vehicleLogDao.getMaintenanceLogById(id) ?: return@withTransaction
+                    val expense = expenseDao.getExpenseById(log.linkedExpenseId)
+                    if (expense != null) {
+                        val account = currentAccountDao.getAccountDirect()
+                            ?: CurrentAccountEntity(accountId = 1L, currentBalancePiastres = 0L)
+                        currentAccountDao.updateBalance(
+                            account.currentBalancePiastres + expense.amountPiastres,
+                            DateUtils.currentEpochMillis()
+                        )
+                        expenseDao.deleteExpense(expense)
+                    } else {
+                        vehicleLogDao.deleteMaintenanceLogById(id)
+                    }
+                }
+                "OIL" -> {
+                    val log = vehicleLogDao.getOilLogById(id) ?: return@withTransaction
+                    val expense = expenseDao.getExpenseById(log.linkedExpenseId)
+                    if (expense != null) {
+                        val account = currentAccountDao.getAccountDirect()
+                            ?: CurrentAccountEntity(accountId = 1L, currentBalancePiastres = 0L)
+                        currentAccountDao.updateBalance(
+                            account.currentBalancePiastres + expense.amountPiastres,
+                            DateUtils.currentEpochMillis()
+                        )
+                        expenseDao.deleteExpense(expense)
+                    } else {
+                        vehicleLogDao.deleteOilLogById(id)
+                    }
+                }
+                "ACCIDENT" -> {
+                    val log = vehicleLogDao.getAccidentLogById(id) ?: return@withTransaction
+                    val expense = log.linkedExpenseId?.let { expenseDao.getExpenseById(it) }
+                    if (expense != null) {
+                        val account = currentAccountDao.getAccountDirect()
+                            ?: CurrentAccountEntity(accountId = 1L, currentBalancePiastres = 0L)
+                        currentAccountDao.updateBalance(
+                            account.currentBalancePiastres + expense.amountPiastres,
+                            DateUtils.currentEpochMillis()
+                        )
+                        expenseDao.deleteExpense(expense)
+                    }
+                    vehicleLogDao.deleteAccidentLogById(id)
+                }
+                else -> Unit
+            }
         }
-    }
 
     override fun getAllGamaeyat(): Flow<List<GamaeyaEntity>> = gamaeyaDao.getAllGamaeyat()
 
@@ -594,7 +666,66 @@ class FinanceRepositoryImpl(private val database: AppDatabase) : FinanceReposito
         }
     }
 
-    override suspend fun deleteCertificate(cert: FinancialCertificateEntity) {
-        certificateDao.deleteCertificate(cert)
+    /**
+     * Redeem a certificate at maturity or break it early (Constitution Sections 8.8 and 10).
+     * Principal returns to the treasury as an investment inflow; early redemption deducts
+     * the bank penalty. Uncollected future payouts are cancelled.
+     */
+    override suspend fun redeemCertificate(
+        certificateId: Long,
+        redemptionDate: Long,
+        isEarlyBreak: Boolean,
+        penaltyPiastres: Long
+    ): Unit = database.withTransaction {
+        val cert = certificateDao.getCertificateById(certificateId) ?: return@withTransaction
+        require(cert.isActive) { "Only an active certificate can be redeemed" }
+        require(penaltyPiastres >= 0L) { "Redemption penalty must not be negative" }
+        require(!isEarlyBreak || penaltyPiastres <= cert.principalPiastres) {
+            "Redemption penalty cannot exceed the certificate principal"
+        }
+        certificateDao.deleteUncollectedSchedules(certificateId)
+        val penalty = if (isEarlyBreak) penaltyPiastres else 0L
+        val account = currentAccountDao.getAccountDirect()
+            ?: CurrentAccountEntity(accountId = 1L, currentBalancePiastres = 0L)
+        currentAccountDao.updateBalance(
+            account.currentBalancePiastres + cert.principalPiastres - penalty,
+            DateUtils.currentEpochMillis()
+        )
+        certificateDao.updateCertificate(
+            cert.copy(
+                isActive = false,
+                isRedeemedEarly = isEarlyBreak,
+                redemptionPenaltyPiastres = penalty
+            )
+        )
     }
+
+    /**
+     * Delete a certificate as a full reverse settlement (Constitution Section 4.2):
+     * collected yields and the original principal purchase are reversed atomically.
+     */
+    override suspend fun deleteCertificate(cert: FinancialCertificateEntity): Unit =
+        database.withTransaction {
+            val collected = certificateDao.getSchedulesForCertificateDirect(cert.certificateId)
+                .filter { it.isCollected && it.linkedRevenueId != null }
+            for (schedule in collected) {
+                val revenue = revenueDao.getRevenueById(schedule.linkedRevenueId!!)
+                if (revenue != null) {
+                    val account = currentAccountDao.getAccountDirect()
+                        ?: CurrentAccountEntity(accountId = 1L, currentBalancePiastres = 0L)
+                    currentAccountDao.updateBalance(
+                        account.currentBalancePiastres - revenue.amountPiastres,
+                        DateUtils.currentEpochMillis()
+                    )
+                    revenueDao.deleteRevenue(revenue)
+                }
+            }
+            val account = currentAccountDao.getAccountDirect()
+                ?: CurrentAccountEntity(accountId = 1L, currentBalancePiastres = 0L)
+            currentAccountDao.updateBalance(
+                account.currentBalancePiastres + cert.principalPiastres,
+                DateUtils.currentEpochMillis()
+            )
+            certificateDao.deleteCertificate(cert)
+        }
 }
