@@ -20,6 +20,7 @@ import java.time.LocalDate
 import java.math.BigDecimal
 import com.example.core.DateUtils
 import com.example.data.local.entities.ExpenseEntity
+import com.example.data.local.entities.GamaeyaInstallmentEntity
 import com.example.ui.viewmodel.FinanceViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.ui.Alignment
@@ -89,7 +90,7 @@ private fun fieldsFor(sectionId: String, tabId: String): List<String> = when (se
     "medical" -> listOf("فرد الأسرة", "اسم المنشأة الطبية", "نوع المنشأة الطبية", "الحالة", "التشخيص", "تكلفة الكشف أو الفحص", "تكلفة الدواء", "التاريخ", "ملاحظات طبية")
     "work" -> listOf("نوع المصروف", "نوع مخصص", "المبلغ", "التاريخ", "الملاحظات")
     "personal" -> listOf("التصنيف", "تصنيف مخصص (عند الحاجة)", "المبلغ", "التاريخ", "طريقة الدفع", "الملاحظات")
-    "associations" -> if (tabId == "form") listOf("اسم الجمعية", "قيمة الجمعية", "عدد الأفراد", "القسط", "رقم الدور", "تاريخ البداية", "تاريخ القبض", "ملاحظات") else listOf("اسم الجمعية", "الشهر", "قيمة القسط أو القبض", "التاريخ", "ملاحظات")
+    "associations" -> if (tabId == "form") listOf("اسم الجمعية", "قيمة الجمعية", "عدد الأفراد", "القسط الشهري", "رقم الدور", "تاريخ البداية", "تاريخ القبض", "ملاحظات") else listOf("اسم الجمعية", "الشهر", "قيمة القسط أو القبض", "التاريخ", "ملاحظات")
     "vehicles" -> when (tabId) {
         "fuel" -> listOf("المركبة", "نوع الوقود", "الكمية أو اللترات", "سعر الوحدة", "إجمالي التكلفة", "قراءة العداد", "التاريخ والوقت", "ملاحظات")
         "maintenance" -> listOf("المركبة", "نوع الصيانة", "وصف الصيانة", "اسم المستلزم أو قطعة الغيار", "سعر المستلزمات", "وصف الأجور", "قيمة الأجور", "التاريخ", "الإجمالي")
@@ -136,6 +137,7 @@ fun CostWorkspaceScreen(
     val savedExpenses by financeViewModel.allExpenses.collectAsState()
     val savedRevenues by financeViewModel.allRevenues.collectAsState()
     val savedGamaeyat by financeViewModel.allGamaeyat.collectAsState()
+    val unpaidGamaeyaInstallments by financeViewModel.allUnpaidGamaeyaInstallments.collectAsState()
     val section = costSections.firstOrNull { it.id == selectedSection }
     val tabs = section?.let { tabsFor(it.id) }.orEmpty()
     val activeTab = tabs.firstOrNull { it.id == selectedTab }
@@ -287,15 +289,50 @@ fun CostWorkspaceScreen(
                         item { SavedRevenueRecords(records = savedRevenues) }
                     } else if (section.id == "associations") {
                         item {
-                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                                 if (savedGamaeyat.isEmpty()) {
                                     Text("لا توجد جمعيات مسجلة حتى الآن.", color = CostMuted, fontSize = 12.sp)
-                                } else savedGamaeyat.forEach { gamaeya ->
-                                    Card(colors = CardDefaults.cardColors(containerColor = Color.White), border = BorderStroke(1.dp, CostBorder)) {
-                                        Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                                            Text(gamaeya.name, color = CostInk, fontWeight = FontWeight.Bold)
-                                            Text("قيمة الجمعية: " + com.example.core.MoneyUtils.formatPiastresPlain(gamaeya.totalPoolValuePiastres) + " ج.م", color = CostMuted, fontSize = 11.sp)
-                                            Text("الأفراد: " + gamaeya.numberOfMembers + " • القسط: " + com.example.core.MoneyUtils.formatPiastresPlain(gamaeya.monthlyInstallmentPiastres) + " ج.م • الدور: " + gamaeya.myTurnOrder, color = CostMuted, fontSize = 10.sp)
+                                } else if (activeTab?.id == "installments") {
+                                    val outstanding = unpaidGamaeyaInstallments.sortedBy { it.dueDate }
+                                    if (outstanding.isEmpty()) {
+                                        Text("لا توجد أقساط غير مسددة.", color = CostMuted, fontSize = 12.sp)
+                                    } else outstanding.forEach { installment ->
+                                        val owner = savedGamaeyat.firstOrNull { it.gamaeyaId == installment.gamaeyaId }
+                                        Card(colors = CardDefaults.cardColors(containerColor = Color.White), border = BorderStroke(1.dp, CostBorder)) {
+                                            Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
+                                                Text(owner?.name ?: "جمعية", color = CostInk, fontWeight = FontWeight.Bold)
+                                                Text("القسط رقم ${installment.installmentNumber} • الاستحقاق: ${DateUtils.formatDateArabic(installment.dueDate)}", color = CostMuted, fontSize = 11.sp)
+                                                Text("${com.example.core.MoneyUtils.formatPiastresPlain(installment.amountPiastres)} جنيه", color = CostGoldDark, fontWeight = FontWeight.Bold)
+                                                Button(onClick = { financeViewModel.payGamaeyaInstallment(installment.installmentId) }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = CostInk, contentColor = CostGold)) {
+                                                    Text("تسجيل سداد القسط")
+                                                }
+                                            }
+                                        }
+                                    }
+                                } else if (activeTab?.id == "payouts") {
+                                    savedGamaeyat.forEach { gamaeya ->
+                                        Card(colors = CardDefaults.cardColors(containerColor = Color.White), border = BorderStroke(1.dp, CostBorder)) {
+                                            Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
+                                                Text(gamaeya.name, color = CostInk, fontWeight = FontWeight.Bold)
+                                                Text("قيمة القبض المتوقعة: ${com.example.core.MoneyUtils.formatPiastresPlain(gamaeya.totalPoolValuePiastres)} جنيه", color = CostMuted, fontSize = 11.sp)
+                                                Text(if (gamaeya.isPayoutReceived) "تم تسجيل استلام القبض" else "لم يتم تسجيل استلام القبض", color = if (gamaeya.isPayoutReceived) Color(0xFF26734D) else CostGoldDark, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                                if (!gamaeya.isPayoutReceived) {
+                                                    Button(onClick = { financeViewModel.collectGamaeyaPayout(gamaeya.gamaeyaId) }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = CostInk, contentColor = CostGold)) {
+                                                        Text("تسجيل استلام القبض")
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                } else {
+                                    savedGamaeyat.forEach { gamaeya ->
+                                        Card(colors = CardDefaults.cardColors(containerColor = Color.White), border = BorderStroke(1.dp, CostBorder)) {
+                                            Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                                Text(gamaeya.name, color = CostInk, fontWeight = FontWeight.Bold)
+                                                Text("قيمة الجمعية: " + com.example.core.MoneyUtils.formatPiastresPlain(gamaeya.totalPoolValuePiastres) + " ج.م", color = CostMuted, fontSize = 11.sp)
+                                                Text("الأفراد: " + gamaeya.numberOfMembers + " • القسط: " + com.example.core.MoneyUtils.formatPiastresPlain(gamaeya.monthlyInstallmentPiastres) + " ج.م • الدور: " + gamaeya.myTurnOrder, color = CostMuted, fontSize = 10.sp)
+                                                Text("بداية الجمعية: ${DateUtils.formatDateArabic(gamaeya.startDate)} • موعد القبض: ${DateUtils.formatDateArabic(gamaeya.expectedPayoutDate)}", color = CostMuted, fontSize = 10.sp)
+                                            }
                                         }
                                     }
                                 }
@@ -329,7 +366,7 @@ fun CostWorkspaceScreen(
                                 val date = runCatching { LocalDate.parse(values["التاريخ"].orEmpty()).atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli() }.getOrNull()
                                 if (section.id == "associations" && activeTab?.id == "form") {
                                     val totalPool = runCatching { BigDecimal(values["قيمة الجمعية"].orEmpty().replace(',', '.')) }.getOrNull()
-                                    val monthlyInstallment = runCatching { BigDecimal(values["قيمة القسط الشهري"].orEmpty().replace(',', '.')) }.getOrNull()
+                                    val monthlyInstallment = runCatching { BigDecimal(values["القسط الشهري"].orEmpty().replace(',', '.')) }.getOrNull()
                                     val members = values["عدد الأفراد"].orEmpty().toIntOrNull()
                                     val turnOrder = values["رقم الدور"].orEmpty().toIntOrNull()
                                     val startDate = runCatching { LocalDate.parse(values["تاريخ البداية"].orEmpty()).atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli() }.getOrNull()
