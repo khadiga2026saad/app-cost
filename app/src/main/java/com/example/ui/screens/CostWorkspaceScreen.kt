@@ -703,7 +703,7 @@ private fun ExpenseEntryPreview(sectionId: String, tabId: String, initialValues:
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(9.dp)) {
             Button(
                 onClick = {
-                    if (sectionId in setOf("house", "medical", "work", "personal", "income")) onSave(values)
+                    if (sectionId in setOf("house", "medical", "work", "personal", "income", "associations")) onSave(values)
                     else onActionUnavailable()
                 },
                 modifier = Modifier.weight(1.15f),
@@ -727,7 +727,7 @@ private fun ExpenseEntryPreview(sectionId: String, tabId: String, initialValues:
                 Text("تصدير", color = CostInk, fontWeight = FontWeight.Bold, fontSize = 12.sp)
             }
         }
-        Text("الحفظ والتصدير لبقية الأقسام سيُفعّلان في المرحلة الثانية؛ هذه الأزرار حاليًا لمعاينة التصميم.", color = CostMuted, fontSize = 10.sp)
+        Text("الحفظ المحلي مفعّل للأقسام المرتبطة بقاعدة البيانات. التصدير يُستكمل ضمن وظائف المرحلة الثانية.", color = CostMuted, fontSize = 10.sp)
 
     }
 }
