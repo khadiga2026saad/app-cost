@@ -471,7 +471,7 @@ private fun ExpenseEntryPreview(sectionId: String, tabId: String, initialValues:
                     PreviewInput("الكمية / عدد اللترات", value("الكمية"), numeric = true) { setValue("الكمية", it) }
                     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         PreviewInput("قراءة عداد السيارة", value("العداد"), numeric = true, modifier = Modifier.weight(1f)) { setValue("العداد", it) }
-                        IconButton(onClick = { }, enabled = false) { Icon(Icons.Outlined.CameraAlt, contentDescription = "تصوير قراءة العداد — يتفعل لاحقًا", tint = CostGoldDark) }
+                        IconButton(onClick = onActionUnavailable) { Icon(Icons.Outlined.CameraAlt, contentDescription = "معاينة زر تصوير قراءة العداد", tint = CostGoldDark) }
                     }
                     PreviewDateInput("تاريخ ووقت التزوّد", value("التاريخ والوقت")) { setValue("التاريخ والوقت", it) }
                     Text("زر الكاميرا مخصص لقراءة العداد تلقائيًا عند تنفيذ وظائف الكاميرا لاحقًا.", color = CostMuted, fontSize = 10.sp)
@@ -503,7 +503,7 @@ private fun ExpenseEntryPreview(sectionId: String, tabId: String, initialValues:
                     PreviewInput("السعر", value("السعر"), numeric = true) { setValue("السعر", it) }
                     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         PreviewInput("قراءة العداد", value("العداد"), numeric = true, modifier = Modifier.weight(1f)) { setValue("العداد", it) }
-                        IconButton(onClick = { }, enabled = false) { Icon(Icons.Outlined.CameraAlt, contentDescription = "تصوير قراءة العداد — يتفعل في مرحلة لاحقة", tint = CostGoldDark) }
+                        IconButton(onClick = onActionUnavailable) { Icon(Icons.Outlined.CameraAlt, contentDescription = "معاينة زر تصوير قراءة العداد", tint = CostGoldDark) }
                     }
                     PreviewDateInput("التاريخ", value("التاريخ")) { setValue("التاريخ", it) }
                     PreviewInput("ملاحظات", value("ملاحظات"), multiline = true) { setValue("ملاحظات", it) }
@@ -511,6 +511,11 @@ private fun ExpenseEntryPreview(sectionId: String, tabId: String, initialValues:
                 "accidents" -> {
                     PreviewDropdown("السيارة", listOf("اختاري السيارة"), value("السيارة").ifBlank { "اختاري السيارة" }) { setValue("السيارة", it) }
                     PreviewInput("عنوان الحادث", value("عنوان الحادث")) { setValue("عنوان الحادث", it) }
+                    OutlinedButton(onClick = onActionUnavailable, modifier = Modifier.fillMaxWidth(), border = BorderStroke(1.dp, CostGold), shape = RoundedCornerShape(12.dp)) {
+                        Icon(Icons.Outlined.AddPhotoAlternate, contentDescription = null, tint = CostGoldDark)
+                        Spacer(Modifier.width(8.dp))
+                        Text("إرفاق صورة الحادث", color = CostInk)
+                    }
                     PreviewDateInput("التاريخ", value("التاريخ")) { setValue("التاريخ", it) }
                     PreviewInput("الوقت", value("الوقت")) { setValue("الوقت", it) }
                     PreviewInput("الموقع (اختياري)", value("الموقع")) { setValue("الموقع", it) }
