@@ -493,7 +493,8 @@ fun CostWorkspaceScreen(
                                         financeViewModel.recordTreasuryMovement(
                                             type = if (activeTab?.id == "deposits") "DEPOSIT" else "WITHDRAWAL",
                                             amount = amount,
-                                            reason = values["الوصف"].orEmpty()
+                                            reason = values["الوصف"].orEmpty(),
+                                            date = date
                                         )
                                         selectedTab = "movements"
                                     } else showDesignNotice = true
@@ -909,7 +910,7 @@ private fun ExpenseEntryPreview(sectionId: String, tabId: String, initialValues:
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(9.dp)) {
             Button(
                 onClick = {
-                    if (sectionId in setOf("house", "medical", "work", "personal", "income", "associations") ||
+                    if (sectionId in setOf("house", "medical", "work", "personal", "income", "associations", "current_account") ||
                         (sectionId == "vehicles" && tabId in setOf("records", "fuel", "maintenance", "oils", "accidents"))) onSave(values)
                     else onActionUnavailable()
                 },

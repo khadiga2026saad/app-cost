@@ -25,7 +25,7 @@ interface FinanceRepository {
     // Treasury
     fun getAccountFlow(): Flow<CurrentAccountEntity?>
     suspend fun getAccountDirect(): CurrentAccountEntity?
-    suspend fun recordTreasuryMovement(type: String, amountPiastres: Long, reason: String): Long
+    suspend fun recordTreasuryMovement(type: String, amountPiastres: Long, reason: String, date: Long = DateUtils.currentEpochMillis()): Long
 
     // Expenses
     fun getAllExpenses(): Flow<List<ExpenseEntity>>
@@ -116,7 +116,7 @@ class FinanceRepositoryImpl(private val database: AppDatabase) : FinanceReposito
 
     override suspend fun getAccountDirect(): CurrentAccountEntity? = currentAccountDao.getAccountDirect()
 
-    override suspend fun recordTreasuryMovement(type: String, amountPiastres: Long, reason: String): Long =
+    override suspend fun recordTreasuryMovement(type: String, amountPiastres: Long, reason: String, date: Long): Long =
         database.withTransaction {
             val account = currentAccountDao.getAccountDirect()
                 ?: CurrentAccountEntity(accountId = 1L, currentBalancePiastres = 0L)
@@ -126,14 +126,13 @@ class FinanceRepositoryImpl(private val database: AppDatabase) : FinanceReposito
                 "WITHDRAWAL" -> current - amountPiastres
                 else -> amountPiastres
             }
-            val now = DateUtils.currentEpochMillis()
-            currentAccountDao.updateBalance(newBalance, now)
+            currentAccountDao.updateBalance(newBalance, date)
 
             treasuryMovementDao.insertMovement(
                 TreasuryMovementEntity(
                     movementType = type,
                     amountPiastres = amountPiastres,
-                    date = now,
+                    date = date,
                     reason = reason,
                     balanceBeforePiastres = current,
                     balanceAfterPiastres = newBalance

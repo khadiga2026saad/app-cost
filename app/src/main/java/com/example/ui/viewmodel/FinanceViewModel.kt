@@ -520,10 +520,10 @@ class FinanceViewModel(
         }
     }
 
-    fun recordTreasuryMovement(type: String, amount: BigDecimal, reason: String) {
+    fun recordTreasuryMovement(type: String, amount: BigDecimal, reason: String, date: Long = DateUtils.currentEpochMillis()) {
         if (amount <= BigDecimal.ZERO) return
         viewModelScope.launch {
-            repository.recordTreasuryMovement(type, MoneyUtils.egpToPiastres(amount), reason.ifBlank { "حركة حساب جاري" })
+            repository.recordTreasuryMovement(type, MoneyUtils.egpToPiastres(amount), reason.ifBlank { "حركة حساب جاري" }, date)
         }
     }
 
