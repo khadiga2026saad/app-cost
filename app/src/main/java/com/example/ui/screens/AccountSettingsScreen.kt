@@ -166,12 +166,12 @@ fun AccountSettingsScreen(profileViewModel: ProfileViewModel, modifier: Modifier
                             HorizontalDivider()
                             Text("معلوماتي", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                             val birthInfo = BirthInfoCalculator.compute(
-                                profile?.birthDate?.let { runCatching { LocalDate.parse(it) }.getOrNull() }
+                                BirthInfoCalculator.parseBirthDate(profile?.birthDate)
                             )
                             if (birthInfo == null) Text("أضف تاريخ ميلادك لتظهر معلوماتك التلقائية.", color = Color.Gray)
                             val values = birthInfo?.let { info ->
                                 listOf(
-                                    "${info.gregorianAgeYears} سنة",
+                                    "${info.gregorianAgeYears} سنة و${info.gregorianAgeMonths} شهر و${info.gregorianAgeDays} يوم",
                                     "${info.hijriAgeYearsApprox} سنة تقريبًا",
                                     info.zodiac,
                                     info.birthWeekday,
@@ -280,10 +280,8 @@ private fun AccountProfileEditor(user: FirebaseUser?, profileViewModel: ProfileV
         if (uri != null) { pendingPhoto = uri; notice = "" }
     }
     val stored = profile?.takeIf { it.accountKey == accountKey }
-    val dateValid = birthDate.isBlank() || try {
-        val parsed = SimpleDateFormat("yyyy-MM-dd", Locale.US).apply { isLenient = false }.parse(birthDate)
-        parsed != null && parsed.time <= System.currentTimeMillis()
-    } catch (_: Exception) { false }
+    val dateValid = birthDate.isBlank() || BirthInfoCalculator.parseBirthDate(birthDate)
+        ?.isAfter(LocalDate.now()) == false
     val phoneValid = phone.isBlank() || (phone.all { it.isDigit() || it == '+' || it == ' ' || it == '-' } && phone.count { it.isDigit() } in 7..15)
     val changed = stored != null && (fullName.trim() != stored.fullName || nickname.trim() != stored.nickname ||
         phone.trim() != stored.phone.orEmpty() || birthDate != stored.birthDate.orEmpty() || pendingPhoto != null)
