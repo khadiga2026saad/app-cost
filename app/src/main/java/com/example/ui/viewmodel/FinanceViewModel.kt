@@ -229,6 +229,11 @@ class FinanceViewModel(
         initialValue = emptyList()
     )
 
+    val allTreasuryMovements: StateFlow<List<com.example.data.local.entities.TreasuryMovementEntity>> =
+        repository.getAllTreasuryMovements().stateIn(
+            viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList()
+        )
+
     // Financial Certificates
     val allCertificates: StateFlow<List<FinancialCertificateEntity>> = repository.getAllCertificates()
         .stateIn(

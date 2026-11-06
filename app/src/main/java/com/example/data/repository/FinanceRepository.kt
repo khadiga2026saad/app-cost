@@ -25,6 +25,7 @@ interface FinanceRepository {
     // Treasury
     fun getAccountFlow(): Flow<CurrentAccountEntity?>
     suspend fun getAccountDirect(): CurrentAccountEntity?
+    fun getAllTreasuryMovements(): Flow<List<TreasuryMovementEntity>>
     suspend fun recordTreasuryMovement(type: String, amountPiastres: Long, reason: String, date: Long = DateUtils.currentEpochMillis()): Long
 
     // Expenses
@@ -116,6 +117,8 @@ class FinanceRepositoryImpl(private val database: AppDatabase) : FinanceReposito
     override fun getAccountFlow(): Flow<CurrentAccountEntity?> = currentAccountDao.getAccountFlow()
 
     override suspend fun getAccountDirect(): CurrentAccountEntity? = currentAccountDao.getAccountDirect()
+
+    override fun getAllTreasuryMovements(): Flow<List<TreasuryMovementEntity>> = treasuryMovementDao.getAllMovements()
 
     override suspend fun recordTreasuryMovement(type: String, amountPiastres: Long, reason: String, date: Long): Long =
         database.withTransaction {

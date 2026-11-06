@@ -145,6 +145,8 @@ fun CostWorkspaceScreen(
     val savedVehicles by financeViewModel.allVehicles.collectAsState()
     val savedVehicleLogs by financeViewModel.allVehicleLogs.collectAsState()
     val savedStudents by financeViewModel.allStudents.collectAsState()
+    val savedTreasuryMovements by financeViewModel.allTreasuryMovements.collectAsState()
+    val financeSummary by financeViewModel.currentMonthSummary.collectAsState()
     val context = LocalContext.current
     val homeCsvLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.CreateDocument("text/csv")
@@ -364,6 +366,23 @@ fun CostWorkspaceScreen(
                                 onEdit = { record -> editingExpense = record; selectedTab = "form" },
                                 onDelete = { financeViewModel.deleteExpense(it.expenseId) }
                             )
+                        }
+                    } else if (section.id == "current_account" && activeTab?.id == "movements") {
+                        item {
+                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Text("الرصيد الحالي: " + com.example.core.MoneyUtils.formatPiastresPlain(financeSummary.currentLiquidBalancePiastres) + " جنيه", color = CostInk, fontWeight = FontWeight.Bold)
+                                if (savedTreasuryMovements.isEmpty()) Text("لا توجد حركات مسجلة حتى الآن.", color = CostMuted, fontSize = 12.sp)
+                                savedTreasuryMovements.forEach { movement ->
+                                    Card(colors = CardDefaults.cardColors(containerColor = Color.White), border = BorderStroke(1.dp, CostBorder)) {
+                                        Column(Modifier.fillMaxWidth().padding(11.dp), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                                            Text(when (movement.movementType) { "DEPOSIT" -> "إيداع"; "WITHDRAWAL" -> "سحب"; else -> "تسوية رصيد" }, color = CostInk, fontWeight = FontWeight.Bold)
+                                            Text(movement.reason, color = CostMuted, fontSize = 11.sp)
+                                            Text(DateUtils.formatDateArabic(movement.date) + " • " + com.example.core.MoneyUtils.formatPiastresPlain(movement.amountPiastres) + " جنيه", color = CostInk, fontSize = 11.sp)
+                                            Text("الرصيد بعد الحركة: " + com.example.core.MoneyUtils.formatPiastresPlain(movement.balanceAfterPiastres) + " جنيه", color = CostMuted, fontSize = 10.sp)
+                                        }
+                                    }
+                                }
+                            }
                         }
                     } else if (section.id == "education" && activeTab?.id == "students") {
                         item {
