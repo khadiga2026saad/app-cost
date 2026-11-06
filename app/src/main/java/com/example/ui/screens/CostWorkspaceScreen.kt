@@ -415,12 +415,16 @@ fun CostWorkspaceScreen(
                                         val logs = savedVehicleLogs.filter { it.vehicleId == vehicle.vehicleId }
                                         Text("سجلات الوقود والصيانة: " + logs.size, color = CostMuted, fontSize = 10.sp)
                                         logs.take(5).forEach { log ->
-                                            Text(
-                                                (when (log.logType) { "FUEL" -> "وقود"; "OIL" -> "زيوت وفلاتر"; "ACCIDENT" -> "حادث"; else -> "صيانة" }) + " • " +
-                                                    DateUtils.formatDateArabic(log.date) + " • " + log.amount + " جنيه",
-                                                color = CostInk,
-                                                fontSize = 11.sp
-                                            )
+                                            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
+                                                Text(
+                                                    (when (log.logType) { "FUEL" -> "وقود"; "OIL" -> "زيوت وفلاتر"; "ACCIDENT" -> "حادث"; else -> "صيانة" }) + " • " +
+                                                        DateUtils.formatDateArabic(log.date) + " • " + log.amount + " جنيه",
+                                                    color = CostInk,
+                                                    fontSize = 11.sp,
+                                                    modifier = Modifier.weight(1f)
+                                                )
+                                                TextButton(onClick = { financeViewModel.deleteVehicleLog(log.id, log.logType) }) { Text("حذف") }
+                                            }
                                         }
                                     }
                                 }
