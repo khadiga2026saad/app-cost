@@ -97,7 +97,7 @@ private fun tabsFor(id: String): List<CostTab> = when (id) {
 private fun exportActionsFor(sectionId: String, tabId: String): List<String> = when (sectionId) {
     "house", "work", "personal", "medical", "vehicles", "education", "associations", "income", "certificates", "current_account" -> listOf("تصدير CSV")
     "car_income" -> listOf("تصدير CSV")
-    "reports" -> listOf("CSV", "طباعة", "حفظ في الخزنة", "إغلاق")
+    "reports" -> listOf("تصدير CSV")
     else -> emptyList()
 }
 
@@ -249,6 +249,23 @@ fun CostWorkspaceScreen(
                         "current_account" -> {
                             appendLine(csvRow("التاريخ", "نوع الحركة", "المبلغ_بالقرش", "الرصيد قبل_بالقرش", "الرصيد بعد_بالقرش", "البيان"))
                             savedTreasuryMovements.sortedByDescending { it.date }.forEach { item -> appendLine(csvRow(DateUtils.formatDateShort(item.date), item.movementType, item.amountPiastres.toString(), item.balanceBeforePiastres.toString(), item.balanceAfterPiastres.toString(), item.reason)) }
+                        }
+                        "reports" -> {
+                            val today = LocalDate.now()
+                            val start = when (selectedTab) {
+                                "daily" -> today
+                                "weekly" -> today.with(java.time.DayOfWeek.MONDAY)
+                                else -> today.withDayOfMonth(1)
+                            }
+                            val startEpoch = start.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
+                            val endEpoch = today.plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli() - 1L
+                            appendLine(csvRow("نوع الحركة", "التاريخ", "التصنيف", "البيان", "المبلغ_بالقرش", "ملاحظات"))
+                            savedExpenses.filter { it.date in startEpoch..endEpoch }.sortedByDescending { it.date }.forEach { item ->
+                                appendLine(csvRow("مصروف", DateUtils.formatDateShort(item.date), item.department, item.title, item.amountPiastres.toString(), item.notes))
+                            }
+                            savedRevenues.filter { it.date in startEpoch..endEpoch }.sortedByDescending { it.date }.forEach { item ->
+                                appendLine(csvRow("دخل", DateUtils.formatDateShort(item.date), item.sourceType, item.title, item.amountPiastres.toString(), item.notes))
+                            }
                         }
                         "car_income" -> {
                             appendLine(csvRow("التاريخ", "نوع الرحلة", "الأجرة_بالقرش", "الملاحظات"))
@@ -678,7 +695,7 @@ fun CostWorkspaceScreen(
                             onActionUnavailable = { showDesignNotice = true },
                             onExport = {
                                 if (section.id == "car_income") carTripCsvLauncher.launch("سجل_رحلات_السيارة.csv")
-                                else if (section.id in setOf("house", "work", "personal", "medical", "vehicles")) homeCsvLauncher.launch("مصروفات_" + section.title + ".csv")
+                                else if (section.id in setOf("house", "work", "personal", "medical", "vehicles", "education", "associations", "income", "certificates", "current_account", "reports")) homeCsvLauncher.launch("تصدير_" + section.title + ".csv")
                                 else showDesignNotice = true
                             },
                             onSave = { values ->
