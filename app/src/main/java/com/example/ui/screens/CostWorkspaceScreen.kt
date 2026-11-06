@@ -145,6 +145,7 @@ fun CostWorkspaceScreen(
     val financeViewModel: FinanceViewModel = viewModel(factory = FinanceViewModel.Factory)
     val savedExpenses by financeViewModel.allExpenses.collectAsState()
     val savedVehicles by financeViewModel.allVehicles.collectAsState()
+    val savedVehicleLogs by financeViewModel.allVehicleLogs.collectAsState()
     val context = LocalContext.current
     val homeCsvLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.CreateDocument("text/csv")
@@ -328,6 +329,33 @@ fun CostWorkspaceScreen(
                 item {
                     val formTitle = "نموذج البيانات — " + (activeTab?.title ?: "السجلات")
                     Text(if (section.id == "reports") "معاينة التقرير" else if (section.id == "backup") "إجراءات النسخ الاحتياطي" else formTitle, color = CostInk, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                }
+                if (section.id == "vehicles" && activeTab?.id == "records") {
+                    item {
+                        Column(verticalArrangement = Arrangement.spacedBy(9.dp)) {
+                            Text("السيارات المسجلة", color = CostInk, fontWeight = FontWeight.Bold)
+                            if (savedVehicles.isEmpty()) {
+                                Text("لا توجد سيارات مسجلة بعد. أضيفي بيانات السيارة من النموذج أدناه.", color = CostMuted, fontSize = 12.sp)
+                            } else savedVehicles.forEach { vehicle ->
+                                Card(colors = CardDefaults.cardColors(containerColor = Color.White), border = BorderStroke(1.dp, CostBorder), shape = RoundedCornerShape(13.dp)) {
+                                    Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                        Text(vehicle.name, color = CostInk, fontWeight = FontWeight.Bold)
+                                        Text("اللوحة: " + vehicle.plateNumber + " • العداد: " + vehicle.currentOdometerKm + " كم", color = CostMuted, fontSize = 11.sp)
+                                        val logs = savedVehicleLogs.filter { it.vehicleId == vehicle.vehicleId }
+                                        Text("سجلات الوقود والصيانة: " + logs.size, color = CostMuted, fontSize = 10.sp)
+                                        logs.take(5).forEach { log ->
+                                            Text(
+                                                (if (log.logType == "FUEL") "وقود" else "صيانة") + " • " +
+                                                    DateUtils.formatDateArabic(log.date) + " • " + log.amount + " جنيه",
+                                                color = CostInk,
+                                                fontSize = 11.sp
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
                 if (activeTab?.id?.let { it in setOf("records", "list", "trips", "students", "student_expenses", "association_list", "movements", "sources", "installments", "payouts") } == true && !(section.id == "vehicles" && activeTab?.id == "records")) {
                     if (section.id in setOf("house", "medical", "work", "personal")) {
