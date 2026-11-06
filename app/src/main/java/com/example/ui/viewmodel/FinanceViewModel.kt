@@ -163,7 +163,7 @@ class FinanceViewModel(
                 date = it.date,
                 odometer = it.odometerKm.toInt(),
                 liters = it.quantityLiters,
-                notes = it.stationName ?: ""
+                notes = listOf(it.stationName, it.serviceCenter).filterNotNull().filter { value -> value.isNotBlank() }.joinToString(" • ")
             )
         }
         val maintItems = maintLogs.map {

@@ -963,10 +963,14 @@ private fun ExpenseEntryPreview(sectionId: String, tabId: String, initialValues:
             .onFailure { Toast.makeText(context, "تعذر حفظ الصورة", Toast.LENGTH_SHORT).show() }
     }
     val imagePickerLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
-        if (uri != null) {
-            runCatching { context.contentResolver.takePersistableUriPermission(uri, android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION) }
-            setValue("مرفق الصورة", uri.toString())
-        }
+        if (uri != null) runCatching {
+            val dir = File(context.filesDir, "vehicle_attachments").apply { mkdirs() }
+            val file = File(dir, "picked_" + System.currentTimeMillis() + ".jpg")
+            val input = context.contentResolver.openInputStream(uri) ?: error("تعذر قراءة الصورة المختارة")
+            input.use { source -> FileOutputStream(file).use { target -> source.copyTo(target) } }
+            file.absolutePath
+        }.onSuccess { setValue("مرفق الصورة", it) }
+            .onFailure { Toast.makeText(context, "تعذر حفظ الصورة المختارة", Toast.LENGTH_SHORT).show() }
     }
 
     val houseTypes = listOf("إفطار", "غداء", "عشاء", "إصلاحات كهربائية", "إصلاحات سباكة", "إصلاحات دهان", "شراء أجهزة منزلية", "شراء مفروشات", "فواتير ومستحقات منزلية", "منظفات ومستلزمات", "أخرى (مخصص)")
@@ -1072,6 +1076,11 @@ private fun ExpenseEntryPreview(sectionId: String, tabId: String, initialValues:
                         PreviewDropdown("ماركة الزيت", oilBrands, value("العلامة التجارية").ifBlank { oilBrands.first() }) { setValue("العلامة التجارية", it) }
                     }
                     PreviewInput("اسم المنتج", value("اسم المنتج")) { setValue("اسم المنتج", it) }
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedButton(onClick = { cameraLauncher.launch(null) }, modifier = Modifier.weight(1f)) { Icon(Icons.Outlined.CameraAlt, null); Spacer(Modifier.width(5.dp)); Text("تصوير") }
+                        OutlinedButton(onClick = { imagePickerLauncher.launch(arrayOf("image/*")) }, modifier = Modifier.weight(1f)) { Icon(Icons.Outlined.AddPhotoAlternate, null); Spacer(Modifier.width(5.dp)); Text("اختيار صورة") }
+                    }
+                    if (value("مرفق الصورة").isNotBlank()) Text("تم إرفاق صورة الزيت أو الفلتر", color = CostMuted, fontSize = 11.sp)
                     PreviewInput("الكمية", value("الكمية"), numeric = true) { setValue("الكمية", it) }
                     PreviewInput("السعر", value("السعر"), numeric = true) { setValue("السعر", it) }
                     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
