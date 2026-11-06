@@ -1,6 +1,10 @@
 package com.example.ui.screens
 
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.platform.LocalContext
+import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -135,6 +139,40 @@ fun CostWorkspaceScreen(
     var editingExpense by remember { mutableStateOf<ExpenseEntity?>(null) }
     val financeViewModel: FinanceViewModel = viewModel(factory = FinanceViewModel.Factory)
     val savedExpenses by financeViewModel.allExpenses.collectAsState()
+    val context = LocalContext.current
+    val homeCsvLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("text/csv")
+    ) { uri ->
+        if (uri != null) {
+            runCatching {
+                val rows = savedExpenses.filter { it.department.equals("HOUSE", ignoreCase = true) }
+                    .sortedByDescending { it.date }
+                val csv = buildString {
+                    append('\uFEFF')
+                    appendLine("التاريخ,التصنيف,البيان,المبلغ_بالقرش,الملاحظات")
+                    rows.forEach { expense ->
+                        val fields = listOf(
+                            DateUtils.formatDateShort(expense.date),
+                            expense.subcategory,
+                            expense.title,
+                            expense.amountPiastres.toString(),
+                            expense.notes.orEmpty()
+                        )
+                        appendLine(fields.joinToString(",") { field ->
+                            "\"" + field.replace("\"", "\"\"") + "\""
+                        })
+                    }
+                }
+                val output = context.contentResolver.openOutputStream(uri)
+                    ?: error("تعذر فتح ملف التصدير")
+                output.bufferedWriter(Charsets.UTF_8).use { it.write(csv) }
+            }.onSuccess {
+                Toast.makeText(context, "تم تصدير مصروفات المنزل بنجاح", Toast.LENGTH_LONG).show()
+            }.onFailure {
+                Toast.makeText(context, "تعذر التصدير: " + (it.localizedMessage ?: "خطأ غير معروف"), Toast.LENGTH_LONG).show()
+            }
+        }
+    }
     val savedRevenues by financeViewModel.allRevenues.collectAsState()
     val savedGamaeyat by financeViewModel.allGamaeyat.collectAsState()
     val unpaidGamaeyaInstallments by financeViewModel.allUnpaidGamaeyaInstallments.collectAsState()
@@ -265,7 +303,15 @@ fun CostWorkspaceScreen(
                     item {
                         LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.fillMaxWidth()) {
                             items(exportActions) { action ->
-                                OutlinedButton(onClick = { showDesignNotice = true }, border = BorderStroke(1.dp, CostBorder), contentPadding = PaddingValues(horizontal = 10.dp, vertical = 7.dp)) {
+                                OutlinedButton(
+                                    onClick = {
+                                        if (section.id == "house" && action.contains("CSV")) {
+                                            homeCsvLauncher.launch("مصروفات_المنزل.csv")
+                                        } else showDesignNotice = true
+                                    },
+                                    border = BorderStroke(1.dp, CostBorder),
+                                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 7.dp)
+                                ) {
                                     Text(action, color = CostInk, fontSize = 10.sp)
                                 }
                             }
@@ -362,6 +408,10 @@ fun CostWorkspaceScreen(
                                 )
                             }.orEmpty(),
                             onActionUnavailable = { showDesignNotice = true },
+                            onExport = {
+                                if (section.id == "house") homeCsvLauncher.launch("مصروفات_المنزل.csv")
+                                else showDesignNotice = true
+                            },
                             onSave = { values ->
                                 val date = runCatching { LocalDate.parse(values["التاريخ"].orEmpty()).atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli() }.getOrNull()
                                 if (section.id == "associations" && activeTab?.id == "form") {
@@ -488,7 +538,7 @@ private fun DashboardSummaryDesign(onAction: () -> Unit) {
 }
 
 @Composable
-private fun ExpenseEntryPreview(sectionId: String, tabId: String, initialValues: Map<String, String> = emptyMap(), onSave: (Map<String, String>) -> Unit = {}, onActionUnavailable: () -> Unit = {}) {
+private fun ExpenseEntryPreview(sectionId: String, tabId: String, initialValues: Map<String, String> = emptyMap(), onSave: (Map<String, String>) -> Unit = {}, onActionUnavailable: () -> Unit = {}, onExport: () -> Unit = {}) {
     var values by remember(sectionId, tabId, initialValues) { mutableStateOf(initialValues) }
     var oilMode by remember(sectionId, tabId) { mutableStateOf("الزيوت") }
     fun value(label: String) = values[label].orEmpty()
@@ -715,7 +765,7 @@ private fun ExpenseEntryPreview(sectionId: String, tabId: String, initialValues:
                 Text(if (initialValues.isEmpty()) "حفظ البيان" else "حفظ التعديلات", fontWeight = FontWeight.Bold, fontSize = 12.sp)
             }
             OutlinedButton(
-                onClick = onActionUnavailable,
+                onClick = onExport,
                 modifier = Modifier.weight(0.85f),
                 border = BorderStroke(1.dp, CostGold),
                 shape = RoundedCornerShape(13.dp),
@@ -726,7 +776,12 @@ private fun ExpenseEntryPreview(sectionId: String, tabId: String, initialValues:
                 Text("تصدير", color = CostInk, fontWeight = FontWeight.Bold, fontSize = 12.sp)
             }
         }
-        Text("الحفظ المحلي مفعّل للأقسام المرتبطة بقاعدة البيانات. التصدير يُستكمل ضمن وظائف المرحلة الثانية.", color = CostMuted, fontSize = 10.sp)
+        Text(
+            if (sectionId == "house") "يمكنك تصدير سجلات المنزل المحفوظة إلى ملف CSV متوافق مع Excel."
+            else "التصدير لهذا القسم غير مفعّل بعد.",
+            color = CostMuted,
+            fontSize = 10.sp
+        )
 
     }
 }
