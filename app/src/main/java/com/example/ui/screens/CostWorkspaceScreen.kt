@@ -836,7 +836,7 @@ fun CostWorkspaceScreen(
                                                             liters = null,
                                                             serviceType = values["نوع الصيانة"].orEmpty(),
                                                             serviceCenter = values["وصف الأجور"].orEmpty(),
-                                                            notes = values["وصف الصيانة"].orEmpty()
+                                                            notes = values["وصف الصيانة"].orEmpty() + values["مرفق الصورة"].orEmpty().takeIf { it.isNotBlank() }?.let { " | مرفق صورة: $it" }.orEmpty()
                                                         )
                                                         selectedTab = "records"
                                                     } else showDesignNotice = true
@@ -1053,6 +1053,11 @@ private fun ExpenseEntryPreview(sectionId: String, tabId: String, initialValues:
                     PreviewInput("سعر المستلزمات", value("سعر المستلزمات"), numeric = true) { setValue("سعر المستلزمات", it) }
                     PreviewInput("وصف الأجور", value("وصف الأجور")) { setValue("وصف الأجور", it) }
                     PreviewInput("قيمة الأجور", value("قيمة الأجور"), numeric = true) { setValue("قيمة الأجور", it) }
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedButton(onClick = { cameraLauncher.launch(null) }, modifier = Modifier.weight(1f)) { Icon(Icons.Outlined.CameraAlt, null); Spacer(Modifier.width(5.dp)); Text("تصوير") }
+                        OutlinedButton(onClick = { imagePickerLauncher.launch(arrayOf("image/*")) }, modifier = Modifier.weight(1f)) { Icon(Icons.Outlined.AddPhotoAlternate, null); Spacer(Modifier.width(5.dp)); Text("اختيار صورة") }
+                    }
+                    if (value("مرفق الصورة").isNotBlank()) Text("تم إرفاق صورة الصيانة", color = CostMuted, fontSize = 11.sp)
                     PreviewDateInput("التاريخ", value("التاريخ")) { setValue("التاريخ", it) }
                 }
                 "oils" -> {
