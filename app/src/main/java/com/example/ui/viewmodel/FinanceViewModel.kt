@@ -15,6 +15,8 @@ import com.example.data.local.entities.StudentEntity
 import com.example.data.local.entities.VehicleEntity
 import com.example.data.local.entities.VehicleFuelLogEntity
 import com.example.data.local.entities.VehicleMaintenanceLogEntity
+import com.example.data.local.entities.VehicleOilLogEntity
+import com.example.data.local.entities.VehicleAccidentLogEntity
 import com.example.data.repository.FinanceRepository
 import com.example.domain.model.FinancialSummary
 import com.example.domain.model.MonthlyReportItem
@@ -460,6 +462,42 @@ class FinanceViewModel(
                 )
                 repository.insertMaintenanceLogWithExpense(maintLog, vehicleName)
             }
+        }
+    }
+
+    fun saveOilLog(vehicleId: Long, amount: BigDecimal, date: Long, odometer: Int, brandAndGrade: String, intervalKm: Long, isFilterReplaced: Boolean) {
+        viewModelScope.launch {
+            val vehicle = repository.getVehicleById(vehicleId) ?: return@launch
+            val total = MoneyUtils.egpToPiastres(amount)
+            if (total <= 0L || odometer < 0 || intervalKm <= 0L) return@launch
+            repository.insertOilLogWithExpense(
+                VehicleOilLogEntity(
+                    vehicleId = vehicleId, date = date, odometerAtChangeKm = odometer.toLong(),
+                    oilBrandAndGrade = brandAndGrade.ifBlank { "زيت / فلتر" }, intervalKm = intervalKm,
+                    nextDueOdometerKm = odometer.toLong() + intervalKm, isFilterReplaced = isFilterReplaced,
+                    totalCostPiastres = total, linkedExpenseId = 0L
+                ), vehicle.name
+            )
+        }
+    }
+
+    fun saveAccidentLog(vehicleId: Long, date: Long, odometer: Int?, description: String, estimatedDamage: BigDecimal, actualRepairCost: BigDecimal, insuranceCompensation: BigDecimal, notes: String = "") {
+        viewModelScope.launch {
+            val vehicle = repository.getVehicleById(vehicleId) ?: return@launch
+            val estimate = MoneyUtils.egpToPiastres(estimatedDamage)
+            val actual = MoneyUtils.egpToPiastres(actualRepairCost)
+            val insurance = MoneyUtils.egpToPiastres(insuranceCompensation)
+            if (estimate < 0L || actual < 0L || insurance < 0L) return@launch
+            val net = maxOf(0L, actual - insurance)
+            repository.insertAccidentLogWithExpense(
+                VehicleAccidentLogEntity(
+                    vehicleId = vehicleId, accidentDate = date, odometerKm = odometer?.toLong(),
+                    description = listOf(description, notes).filter { it.isNotBlank() }.joinToString(" — ").ifBlank { "حادث مركبة" },
+                    estimatedDamagePiastres = estimate, actualRepairCostPiastres = actual,
+                    insuranceCompensationPiastres = insurance, netUserCostPiastres = net,
+                    compensationStatus = when { actual == 0L -> "PENDING_CLAIM"; insurance >= actual -> "COMPENSATED"; else -> "PENDING_CLAIM" }
+                ), vehicle.name
+            )
         }
     }
 

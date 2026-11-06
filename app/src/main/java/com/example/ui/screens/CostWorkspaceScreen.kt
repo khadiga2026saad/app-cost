@@ -7,6 +7,9 @@ import androidx.compose.ui.platform.LocalContext
 import android.content.Context
 import com.example.data.local.entities.VehicleEntity
 import android.widget.Toast
+import android.graphics.Bitmap
+import java.io.File
+import java.io.FileOutputStream
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -148,7 +151,8 @@ fun CostWorkspaceScreen(
     ) { uri ->
         if (uri != null) {
             runCatching {
-                val rows = savedExpenses.filter { it.department.equals("HOUSE", ignoreCase = true) }
+                val department = selectedSection?.uppercase().orEmpty()
+                val rows = savedExpenses.filter { it.department.equals(department, ignoreCase = true) }
                     .sortedByDescending { it.date }
                 val csv = buildString {
                     append('\uFEFF')
@@ -308,8 +312,8 @@ fun CostWorkspaceScreen(
                             items(exportActions) { action ->
                                 OutlinedButton(
                                     onClick = {
-                                        if (section.id == "house" && action.contains("CSV")) {
-                                            homeCsvLauncher.launch("مصروفات_المنزل.csv")
+                                        if (action.contains("CSV") || action.contains("Excel")) {
+                                            homeCsvLauncher.launch("مصروفات_" + section.title + ".csv")
                                         } else showDesignNotice = true
                                     },
                                     border = BorderStroke(1.dp, CostBorder),
@@ -413,7 +417,7 @@ fun CostWorkspaceScreen(
                             }.orEmpty(),
                             onActionUnavailable = { showDesignNotice = true },
                             onExport = {
-                                if (section.id == "house") homeCsvLauncher.launch("مصروفات_المنزل.csv")
+                                if (section.id in setOf("house", "work", "personal", "medical")) homeCsvLauncher.launch("مصروفات_" + section.title + ".csv")
                                 else showDesignNotice = true
                             },
                             onSave = { values ->
@@ -473,7 +477,7 @@ fun CostWorkspaceScreen(
                                                 selectedTab = "records"
                                             } else showDesignNotice = true
                                         }
-                                        "fuel", "maintenance" -> {
+                                        "fuel", "maintenance", "oils", "accidents" -> {
                                             val dateText = values["التاريخ والوقت"].orEmpty().ifBlank { values["التاريخ"].orEmpty() }
                                             val date = runCatching { LocalDate.parse(dateText).atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli() }.getOrNull()
                                             val odometer = values["العداد"].orEmpty().toIntOrNull()
@@ -495,7 +499,7 @@ fun CostWorkspaceScreen(
                                                         )
                                                         selectedTab = "records"
                                                     } else showDesignNotice = true
-                                                } else {
+                                                } else if (activeTab?.id == "maintenance") {
                                                     val parts = values["سعر المستلزمات"].orEmpty().replace(',', '.').toBigDecimalOrNull() ?: BigDecimal.ZERO
                                                     val labor = values["قيمة الأجور"].orEmpty().replace(',', '.').toBigDecimalOrNull() ?: BigDecimal.ZERO
                                                     val total = parts.add(labor)
@@ -511,6 +515,22 @@ fun CostWorkspaceScreen(
                                                             serviceCenter = values["وصف الأجور"].orEmpty(),
                                                             notes = values["وصف الصيانة"].orEmpty()
                                                         )
+                                                        selectedTab = "records"
+                                                    } else showDesignNotice = true
+                                                } else if (activeTab?.id == "oils") {
+                                                    val unitPrice = values["السعر"].orEmpty().replace(',', '.').toBigDecimalOrNull() ?: BigDecimal.ZERO
+                                                    val quantity = values["الكمية"].orEmpty().replace(',', '.').toBigDecimalOrNull() ?: BigDecimal.ONE
+                                                    val interval = values["فترة التغيير"].orEmpty().filter(Char::isDigit).toLongOrNull() ?: 5000L
+                                                    if (unitPrice > BigDecimal.ZERO && quantity > BigDecimal.ZERO) {
+                                                        financeViewModel.saveOilLog(vehicle.vehicleId, unitPrice.multiply(quantity), date, odometer, listOf(values["العلامة التجارية"], values["اسم المنتج"], values["مرفق الصورة"]).filterNotNull().filter { it.isNotBlank() }.joinToString(" "), interval, values["نوع الخدمة"].orEmpty().contains("فلتر"))
+                                                        selectedTab = "records"
+                                                    } else showDesignNotice = true
+                                                } else {
+                                                    val estimate = values["تقدير الضرر"].orEmpty().replace(',', '.').toBigDecimalOrNull() ?: BigDecimal.ZERO
+                                                    val actual = values["تكلفة الإصلاح الفعلية"].orEmpty().replace(',', '.').toBigDecimalOrNull() ?: BigDecimal.ZERO
+                                                    val insurance = values["تعويض التأمين"].orEmpty().replace(',', '.').toBigDecimalOrNull() ?: BigDecimal.ZERO
+                                                    if (estimate >= BigDecimal.ZERO && actual >= BigDecimal.ZERO && insurance >= BigDecimal.ZERO) {
+                                                        financeViewModel.saveAccidentLog(vehicle.vehicleId, date, odometer, listOf(values["عنوان الحادث"], values["الموقع"], values["مرفق الصورة"]).filterNotNull().filter { it.isNotBlank() }.joinToString(" — "), estimate, actual, insurance, values["ملاحظات"].orEmpty())
                                                         selectedTab = "records"
                                                     } else showDesignNotice = true
                                                 }
@@ -610,6 +630,21 @@ private fun ExpenseEntryPreview(sectionId: String, tabId: String, initialValues:
     val fuelPricePrefs = remember(context) { context.getSharedPreferences("smart_cost_fuel_prices", Context.MODE_PRIVATE) }
     fun value(label: String) = values[label].orEmpty()
     fun setValue(label: String, newValue: String) { values = values + (label to newValue) }
+    val cameraLauncher = rememberLauncherForActivityResult(ActivityResultContracts.TakePicturePreview()) { bitmap ->
+        if (bitmap != null) runCatching {
+            val dir = File(context.filesDir, "vehicle_attachments").apply { mkdirs() }
+            val file = File(dir, "image_" + System.currentTimeMillis() + ".jpg")
+            FileOutputStream(file).use { bitmap.compress(Bitmap.CompressFormat.JPEG, 88, it) }
+            file.absolutePath
+        }.onSuccess { setValue("مرفق الصورة", it) }
+            .onFailure { Toast.makeText(context, "تعذر حفظ الصورة", Toast.LENGTH_SHORT).show() }
+    }
+    val imagePickerLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri != null) {
+            runCatching { context.contentResolver.takePersistableUriPermission(uri, android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION) }
+            setValue("مرفق الصورة", uri.toString())
+        }
+    }
 
     val houseTypes = listOf("إفطار", "غداء", "عشاء", "إصلاحات كهربائية", "إصلاحات سباكة", "إصلاحات دهان", "شراء أجهزة منزلية", "شراء مفروشات", "فواتير ومستحقات منزلية", "منظفات ومستلزمات", "أخرى (مخصص)")
     val workTypes = listOf("أدوات مكتبية", "صيانة أجهزة العمل", "اشتراكات برمجيات", "ضيافة واجتماعات", "تنقلات ومواصلات عمل", "شحن وتوصيل مستندات", "أخرى (مخصص)")
@@ -678,10 +713,13 @@ private fun ExpenseEntryPreview(sectionId: String, tabId: String, initialValues:
                     Text("إجمالي التعبئة: " + com.example.core.MoneyUtils.formatPiastresPlain(com.example.core.MoneyUtils.egpToPiastres(fuelTotal)) + " جنيه", color = CostInk, fontWeight = FontWeight.Bold)
                     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         PreviewInput("قراءة عداد السيارة", value("العداد"), numeric = true, modifier = Modifier.weight(1f)) { setValue("العداد", it) }
-                        IconButton(onClick = onActionUnavailable) { Icon(Icons.Outlined.CameraAlt, contentDescription = "معاينة زر تصوير قراءة العداد", tint = CostGoldDark) }
+                        IconButton(onClick = { cameraLauncher.launch(null) }) { Icon(Icons.Outlined.CameraAlt, contentDescription = "تصوير عداد السيارة", tint = CostGoldDark) }
                     }
                     PreviewDateInput("تاريخ ووقت التزوّد", value("التاريخ والوقت")) { setValue("التاريخ والوقت", it) }
-                    Text("زر الكاميرا مخصص لقراءة العداد تلقائيًا عند تنفيذ وظائف الكاميرا لاحقًا.", color = CostMuted, fontSize = 10.sp)
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        TextButton(onClick = { imagePickerLauncher.launch(arrayOf("image/*")) }) { Text("اختيار صورة") }
+                        if (value("مرفق الصورة").isNotBlank()) Text("تم إرفاق الصورة", color = CostMuted, fontSize = 11.sp)
+                    }
                     PreviewInput("محطة الوقود (اختياري)", value("محطة الوقود")) { setValue("محطة الوقود", it) }
                 }
                 "maintenance" -> {
@@ -710,23 +748,26 @@ private fun ExpenseEntryPreview(sectionId: String, tabId: String, initialValues:
                     PreviewInput("السعر", value("السعر"), numeric = true) { setValue("السعر", it) }
                     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         PreviewInput("قراءة العداد", value("العداد"), numeric = true, modifier = Modifier.weight(1f)) { setValue("العداد", it) }
-                        IconButton(onClick = onActionUnavailable) { Icon(Icons.Outlined.CameraAlt, contentDescription = "معاينة زر تصوير قراءة العداد", tint = CostGoldDark) }
+                        IconButton(onClick = { cameraLauncher.launch(null) }) { Icon(Icons.Outlined.CameraAlt, contentDescription = "تصوير عداد السيارة", tint = CostGoldDark) }
                     }
                     PreviewDateInput("التاريخ", value("التاريخ")) { setValue("التاريخ", it) }
                     PreviewInput("ملاحظات", value("ملاحظات"), multiline = true) { setValue("ملاحظات", it) }
                 }
                 "accidents" -> {
-                    PreviewDropdown("السيارة", listOf("اختاري السيارة"), value("السيارة").ifBlank { "اختاري السيارة" }) { setValue("السيارة", it) }
+                    PreviewDropdown("السيارة", vehicleOptions, value("السيارة").ifBlank { vehicleOptions.first() }) { setValue("السيارة", it) }
                     PreviewInput("عنوان الحادث", value("عنوان الحادث")) { setValue("عنوان الحادث", it) }
-                    OutlinedButton(onClick = onActionUnavailable, modifier = Modifier.fillMaxWidth(), border = BorderStroke(1.dp, CostGold), shape = RoundedCornerShape(12.dp)) {
-                        Icon(Icons.Outlined.AddPhotoAlternate, contentDescription = null, tint = CostGoldDark)
-                        Spacer(Modifier.width(8.dp))
-                        Text("إرفاق صورة الحادث", color = CostInk)
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedButton(onClick = { cameraLauncher.launch(null) }, modifier = Modifier.weight(1f)) { Icon(Icons.Outlined.CameraAlt, null); Spacer(Modifier.width(5.dp)); Text("تصوير") }
+                        OutlinedButton(onClick = { imagePickerLauncher.launch(arrayOf("image/*")) }, modifier = Modifier.weight(1f)) { Icon(Icons.Outlined.AddPhotoAlternate, null); Spacer(Modifier.width(5.dp)); Text("اختيار صورة") }
                     }
+                    if (value("مرفق الصورة").isNotBlank()) Text("تم إرفاق صورة الحادث", color = CostMuted, fontSize = 11.sp)
                     PreviewDateInput("التاريخ", value("التاريخ")) { setValue("التاريخ", it) }
                     PreviewInput("الوقت", value("الوقت")) { setValue("الوقت", it) }
                     PreviewInput("الموقع (اختياري)", value("الموقع")) { setValue("الموقع", it) }
                     PreviewInput("تقدير الضرر — ليس مبلغًا مدفوعًا", value("تقدير الضرر"), numeric = true) { setValue("تقدير الضرر", it) }
+                    PreviewInput("تكلفة الإصلاح الفعلية", value("تكلفة الإصلاح الفعلية"), numeric = true) { setValue("تكلفة الإصلاح الفعلية", it) }
+                    PreviewInput("تعويض التأمين المستلم", value("تعويض التأمين"), numeric = true) { setValue("تعويض التأمين", it) }
+                    Text("التكلفة التي تخصم = الإصلاح الفعلي − تعويض التأمين، ولا يخصم تقدير الضرر.", color = CostMuted, fontSize = 10.sp)
                     PreviewInput("ملاحظات", value("ملاحظات"), multiline = true) { setValue("ملاحظات", it) }
                 }
                 else -> {
@@ -830,7 +871,7 @@ private fun ExpenseEntryPreview(sectionId: String, tabId: String, initialValues:
             Button(
                 onClick = {
                     if (sectionId in setOf("house", "medical", "work", "personal", "income", "associations") ||
-                        (sectionId == "vehicles" && tabId in setOf("records", "fuel", "maintenance"))) onSave(values)
+                        (sectionId == "vehicles" && tabId in setOf("records", "fuel", "maintenance", "oils", "accidents"))) onSave(values)
                     else onActionUnavailable()
                 },
                 modifier = Modifier.weight(1.15f),
@@ -855,7 +896,7 @@ private fun ExpenseEntryPreview(sectionId: String, tabId: String, initialValues:
             }
         }
         Text(
-            if (sectionId == "house") "يمكنك تصدير سجلات المنزل المحفوظة إلى ملف CSV متوافق مع Excel."
+            if (sectionId in setOf("house", "work", "personal", "medical")) "يمكنك تصدير سجلات القسم المحفوظة إلى ملف CSV متوافق مع Excel."
             else "التصدير لهذا القسم غير مفعّل بعد.",
             color = CostMuted,
             fontSize = 10.sp
