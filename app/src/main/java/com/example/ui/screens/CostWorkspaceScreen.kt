@@ -4,6 +4,8 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.ui.platform.LocalContext
+import android.content.Context
+import com.example.data.local.entities.VehicleEntity
 import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -139,6 +141,7 @@ fun CostWorkspaceScreen(
     var editingExpense by remember { mutableStateOf<ExpenseEntity?>(null) }
     val financeViewModel: FinanceViewModel = viewModel(factory = FinanceViewModel.Factory)
     val savedExpenses by financeViewModel.allExpenses.collectAsState()
+    val savedVehicles by financeViewModel.allVehicles.collectAsState()
     val context = LocalContext.current
     val homeCsvLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.CreateDocument("text/csv")
@@ -396,6 +399,7 @@ fun CostWorkspaceScreen(
                         ExpenseEntryPreview(
                             section.id,
                             activeTab?.id.orEmpty(),
+                            vehicleOptions = listOf("اختاري السيارة") + savedVehicles.map { it.name },
                             initialValues = editingExpense?.let { record ->
                                 mapOf(
                                     "المبلغ" to com.example.core.MoneyUtils.formatPiastresPlain(record.amountPiastres),
@@ -452,6 +456,67 @@ fun CostWorkspaceScreen(
                                             notes = values["ملاحظات"].orEmpty()
                                         )
                                         selectedTab = "sources"
+                                    }
+                                } else if (section.id == "vehicles") {
+                                    val vehicle = savedVehicles.firstOrNull { it.name == values["السيارة"] }
+                                    when (activeTab?.id) {
+                                        "records" -> {
+                                            val odometer = values["قراءة العداد الحالية"].orEmpty().toIntOrNull()
+                                            if (!values["اسم السيارة"].isNullOrBlank() && odometer != null && odometer >= 0) {
+                                                financeViewModel.saveVehicle(
+                                                    name = values["اسم السيارة"].orEmpty(),
+                                                    plateNumber = values["رقم اللوحة"].orEmpty(),
+                                                    modelYear = values["سنة الصنع"].orEmpty(),
+                                                    initialOdometer = odometer,
+                                                    notes = values["ملاحظات"].orEmpty()
+                                                )
+                                                selectedTab = "records"
+                                            } else showDesignNotice = true
+                                        }
+                                        "fuel", "maintenance" -> {
+                                            val dateText = values["التاريخ والوقت"].orEmpty().ifBlank { values["التاريخ"].orEmpty() }
+                                            val date = runCatching { LocalDate.parse(dateText).atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli() }.getOrNull()
+                                            val odometer = values["العداد"].orEmpty().toIntOrNull()
+                                            if (vehicle != null && date != null && odometer != null) {
+                                                if (activeTab?.id == "fuel") {
+                                                    val liters = values["الكمية"].orEmpty().replace(',', '.').toDoubleOrNull()
+                                                    val price = values["سعر اللتر"].orEmpty().replace(',', '.').toBigDecimalOrNull()
+                                                    if (liters != null && liters > 0.0 && price != null && price > BigDecimal.ZERO) {
+                                                        financeViewModel.saveVehicleLog(
+                                                            vehicleId = vehicle.vehicleId,
+                                                            logType = "FUEL",
+                                                            amount = price.multiply(BigDecimal.valueOf(liters)),
+                                                            date = date,
+                                                            odometer = odometer,
+                                                            liters = liters,
+                                                            serviceType = values["نوع الوقود"].orEmpty(),
+                                                            serviceCenter = values["محطة الوقود"].orEmpty(),
+                                                            notes = values["ملاحظات"].orEmpty()
+                                                        )
+                                                        selectedTab = "records"
+                                                    } else showDesignNotice = true
+                                                } else {
+                                                    val parts = values["سعر المستلزمات"].orEmpty().replace(',', '.').toBigDecimalOrNull() ?: BigDecimal.ZERO
+                                                    val labor = values["قيمة الأجور"].orEmpty().replace(',', '.').toBigDecimalOrNull() ?: BigDecimal.ZERO
+                                                    val total = parts.add(labor)
+                                                    if (total > BigDecimal.ZERO) {
+                                                        financeViewModel.saveVehicleLog(
+                                                            vehicleId = vehicle.vehicleId,
+                                                            logType = "MAINTENANCE",
+                                                            amount = total,
+                                                            date = date,
+                                                            odometer = odometer,
+                                                            liters = null,
+                                                            serviceType = values["نوع الصيانة"].orEmpty(),
+                                                            serviceCenter = values["وصف الأجور"].orEmpty(),
+                                                            notes = values["وصف الصيانة"].orEmpty()
+                                                        )
+                                                        selectedTab = "records"
+                                                    } else showDesignNotice = true
+                                                }
+                                            } else showDesignNotice = true
+                                        }
+                                        else -> showDesignNotice = true
                                     }
                                 } else {
                                     val amount = runCatching { BigDecimal(values["المبلغ"].orEmpty().replace(',', '.')) }.getOrNull()
@@ -538,9 +603,11 @@ private fun DashboardSummaryDesign(onAction: () -> Unit) {
 }
 
 @Composable
-private fun ExpenseEntryPreview(sectionId: String, tabId: String, initialValues: Map<String, String> = emptyMap(), onSave: (Map<String, String>) -> Unit = {}, onActionUnavailable: () -> Unit = {}, onExport: () -> Unit = {}) {
+private fun ExpenseEntryPreview(sectionId: String, tabId: String, initialValues: Map<String, String> = emptyMap(), onSave: (Map<String, String>) -> Unit = {}, onActionUnavailable: () -> Unit = {}, onExport: () -> Unit = {}, vehicleOptions: List<String> = listOf("اختاري السيارة")) {
     var values by remember(sectionId, tabId, initialValues) { mutableStateOf(initialValues) }
     var oilMode by remember(sectionId, tabId) { mutableStateOf("الزيوت") }
+    val context = LocalContext.current
+    val fuelPricePrefs = remember(context) { context.getSharedPreferences("smart_cost_fuel_prices", Context.MODE_PRIVATE) }
     fun value(label: String) = values[label].orEmpty()
     fun setValue(label: String, newValue: String) { values = values + (label to newValue) }
 
@@ -596,19 +663,29 @@ private fun ExpenseEntryPreview(sectionId: String, tabId: String, initialValues:
             }
             "vehicles" -> when (tabId) {
                 "fuel" -> {
-                    PreviewDropdown("السيارة", listOf("اختاري السيارة"), value("السيارة").ifBlank { "اختاري السيارة" }) { setValue("السيارة", it) }
-                    PreviewDropdown("نوع الوقود / مصدر الطاقة", vehicleFuel, value("نوع الوقود").ifBlank { "بنزين 92" }) { setValue("نوع الوقود", it) }
+                    PreviewDropdown("السيارة", vehicleOptions, value("السيارة").ifBlank { vehicleOptions.first() }) { setValue("السيارة", it) }
+                    PreviewDropdown("نوع الوقود / مصدر الطاقة", vehicleFuel, value("نوع الوقود").ifBlank { "بنزين 92" }) {
+                        setValue("نوع الوقود", it)
+                        setValue("سعر اللتر", fuelPricePrefs.getString("price_" + it, "").orEmpty())
+                    }
                     PreviewInput("الكمية / عدد اللترات", value("الكمية"), numeric = true) { setValue("الكمية", it) }
+                    PreviewInput("سعر اللتر (جنيه)", value("سعر اللتر"), numeric = true) {
+                        setValue("سعر اللتر", it)
+                        fuelPricePrefs.edit().putString("price_" + value("نوع الوقود").ifBlank { "بنزين 92" }, it).apply()
+                    }
+                    val fuelTotal = (value("الكمية").replace(',', '.').toBigDecimalOrNull() ?: BigDecimal.ZERO)
+                        .multiply(value("سعر اللتر").replace(',', '.').toBigDecimalOrNull() ?: BigDecimal.ZERO)
+                    Text("إجمالي التعبئة: " + com.example.core.MoneyUtils.formatPiastresPlain(com.example.core.MoneyUtils.egpToPiastres(fuelTotal)) + " جنيه", color = CostInk, fontWeight = FontWeight.Bold)
                     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         PreviewInput("قراءة عداد السيارة", value("العداد"), numeric = true, modifier = Modifier.weight(1f)) { setValue("العداد", it) }
                         IconButton(onClick = onActionUnavailable) { Icon(Icons.Outlined.CameraAlt, contentDescription = "معاينة زر تصوير قراءة العداد", tint = CostGoldDark) }
                     }
                     PreviewDateInput("تاريخ ووقت التزوّد", value("التاريخ والوقت")) { setValue("التاريخ والوقت", it) }
                     Text("زر الكاميرا مخصص لقراءة العداد تلقائيًا عند تنفيذ وظائف الكاميرا لاحقًا.", color = CostMuted, fontSize = 10.sp)
-                    Text("سعر الوحدة والإجمالي يظهران بعد تفعيل الحسابات.", color = CostMuted, fontSize = 11.sp)
+                    PreviewInput("محطة الوقود (اختياري)", value("محطة الوقود")) { setValue("محطة الوقود", it) }
                 }
                 "maintenance" -> {
-                    PreviewDropdown("السيارة", listOf("اختاري السيارة"), value("السيارة").ifBlank { "اختاري السيارة" }) { setValue("السيارة", it) }
+                    PreviewDropdown("السيارة", vehicleOptions, value("السيارة").ifBlank { vehicleOptions.first() }) { setValue("السيارة", it) }
                     PreviewDropdown("نوع الصيانة", maintenanceTypes, value("نوع الصيانة").ifBlank { maintenanceTypes.first() }) { setValue("نوع الصيانة", it) }
                     PreviewInput("وصف الصيانة", value("وصف الصيانة"), multiline = true) { setValue("وصف الصيانة", it) }
                     PreviewInput("اسم المستلزم أو قطعة الغيار", value("قطعة الغيار")) { setValue("قطعة الغيار", it) }
@@ -618,7 +695,7 @@ private fun ExpenseEntryPreview(sectionId: String, tabId: String, initialValues:
                     PreviewDateInput("التاريخ", value("التاريخ")) { setValue("التاريخ", it) }
                 }
                 "oils" -> {
-                    PreviewDropdown("السيارة", listOf("اختاري السيارة"), value("السيارة").ifBlank { "اختاري السيارة" }) { setValue("السيارة", it) }
+                    PreviewDropdown("السيارة", vehicleOptions, value("السيارة").ifBlank { vehicleOptions.first() }) { setValue("السيارة", it) }
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         listOf("الزيوت", "الفلاتر").forEach { mode -> OutlinedButton(onClick = { oilMode = mode }, modifier = Modifier.weight(1f), colors = ButtonDefaults.outlinedButtonColors(containerColor = if (oilMode == mode) CostInk else Color.White, contentColor = if (oilMode == mode) CostGold else CostInk), border = BorderStroke(1.dp, CostGold)) { Text(mode) } }
                     }
@@ -752,7 +829,8 @@ private fun ExpenseEntryPreview(sectionId: String, tabId: String, initialValues:
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(9.dp)) {
             Button(
                 onClick = {
-                    if (sectionId in setOf("house", "medical", "work", "personal", "income", "associations")) onSave(values)
+                    if (sectionId in setOf("house", "medical", "work", "personal", "income", "associations") ||
+                        (sectionId == "vehicles" && tabId in setOf("records", "fuel", "maintenance"))) onSave(values)
                     else onActionUnavailable()
                 },
                 modifier = Modifier.weight(1.15f),

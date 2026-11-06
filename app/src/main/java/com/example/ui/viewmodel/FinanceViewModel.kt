@@ -421,7 +421,8 @@ class FinanceViewModel(
         liters: Double?,
         serviceType: String?,
         serviceCenter: String?,
-        notes: String = ""
+        notes: String = "",
+        fuelType: String = "بنزين 95"
     ) {
         viewModelScope.launch {
             val vehicle = repository.getVehicleById(vehicleId)
@@ -440,6 +441,8 @@ class FinanceViewModel(
                     } else 0L,
                     totalCostPiastres = totalCostPiastres,
                     isFullTank = true,
+                    stationName = serviceCenter,
+                    fuelType = fuelType,
                     linkedExpenseId = 0L
                 )
                 repository.insertFuelLogWithExpense(fuelLog, vehicleName)
