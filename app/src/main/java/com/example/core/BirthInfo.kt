@@ -4,6 +4,8 @@ import java.time.LocalDate
 import java.time.Period
 import java.time.Year
 import java.time.chrono.HijrahDate
+import java.time.format.DateTimeFormatter
+import java.time.format.ResolverStyle
 import java.time.format.TextStyle
 import java.time.temporal.ChronoField
 import java.time.temporal.ChronoUnit
@@ -12,6 +14,8 @@ import java.util.Locale
 /** Shared, deterministic birth information used by account settings and the news ticker. */
 data class BirthInfo(
     val gregorianAgeYears: Int,
+    val gregorianAgeMonths: Int,
+    val gregorianAgeDays: Int,
     val hijriAgeYearsApprox: Int,
     val zodiac: String,
     val birthWeekday: String,
@@ -21,6 +25,34 @@ data class BirthInfo(
 )
 
 object BirthInfoCalculator {
+    /**
+     * Parses ISO dates and day-first dates (d/M/yyyy, d-M-yyyy, d.M.yyyy).
+     * Arabic-Indic and Eastern Arabic-Indic digits are normalized before parsing.
+     */
+    fun parseBirthDate(raw: String?): LocalDate? {
+        val value = raw?.trim()?.takeIf { it.isNotEmpty() } ?: return null
+        val asciiDigits = buildString(value.length) {
+            value.forEach { char ->
+                append(
+                    when (char) {
+                        in '\\u0660'..'\\u0669' -> ('0'.code + char.code - '\\u0660'.code).toChar()
+                        in '\\u06F0'..'\\u06F9' -> ('0'.code + char.code - '\\u06F0'.code).toChar()
+                        else -> char
+                    }
+                )
+            }
+        }
+        val formats = listOf(
+            DateTimeFormatter.ISO_LOCAL_DATE,
+            DateTimeFormatter.ofPattern("d/M/uuuu", Locale.ROOT),
+            DateTimeFormatter.ofPattern("d-M-uuuu", Locale.ROOT),
+            DateTimeFormatter.ofPattern("d.M.uuuu", Locale.ROOT)
+        ).map { it.withResolverStyle(ResolverStyle.STRICT) }
+        return formats.firstNotNullOfOrNull { formatter ->
+            runCatching { LocalDate.parse(asciiDigits, formatter) }.getOrNull()
+        }
+    }
+
     /** Returns null for a missing/future birth date. A February 29 birthday is observed on February 28 in non-leap years. */
     fun compute(
         birthDate: LocalDate?,
@@ -39,10 +71,13 @@ object BirthInfoCalculator {
         val hijriAge = todayHijri.get(ChronoField.YEAR) - birthHijri.get(ChronoField.YEAR) -
             if (todayHijriMonth * 32 + todayHijriDay < birthHijriMonth * 32 + birthHijriDay) 1 else 0
 
+        val age = Period.between(birth, today)
         val thisYearsBirthday = birthdayInYear(birth, today.year)
         val nextBirthday = if (thisYearsBirthday.isBefore(today)) birthdayInYear(birth, today.year + 1) else thisYearsBirthday
         return BirthInfo(
-            gregorianAgeYears = Period.between(birth, today).years,
+            gregorianAgeYears = age.years,
+            gregorianAgeMonths = age.months,
+            gregorianAgeDays = age.days,
             hijriAgeYearsApprox = hijriAge,
             zodiac = zodiacFor(birth),
             birthWeekday = birth.dayOfWeek.getDisplayName(TextStyle.FULL, locale),
