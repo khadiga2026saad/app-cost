@@ -481,7 +481,9 @@ fun CostWorkspaceScreen(
                                             val dateText = values["التاريخ والوقت"].orEmpty().ifBlank { values["التاريخ"].orEmpty() }
                                             val date = runCatching { LocalDate.parse(dateText).atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli() }.getOrNull()
                                             val odometer = values["العداد"].orEmpty().toIntOrNull()
-                                            if (vehicle != null && date != null && odometer != null) {
+                                            val odometerRequired = activeTab?.id != "accidents"
+                                            if (vehicle != null && date != null && (!odometerRequired || odometer != null)) {
+                                                val currentOdometer = odometer ?: 0
                                                 if (activeTab?.id == "fuel") {
                                                     val liters = values["الكمية"].orEmpty().replace(',', '.').toDoubleOrNull()
                                                     val price = values["سعر اللتر"].orEmpty().replace(',', '.').toBigDecimalOrNull()
@@ -491,11 +493,12 @@ fun CostWorkspaceScreen(
                                                             logType = "FUEL",
                                                             amount = price.multiply(BigDecimal.valueOf(liters)),
                                                             date = date,
-                                                            odometer = odometer,
+                                                            odometer = currentOdometer,
                                                             liters = liters,
                                                             serviceType = values["نوع الوقود"].orEmpty(),
-                                                            serviceCenter = values["محطة الوقود"].orEmpty(),
-                                                            notes = values["ملاحظات"].orEmpty()
+                                                            serviceCenter = listOf(values["محطة الوقود"].orEmpty(), values["مرفق الصورة"].orEmpty().takeIf { it.isNotBlank() }?.let { "صورة عداد: $it" }.orEmpty()).filter { it.isNotBlank() }.joinToString(" | "),
+                                                            notes = values["ملاحظات"].orEmpty(),
+                                                            fuelType = values["نوع الوقود"].orEmpty()
                                                         )
                                                         selectedTab = "records"
                                                     } else showDesignNotice = true
@@ -509,7 +512,7 @@ fun CostWorkspaceScreen(
                                                             logType = "MAINTENANCE",
                                                             amount = total,
                                                             date = date,
-                                                            odometer = odometer,
+                                                            odometer = currentOdometer,
                                                             liters = null,
                                                             serviceType = values["نوع الصيانة"].orEmpty(),
                                                             serviceCenter = values["وصف الأجور"].orEmpty(),
@@ -522,7 +525,7 @@ fun CostWorkspaceScreen(
                                                     val quantity = values["الكمية"].orEmpty().replace(',', '.').toBigDecimalOrNull() ?: BigDecimal.ONE
                                                     val interval = values["فترة التغيير"].orEmpty().filter(Char::isDigit).toLongOrNull() ?: 5000L
                                                     if (unitPrice > BigDecimal.ZERO && quantity > BigDecimal.ZERO) {
-                                                        financeViewModel.saveOilLog(vehicle.vehicleId, unitPrice.multiply(quantity), date, odometer, listOf(values["العلامة التجارية"], values["اسم المنتج"], values["مرفق الصورة"]).filterNotNull().filter { it.isNotBlank() }.joinToString(" "), interval, values["نوع الخدمة"].orEmpty().contains("فلتر"))
+                                                        financeViewModel.saveOilLog(vehicle.vehicleId, unitPrice.multiply(quantity), date, currentOdometer, listOf(values["العلامة التجارية"], values["اسم المنتج"], values["مرفق الصورة"]).filterNotNull().filter { it.isNotBlank() }.joinToString(" "), interval, values["نوع الخدمة"].orEmpty().contains("فلتر"))
                                                         selectedTab = "records"
                                                     } else showDesignNotice = true
                                                 } else {
