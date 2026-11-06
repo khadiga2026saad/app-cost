@@ -144,6 +144,7 @@ fun CostWorkspaceScreen(
     val savedExpenses by financeViewModel.allExpenses.collectAsState()
     val savedVehicles by financeViewModel.allVehicles.collectAsState()
     val savedVehicleLogs by financeViewModel.allVehicleLogs.collectAsState()
+    val savedStudents by financeViewModel.allStudents.collectAsState()
     val context = LocalContext.current
     val homeCsvLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.CreateDocument("text/csv")
@@ -364,6 +365,28 @@ fun CostWorkspaceScreen(
                                 onDelete = { financeViewModel.deleteExpense(it.expenseId) }
                             )
                         }
+                    } else if (section.id == "education" && activeTab?.id == "students") {
+                        item {
+                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                if (savedStudents.isEmpty()) Text("لا يوجد طلاب مسجلون.", color = CostMuted, fontSize = 12.sp)
+                                savedStudents.forEach { student ->
+                                    Card(colors = CardDefaults.cardColors(containerColor = Color.White), border = BorderStroke(1.dp, CostBorder)) {
+                                        Column(Modifier.fillMaxWidth().padding(12.dp)) {
+                                            Text(student.fullName, color = CostInk, fontWeight = FontWeight.Bold)
+                                            Text(student.academicStage + " • " + student.academicYear, color = CostMuted, fontSize = 11.sp)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    } else if (section.id == "education" && activeTab?.id == "student_expenses") {
+                        item {
+                            SavedExpenseRecords(
+                                records = savedExpenses.filter { it.department.equals("EDUCATION", true) },
+                                onEdit = { showDesignNotice = true },
+                                onDelete = { financeViewModel.deleteExpense(it.expenseId) }
+                            )
+                        }
                     } else if (section.id == "income") {
                         item { SavedRevenueRecords(records = savedRevenues) }
                     } else if (section.id == "associations") {
@@ -430,6 +453,7 @@ fun CostWorkspaceScreen(
                             section.id,
                             activeTab?.id.orEmpty(),
                             vehicleOptions = listOf("اختاري السيارة") + savedVehicles.map { it.name },
+                            studentOptions = listOf("اختاري الطالب") + savedStudents.map { it.fullName },
                             initialValues = editingExpense?.let { record ->
                                 mapOf(
                                     "المبلغ" to com.example.core.MoneyUtils.formatPiastresPlain(record.amountPiastres),
@@ -486,6 +510,38 @@ fun CostWorkspaceScreen(
                                             notes = values["ملاحظات"].orEmpty()
                                         )
                                         selectedTab = "sources"
+                                    }
+                                } else if (section.id == "education") {
+                                    when (activeTab?.id) {
+                                        "student_add" -> {
+                                            val name = values["اسم الطالب"].orEmpty().trim()
+                                            val stage = values["المرحلة"].orEmpty().ifBlank { "ابتدائي" }
+                                            if (name.isNotBlank()) {
+                                                financeViewModel.saveStudent(fullName = name, academicStage = stage)
+                                                selectedTab = "students"
+                                            } else showDesignNotice = true
+                                        }
+                                        "student_edit" -> {
+                                            val student = savedStudents.firstOrNull { it.fullName == values["الطالب"] }
+                                            if (student != null) {
+                                                financeViewModel.saveStudent(id = student.studentId, fullName = student.fullName, academicStage = values["المرحلة"].orEmpty().ifBlank { student.academicStage }, academicYear = student.academicYear)
+                                                selectedTab = "students"
+                                            } else showDesignNotice = true
+                                        }
+                                        "student_expense_form" -> {
+                                            val student = savedStudents.firstOrNull { it.fullName == values["الطالب"] }
+                                            val amount = values["المبلغ"].orEmpty().replace(',', '.').toBigDecimalOrNull()
+                                            if (student != null && amount != null && amount > BigDecimal.ZERO && date != null) {
+                                                financeViewModel.saveExpense(
+                                                    amount = amount, date = date, department = "EDUCATION",
+                                                    category = values["تصنيف المصروف"].orEmpty(),
+                                                    title = values["عنوان المصروف"].orEmpty().ifBlank { "مصروف تعليمي - " + student.fullName },
+                                                    studentId = student.studentId
+                                                )
+                                                selectedTab = "student_expenses"
+                                            } else showDesignNotice = true
+                                        }
+                                        else -> showDesignNotice = true
                                     }
                                 } else if (section.id == "current_account") {
                                     val amount = values["المبلغ"].orEmpty().replace(',', '.').toBigDecimalOrNull()
@@ -663,7 +719,7 @@ private fun DashboardSummaryDesign(onAction: () -> Unit) {
 }
 
 @Composable
-private fun ExpenseEntryPreview(sectionId: String, tabId: String, initialValues: Map<String, String> = emptyMap(), onSave: (Map<String, String>) -> Unit = {}, onActionUnavailable: () -> Unit = {}, onExport: () -> Unit = {}, vehicleOptions: List<String> = listOf("اختاري السيارة")) {
+private fun ExpenseEntryPreview(sectionId: String, tabId: String, initialValues: Map<String, String> = emptyMap(), onSave: (Map<String, String>) -> Unit = {}, onActionUnavailable: () -> Unit = {}, onExport: () -> Unit = {}, vehicleOptions: List<String> = listOf("اختاري السيارة"), studentOptions: List<String> = listOf("اختاري الطالب")) {
     var values by remember(sectionId, tabId, initialValues) { mutableStateOf(initialValues) }
     var oilMode by remember(sectionId, tabId) { mutableStateOf("الزيوت") }
     val context = LocalContext.current
@@ -884,11 +940,11 @@ private fun ExpenseEntryPreview(sectionId: String, tabId: String, initialValues:
                     Text("هذا الرقم مطلوب ويتكون من 14 رقمًا.", color = CostMuted, fontSize = 10.sp)
                 }
                 "student_edit" -> {
-                    PreviewDropdown("اختاري الطالب المراد تعديله", listOf("لا يوجد طلاب مسجلون في المعاينة"), value("الطالب").ifBlank { "لا يوجد طلاب مسجلون في المعاينة" }) { setValue("الطالب", it) }
-                    Text("بعد ربط السجلات ستظهر أسماء الطلاب المسجلين هنا للاختيار ثم التعديل أو الحذف.", color = CostMuted, fontSize = 11.sp)
+                    PreviewDropdown("اختاري الطالب المراد تعديله", studentOptions, value("الطالب").ifBlank { studentOptions.first() }) { setValue("الطالب", it) }
+                    PreviewDropdown("المرحلة التعليمية", listOf("رياض أطفال", "ابتدائي", "إعدادي", "ثانوي", "جامعة"), value("المرحلة").ifBlank { "ابتدائي" }) { setValue("المرحلة", it) }
                 }
                 "student_expense_form" -> {
-                    PreviewDropdown("اختاري الطالب", listOf("لا يوجد طلاب مسجلون في المعاينة"), value("الطالب").ifBlank { "لا يوجد طلاب مسجلون في المعاينة" }) { setValue("الطالب", it) }
+                    PreviewDropdown("اختاري الطالب", studentOptions, value("الطالب").ifBlank { studentOptions.first() }) { setValue("الطالب", it) }
                     PreviewDropdown("تصنيف المصروف", listOf("دروس خصوصية", "مصروفات مدرسية", "كتب ومذكرات", "أتوبيس المدرسة", "مستلزمات", "انتقالات", "أخرى"), value("تصنيف المصروف").ifBlank { "دروس خصوصية" }) { setValue("تصنيف المصروف", it) }
                     PreviewInput("عنوان المصروف", value("عنوان المصروف")) { setValue("عنوان المصروف", it) }
                     PreviewInput("المبلغ", value("المبلغ"), numeric = true) { setValue("المبلغ", it) }
@@ -910,7 +966,7 @@ private fun ExpenseEntryPreview(sectionId: String, tabId: String, initialValues:
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(9.dp)) {
             Button(
                 onClick = {
-                    if (sectionId in setOf("house", "medical", "work", "personal", "income", "associations", "current_account") ||
+                    if (sectionId in setOf("house", "medical", "work", "personal", "income", "associations", "current_account", "education") ||
                         (sectionId == "vehicles" && tabId in setOf("records", "fuel", "maintenance", "oils", "accidents"))) onSave(values)
                     else onActionUnavailable()
                 },

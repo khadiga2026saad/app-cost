@@ -313,6 +313,7 @@ class FinanceViewModel(
         title: String,
         notes: String = "",
         vehicleId: Long? = null,
+        studentId: Long? = null,
         studentName: String? = null,
         institution: String? = null,
         academicTerm: String? = null,
@@ -329,7 +330,8 @@ class FinanceViewModel(
                 subcategory = category,
                 title = title,
                 notes = notes.ifBlank { null },
-                vehicleId = vehicleId
+                vehicleId = vehicleId,
+                studentId = studentId
             )
             if (id == 0L) {
                 repository.insertExpense(entity)
@@ -524,6 +526,14 @@ class FinanceViewModel(
         if (amount <= BigDecimal.ZERO) return
         viewModelScope.launch {
             repository.recordTreasuryMovement(type, MoneyUtils.egpToPiastres(amount), reason.ifBlank { "حركة حساب جاري" }, date)
+        }
+    }
+
+    fun saveStudent(id: Long = 0, fullName: String, academicStage: String, academicYear: String = DateUtils.currentYear().toString() + "/" + (DateUtils.currentYear() + 1).toString()) {
+        viewModelScope.launch {
+            if (fullName.isBlank() || academicStage.isBlank()) return@launch
+            val student = StudentEntity(studentId = id, fullName = fullName.trim(), academicStage = academicStage, academicYear = academicYear)
+            if (id == 0L) repository.insertStudent(student) else repository.updateStudent(student)
         }
     }
 
