@@ -5,6 +5,7 @@ import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import com.example.data.local.AppDatabase
 import com.example.data.local.entities.CurrentAccountEntity
+import com.example.data.local.entities.ExpenseEntity
 import com.example.data.local.entities.FinancialCertificateEntity
 import com.example.data.local.entities.VehicleAccidentLogEntity
 import com.example.data.local.entities.VehicleEntity
@@ -55,6 +56,25 @@ class FinanceRepositorySettlementTest {
 
     private suspend fun balance(): Long =
         repository.getAccountDirect()?.currentBalancePiastres ?: 0L
+
+    @Test
+    fun treasuryBalanceUpdateCreatesMissingAccountRow() = runBlocking {
+        assertNull(repository.getAccountDirect())
+
+        repository.insertExpense(
+            ExpenseEntity(
+                amountPiastres = 12_500L,
+                date = 1_000L,
+                department = "HOME",
+                subcategory = "مستلزمات",
+                title = "مصروف اختبار"
+            )
+        )
+
+        val account = repository.getAccountDirect()
+        assertNotNull(account)
+        assertEquals(-12_500L, account!!.currentBalancePiastres)
+    }
 
     private suspend fun insertVehicle(): Long =
         db.vehicleDao().insertVehicle(
