@@ -10,6 +10,8 @@ import android.widget.Toast
 import android.graphics.Bitmap
 import java.io.File
 import java.io.FileOutputStream
+import java.io.FileInputStream
+import com.example.data.local.AppDatabase
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -170,6 +172,24 @@ fun CostWorkspaceScreen(
             Toast.makeText(context, "تم تصدير سجل الرحلات", Toast.LENGTH_LONG).show()
         }.onFailure {
             Toast.makeText(context, "تعذر تصدير الرحلات: " + (it.localizedMessage ?: "خطأ غير معروف"), Toast.LENGTH_LONG).show()
+        }
+    }
+    val backupLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("application/octet-stream")
+    ) { uri ->
+        if (uri != null) runCatching {
+            val database = AppDatabase.getDatabase(context)
+            database.openHelper.writableDatabase.query("PRAGMA wal_checkpoint(FULL)").use { cursor ->
+                while (cursor.moveToNext()) Unit
+            }
+            val databaseFile = context.getDatabasePath("smart_cost_pro_database")
+            check(databaseFile.exists()) { "ملف قاعدة البيانات غير موجود" }
+            val output = context.contentResolver.openOutputStream(uri) ?: error("تعذر فتح ملف النسخة")
+            FileInputStream(databaseFile).use { input -> output.use { input.copyTo(it) } }
+        }.onSuccess {
+            Toast.makeText(context, "تم إنشاء نسخة احتياطية من قاعدة البيانات", Toast.LENGTH_LONG).show()
+        }.onFailure {
+            Toast.makeText(context, "تعذر إنشاء النسخة: " + (it.localizedMessage ?: "خطأ غير معروف"), Toast.LENGTH_LONG).show()
         }
     }
     val homeCsvLauncher = rememberLauncherForActivityResult(
@@ -571,7 +591,12 @@ fun CostWorkspaceScreen(
                         }
                     }
                 } else if (section.id == "backup") {
-                    item { BackupPreviewDesign(activeTab?.id.orEmpty()) { showDesignNotice = true } }
+                    item {
+                        BackupPreviewDesign(activeTab?.id.orEmpty()) {
+                            if (activeTab?.id == "export") backupLauncher.launch("SMART_COST_PRO_backup.db")
+                            else showDesignNotice = true
+                        }
+                    }
                 } else {
                     item {
                         ExpenseEntryPreview(
@@ -1443,7 +1468,7 @@ private fun BackupPreviewDesign(tabId: String, onAction: () -> Unit) {
     Card(colors = CardDefaults.cardColors(containerColor = Color.White), border = BorderStroke(1.dp, CostBorder)) {
         Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Text(if (tabId == "restore") "استعادة نسخة مالية" else "تصدير نسخة مالية", color = CostInk, fontWeight = FontWeight.Bold)
-            Text(if (tabId == "restore") "اختيار الملف، فحص المخطط، عرض المجموعات التي ستُستبدل ثم طلب التأكيد." else "إنشاء ملف نسخة يتضمن المجموعات المدعومة مع إصدار المخطط وتاريخ التصدير.", color = CostMuted, fontSize = 11.sp)
+            Text(if (tabId == "restore") "اختيار الملف، فحص المخطط، عرض المجموعات التي ستُستبدل ثم طلب التأكيد." else "إنشاء نسخة فعلية من قاعدة بيانات التطبيق المحلية بصيغة DB.", color = CostMuted, fontSize = 11.sp)
             OutlinedButton(onClick = onAction, modifier = Modifier.fillMaxWidth(), border = BorderStroke(1.dp, CostGold)) {
                 Text(if (tabId == "restore") "اختيار ملف النسخة" else "تجهيز نسخة احتياطية", color = CostInk)
             }
