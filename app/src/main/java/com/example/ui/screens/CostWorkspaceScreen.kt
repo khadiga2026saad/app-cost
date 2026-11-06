@@ -12,6 +12,9 @@ import java.io.File
 import java.io.FileOutputStream
 import java.io.FileInputStream
 import com.example.data.local.AppDatabase
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -153,6 +156,7 @@ fun CostWorkspaceScreen(
     val savedCertificates by financeViewModel.allCertificates.collectAsState()
     val savedCertificateSchedules by financeViewModel.allUncollectedCertificateSchedules.collectAsState()
     val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
     val carTripCsvLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.CreateDocument("text/csv")
     ) { uri ->
@@ -177,19 +181,24 @@ fun CostWorkspaceScreen(
     val backupLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.CreateDocument("application/octet-stream")
     ) { uri ->
-        if (uri != null) runCatching {
-            val database = AppDatabase.getDatabase(context)
-            database.openHelper.writableDatabase.query("PRAGMA wal_checkpoint(FULL)").use { cursor ->
-                while (cursor.moveToNext()) Unit
+        if (uri != null) coroutineScope.launch {
+            val result = withContext(Dispatchers.IO) {
+                runCatching {
+                    val database = AppDatabase.getDatabase(context)
+                    database.openHelper.writableDatabase.query("PRAGMA wal_checkpoint(FULL)").use { cursor ->
+                        while (cursor.moveToNext()) Unit
+                    }
+                    val databaseFile = context.getDatabasePath("smart_cost_pro_database")
+                    check(databaseFile.exists()) { "ملف قاعدة البيانات غير موجود" }
+                    val output = context.contentResolver.openOutputStream(uri) ?: error("تعذر فتح ملف النسخة")
+                    FileInputStream(databaseFile).use { input -> output.use { input.copyTo(it) } }
+                }
             }
-            val databaseFile = context.getDatabasePath("smart_cost_pro_database")
-            check(databaseFile.exists()) { "ملف قاعدة البيانات غير موجود" }
-            val output = context.contentResolver.openOutputStream(uri) ?: error("تعذر فتح ملف النسخة")
-            FileInputStream(databaseFile).use { input -> output.use { input.copyTo(it) } }
-        }.onSuccess {
-            Toast.makeText(context, "تم إنشاء نسخة احتياطية من قاعدة البيانات", Toast.LENGTH_LONG).show()
-        }.onFailure {
-            Toast.makeText(context, "تعذر إنشاء النسخة: " + (it.localizedMessage ?: "خطأ غير معروف"), Toast.LENGTH_LONG).show()
+            result.onSuccess {
+                Toast.makeText(context, "تم إنشاء نسخة احتياطية من قاعدة البيانات", Toast.LENGTH_LONG).show()
+            }.onFailure {
+                Toast.makeText(context, "تعذر إنشاء النسخة: " + (it.localizedMessage ?: "خطأ غير معروف"), Toast.LENGTH_LONG).show()
+            }
         }
     }
     val homeCsvLauncher = rememberLauncherForActivityResult(
