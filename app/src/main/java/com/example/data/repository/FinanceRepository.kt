@@ -450,9 +450,8 @@ class FinanceRepositoryImpl(private val database: AppDatabase) : FinanceReposito
                             DateUtils.currentEpochMillis()
                         )
                         expenseDao.deleteExpense(expense)
-                    } else {
-                        vehicleLogDao.deleteFuelLogById(id)
                     }
+                    vehicleLogDao.deleteFuelLogById(id)
                 }
                 "MAINTENANCE" -> {
                     val log = vehicleLogDao.getMaintenanceLogById(id) ?: return@withTransaction
@@ -465,9 +464,8 @@ class FinanceRepositoryImpl(private val database: AppDatabase) : FinanceReposito
                             DateUtils.currentEpochMillis()
                         )
                         expenseDao.deleteExpense(expense)
-                    } else {
-                        vehicleLogDao.deleteMaintenanceLogById(id)
                     }
+                    vehicleLogDao.deleteMaintenanceLogById(id)
                 }
                 "OIL" -> {
                     val log = vehicleLogDao.getOilLogById(id) ?: return@withTransaction
@@ -480,9 +478,8 @@ class FinanceRepositoryImpl(private val database: AppDatabase) : FinanceReposito
                             DateUtils.currentEpochMillis()
                         )
                         expenseDao.deleteExpense(expense)
-                    } else {
-                        vehicleLogDao.deleteOilLogById(id)
                     }
+                    vehicleLogDao.deleteOilLogById(id)
                 }
                 "ACCIDENT" -> {
                     val log = vehicleLogDao.getAccidentLogById(id) ?: return@withTransaction
