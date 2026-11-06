@@ -13,6 +13,22 @@ class BirthInfoCalculatorTest {
         assertEquals("الثور", info.zodiac)
     }
 
+    @Test fun parsesDayFirstDatesWithArabicDigits() {
+        assertEquals(LocalDate.of(1984, 2, 11), BirthInfoCalculator.parseBirthDate("١١/٢/١٩٨٤"))
+        assertEquals(LocalDate.of(1984, 2, 11), BirthInfoCalculator.parseBirthDate("11/2/1984"))
+    }
+
+    @Test fun parsesDayFirstDatesWithHyphensAndPersianDigits() {
+        assertEquals(LocalDate.of(1984, 2, 5), BirthInfoCalculator.parseBirthDate("۰۵-۰۲-۱۹۸۴"))
+    }
+
+    @Test fun computesAgeInYearsMonthsAndDays() {
+        val info = BirthInfoCalculator.compute(LocalDate.of(1990, 1, 15), LocalDate.of(2024, 3, 20))!!
+        assertEquals(34, info.gregorianAgeYears)
+        assertEquals(2, info.gregorianAgeMonths)
+        assertEquals(5, info.gregorianAgeDays)
+    }
+
     @Test fun birthdayTodayHasZeroDaysRemaining() {
         val info = BirthInfoCalculator.compute(LocalDate.of(2000, 7, 15), LocalDate.of(2024, 7, 15))!!
         assertEquals(24, info.gregorianAgeYears)
