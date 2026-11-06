@@ -76,6 +76,7 @@ interface FinanceRepository {
     fun getOilLogsBetween(startEpoch: Long, endEpoch: Long): Flow<List<VehicleOilLogEntity>>
     suspend fun insertOilLogWithExpense(log: VehicleOilLogEntity, vehicleName: String): Long
     fun getAccidentLogsForVehicle(vehicleId: Long): Flow<List<VehicleAccidentLogEntity>>
+    fun getAllAccidentLogs(): Flow<List<VehicleAccidentLogEntity>>
     suspend fun insertAccidentLogWithExpense(log: VehicleAccidentLogEntity, vehicleName: String): Long
     suspend fun deleteVehicleLogById(id: Long, logType: String)
 
@@ -385,6 +386,9 @@ class FinanceRepositoryImpl(private val database: AppDatabase) : FinanceReposito
 
     override fun getAccidentLogsForVehicle(vehicleId: Long): Flow<List<VehicleAccidentLogEntity>> =
         vehicleLogDao.getAccidentLogsForVehicle(vehicleId)
+
+    override fun getAllAccidentLogs(): Flow<List<VehicleAccidentLogEntity>> =
+        vehicleLogDao.getAllAccidentLogs()
 
     override suspend fun insertAccidentLogWithExpense(
         log: VehicleAccidentLogEntity,

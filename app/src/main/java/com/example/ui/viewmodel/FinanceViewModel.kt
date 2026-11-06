@@ -150,8 +150,9 @@ class FinanceViewModel(
     val allVehicleLogs: StateFlow<List<com.example.domain.model.VehicleLogItem>> = combine(
         repository.getFuelLogsBetween(0L, Long.MAX_VALUE),
         repository.getMaintenanceLogsBetween(0L, Long.MAX_VALUE),
-        repository.getOilLogsBetween(0L, Long.MAX_VALUE)
-    ) { fuelLogs, maintLogs, oilLogs ->
+        repository.getOilLogsBetween(0L, Long.MAX_VALUE),
+        repository.getAllAccidentLogs()
+    ) { fuelLogs, maintLogs, oilLogs, accidentLogs ->
         val fuelItems = fuelLogs.map {
             com.example.domain.model.VehicleLogItem(
                 id = it.fuelLogId,
@@ -189,7 +190,19 @@ class FinanceViewModel(
                 notes = it.oilBrandAndGrade
             )
         }
-        (fuelItems + maintItems + oilItems).sortedByDescending { it.date }
+        val accidentItems = accidentLogs.map {
+            com.example.domain.model.VehicleLogItem(
+                id = it.accidentLogId,
+                vehicleId = it.vehicleId,
+                logType = "ACCIDENT",
+                amount = MoneyUtils.formatPiastresPlain(it.netUserCostPiastres),
+                date = it.accidentDate,
+                odometer = it.odometerKm?.toInt(),
+                serviceType = "حادث",
+                notes = it.description
+            )
+        }
+        (fuelItems + maintItems + oilItems + accidentItems).sortedByDescending { it.date }
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),

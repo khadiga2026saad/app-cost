@@ -344,7 +344,7 @@ fun CostWorkspaceScreen(
                                         Text("سجلات الوقود والصيانة: " + logs.size, color = CostMuted, fontSize = 10.sp)
                                         logs.take(5).forEach { log ->
                                             Text(
-                                                (when (log.logType) { "FUEL" -> "وقود"; "OIL" -> "زيوت وفلاتر"; else -> "صيانة" }) + " • " +
+                                                (when (log.logType) { "FUEL" -> "وقود"; "OIL" -> "زيوت وفلاتر"; "ACCIDENT" -> "حادث"; else -> "صيانة" }) + " • " +
                                                     DateUtils.formatDateArabic(log.date) + " • " + log.amount + " جنيه",
                                                 color = CostInk,
                                                 fontSize = 11.sp

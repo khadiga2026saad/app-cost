@@ -67,6 +67,9 @@ interface VehicleLogDao {
     @Query("SELECT * FROM vehicle_accident_logs WHERE vehicleId = :vehicleId ORDER BY accidentDate DESC")
     fun getAccidentLogsForVehicle(vehicleId: Long): Flow<List<VehicleAccidentLogEntity>>
 
+    @Query("SELECT * FROM vehicle_accident_logs ORDER BY accidentDate DESC")
+    fun getAllAccidentLogs(): Flow<List<VehicleAccidentLogEntity>>
+
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insertAccidentLog(log: VehicleAccidentLogEntity): Long
 
