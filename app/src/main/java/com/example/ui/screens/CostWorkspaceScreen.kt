@@ -116,7 +116,7 @@ private fun choicesFor(sectionId: String, tabId: String): List<String> = when (s
         "oils" -> listOf("زيوت", "فلاتر", "Mobil", "متابعة 5,000 كم")
         else -> emptyList()
     }
-    "education" -> if (tabId == "student_form") listOf("رياض أطفال", "ابتدائي", "إعدادي", "ثانوي", "جامعة") else listOf("دروس خصوصية", "شخصي", "انتقالات", "مصروفات مدرسية", "كتب ومذكرات", "أتوبيس المدرسة", "مستلزمات", "أخرى")
+    "education" -> if (tabId in setOf("student_add", "student_edit")) listOf("رياض أطفال", "ابتدائي", "إعدادي", "ثانوي", "جامعة") else listOf("دروس خصوصية", "شخصي", "انتقالات", "مصروفات مدرسية", "كتب ومذكرات", "أتوبيس المدرسة", "مستلزمات", "أخرى")
     "income" -> listOf("راتب", "دخل إضافي", "مكافأة", "استثمار", "أخرى")
     "certificates" -> if (tabId == "form") listOf("6 أشهر", "سنة", "سنتان", "3 سنوات", "5 سنوات", "شهري", "ربع سنوي", "نصف سنوي", "سنوي", "عند الاستحقاق") else emptyList()
     "car_income" -> if (tabId == "add_trip") listOf("نقدي", "Uber", "DiDi", "inDrive", "خاص") else if (tabId == "trip_report") listOf("الكل", "نقدي", "Uber", "DiDi", "inDrive", "خاص") else emptyList()
