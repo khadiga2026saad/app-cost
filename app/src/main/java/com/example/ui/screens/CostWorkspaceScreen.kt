@@ -95,8 +95,7 @@ private fun tabsFor(id: String): List<CostTab> = when (id) {
 }
 
 private fun exportActionsFor(sectionId: String, tabId: String): List<String> = when (sectionId) {
-    "house", "work", "personal", "medical", "vehicles" -> listOf("تصدير CSV")
-    "education" -> listOf("تصدير HTML / XLS", "طباعة")
+    "house", "work", "personal", "medical", "vehicles", "education", "associations", "income", "certificates", "current_account" -> listOf("تصدير CSV")
     "car_income" -> listOf("تصدير CSV")
     "reports" -> listOf("CSV", "طباعة", "حفظ في الخزنة", "إغلاق")
     else -> emptyList()
@@ -161,6 +160,7 @@ fun CostWorkspaceScreen(
     val financeSummary by financeViewModel.currentMonthSummary.collectAsState()
     val savedCertificates by financeViewModel.allCertificates.collectAsState()
     val savedCertificateSchedules by financeViewModel.allUncollectedCertificateSchedules.collectAsState()
+    val savedGamaeyat by financeViewModel.allGamaeyat.collectAsState()
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     val carTripCsvLauncher = rememberLauncherForActivityResult(
@@ -212,23 +212,53 @@ fun CostWorkspaceScreen(
     ) { uri ->
         if (uri != null) {
             runCatching {
-                val department = selectedSection?.uppercase().orEmpty()
-                val rows = savedExpenses.filter { it.department.equals(department, ignoreCase = true) }
-                    .sortedByDescending { it.date }
+                val department = selectedSection.orEmpty()
+                fun csvRow(vararg fields: String?): String = fields.joinToString(",") { field ->
+                    "\"" + field.orEmpty().replace("\"", "\"\"") + "\""
+                }
                 val csv = buildString {
                     append('\uFEFF')
-                    appendLine("التاريخ,التصنيف,البيان,المبلغ_بالقرش,الملاحظات")
-                    rows.forEach { expense ->
-                        val fields = listOf(
-                            DateUtils.formatDateShort(expense.date),
-                            expense.subcategory,
-                            expense.title,
-                            expense.amountPiastres.toString(),
-                            expense.notes.orEmpty()
-                        )
-                        appendLine(fields.joinToString(",") { field ->
-                            "\"" + field.replace("\"", "\"\"") + "\""
-                        })
+                    when (department) {
+                        "vehicles" -> {
+                            appendLine(csvRow("السيارة", "نوع السجل", "التاريخ", "العداد_كم", "المبلغ_جنيه", "التفاصيل", "ملاحظات"))
+                            savedVehicleLogs.sortedByDescending { it.date }.forEach { log ->
+                                val vehicleName = savedVehicles.firstOrNull { it.vehicleId == log.vehicleId }?.name.orEmpty()
+                                appendLine(csvRow(vehicleName, log.logType, DateUtils.formatDateShort(log.date), log.odometer?.toString(), log.amount, log.serviceType ?: log.serviceCenter, log.notes))
+                            }
+                        }
+                        "education" -> {
+                            appendLine(csvRow("نوع السجل", "الطالب", "التاريخ", "التصنيف", "البيان", "المبلغ_بالقرش", "ملاحظات"))
+                            savedStudents.forEach { student -> appendLine(csvRow("طالب", student.fullName, "", student.academicStage, student.schoolOrInstitution, student.monthlyBudgetPiastres?.toString(), student.academicYear)) }
+                            savedExpenses.filter { it.department.equals("EDUCATION", true) }.sortedByDescending { it.date }.forEach { expense ->
+                                val studentName = savedStudents.firstOrNull { it.studentId == expense.studentId }?.fullName.orEmpty()
+                                appendLine(csvRow("مصروف", studentName, DateUtils.formatDateShort(expense.date), expense.subcategory, expense.title, expense.amountPiastres.toString(), expense.notes))
+                            }
+                        }
+                        "income" -> {
+                            appendLine(csvRow("التاريخ", "مصدر الدخل", "البيان", "المبلغ_بالقرش", "الجهة", "ملاحظات"))
+                            savedRevenues.sortedByDescending { it.date }.forEach { item -> appendLine(csvRow(DateUtils.formatDateShort(item.date), item.sourceType, item.title, item.amountPiastres.toString(), item.payerOrInstitution, item.notes)) }
+                        }
+                        "associations" -> {
+                            appendLine(csvRow("اسم الجمعية", "قيمة الجمعية_بالقرش", "عدد الأفراد", "قيمة القسط_بالقرش", "رقم الدور", "تاريخ البداية", "تاريخ القبض المتوقع", "الحالة", "تم القبض"))
+                            savedGamaeyat.forEach { item -> appendLine(csvRow(item.name, item.totalPoolValuePiastres.toString(), item.numberOfMembers.toString(), item.monthlyInstallmentPiastres.toString(), item.myTurnOrder.toString(), DateUtils.formatDateShort(item.startDate), DateUtils.formatDateShort(item.expectedPayoutDate), item.status, item.isPayoutReceived.toString())) }
+                        }
+                        "certificates" -> {
+                            appendLine(csvRow("الشهادة", "البنك", "أصل الشهادة_بالقرش", "العائد السنوي", "دورية الصرف", "المدة_سنوات", "تاريخ الإصدار", "تاريخ الاستحقاق", "نشطة"))
+                            savedCertificates.forEach { item -> appendLine(csvRow(item.name, item.bankName, item.principalPiastres.toString(), item.annualRatePercent, item.payoutFrequency, item.durationYears.toString(), DateUtils.formatDateShort(item.issueDate), DateUtils.formatDateShort(item.maturityDate), item.isActive.toString())) }
+                        }
+                        "current_account" -> {
+                            appendLine(csvRow("التاريخ", "نوع الحركة", "المبلغ_بالقرش", "الرصيد قبل_بالقرش", "الرصيد بعد_بالقرش", "البيان"))
+                            savedTreasuryMovements.sortedByDescending { it.date }.forEach { item -> appendLine(csvRow(DateUtils.formatDateShort(item.date), item.movementType, item.amountPiastres.toString(), item.balanceBeforePiastres.toString(), item.balanceAfterPiastres.toString(), item.reason)) }
+                        }
+                        "car_income" -> {
+                            appendLine(csvRow("التاريخ", "نوع الرحلة", "الأجرة_بالقرش", "الملاحظات"))
+                            savedRevenues.filter { it.sourceType == "CAR_TRIP" }.sortedByDescending { it.date }.forEach { item -> appendLine(csvRow(DateUtils.formatDateShort(item.date), item.title, item.amountPiastres.toString(), item.notes)) }
+                        }
+                        else -> {
+                            val rows = savedExpenses.filter { it.department.equals(department.uppercase(), ignoreCase = true) }.sortedByDescending { it.date }
+                            appendLine(csvRow("التاريخ", "التصنيف", "البيان", "المبلغ_بالقرش", "الملاحظات"))
+                            rows.forEach { expense -> appendLine(csvRow(DateUtils.formatDateShort(expense.date), expense.subcategory, expense.title, expense.amountPiastres.toString(), expense.notes)) }
+                        }
                     }
                 }
                 val output = context.contentResolver.openOutputStream(uri)
@@ -241,7 +271,6 @@ fun CostWorkspaceScreen(
             }
         }
     }
-    val savedGamaeyat by financeViewModel.allGamaeyat.collectAsState()
     val unpaidGamaeyaInstallments by financeViewModel.allUnpaidGamaeyaInstallments.collectAsState()
     val section = costSections.firstOrNull { it.id == selectedSection }
     val tabs = section?.let { tabsFor(it.id) }.orEmpty()
@@ -390,7 +419,7 @@ fun CostWorkspaceScreen(
                                     onClick = {
                                         if (action.contains("CSV") || action.contains("Excel")) {
                                             if (section.id == "car_income") carTripCsvLauncher.launch("سجل_رحلات_السيارة.csv")
-                                            else homeCsvLauncher.launch("مصروفات_" + section.title + ".csv")
+                                            else homeCsvLauncher.launch("تصدير_" + section.title + ".csv")
                                         } else showDesignNotice = true
                                     },
                                     border = BorderStroke(1.dp, CostBorder),
