@@ -487,6 +487,16 @@ fun CostWorkspaceScreen(
                                         )
                                         selectedTab = "sources"
                                     }
+                                } else if (section.id == "current_account") {
+                                    val amount = values["المبلغ"].orEmpty().replace(',', '.').toBigDecimalOrNull()
+                                    if (amount != null && amount > BigDecimal.ZERO && date != null) {
+                                        financeViewModel.recordTreasuryMovement(
+                                            type = if (activeTab?.id == "deposits") "DEPOSIT" else "WITHDRAWAL",
+                                            amount = amount,
+                                            reason = values["الوصف"].orEmpty()
+                                        )
+                                        selectedTab = "movements"
+                                    } else showDesignNotice = true
                                 } else if (section.id == "vehicles") {
                                     val vehicle = savedVehicles.firstOrNull { it.name == values["السيارة"] }
                                     when (activeTab?.id) {
