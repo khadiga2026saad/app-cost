@@ -87,7 +87,7 @@ private fun tabsFor(id: String): List<CostTab> = when (id) {
 private fun exportActionsFor(sectionId: String, tabId: String): List<String> = when (sectionId) {
     "house", "work", "personal", "medical", "vehicles" -> listOf("تصدير CSV")
     "education" -> listOf("تصدير HTML / XLS", "طباعة")
-    "car_income" -> listOf("Excel", "Word", "طباعة", "نسخ نص التقرير")
+    "car_income" -> listOf("تصدير CSV")
     "reports" -> listOf("CSV", "طباعة", "حفظ في الخزنة", "إغلاق")
     else -> emptyList()
 }
@@ -150,6 +150,27 @@ fun CostWorkspaceScreen(
     val savedCertificates by financeViewModel.allCertificates.collectAsState()
     val savedCertificateSchedules by financeViewModel.allUncollectedCertificateSchedules.collectAsState()
     val context = LocalContext.current
+    val carTripCsvLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("text/csv")
+    ) { uri ->
+        if (uri != null) runCatching {
+            val rows = savedRevenues.filter { it.sourceType == "CAR_TRIP" }.sortedByDescending { it.date }
+            val csv = buildString {
+                append('﻿')
+                appendLine("التاريخ,نوع الرحلة,الأجرة_بالقرش,الملاحظات")
+                rows.forEach { item ->
+                    val fields = listOf(DateUtils.formatDateShort(item.date), item.title, item.amountPiastres.toString(), item.notes.orEmpty())
+                    appendLine(fields.joinToString(",") { field -> "\"" + field.replace("\"", "\"\"") + "\"" })
+                }
+            }
+            val output = context.contentResolver.openOutputStream(uri) ?: error("تعذر فتح ملف التصدير")
+            output.bufferedWriter(Charsets.UTF_8).use { it.write(csv) }
+        }.onSuccess {
+            Toast.makeText(context, "تم تصدير سجل الرحلات", Toast.LENGTH_LONG).show()
+        }.onFailure {
+            Toast.makeText(context, "تعذر تصدير الرحلات: " + (it.localizedMessage ?: "خطأ غير معروف"), Toast.LENGTH_LONG).show()
+        }
+    }
     val homeCsvLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.CreateDocument("text/csv")
     ) { uri ->
@@ -317,7 +338,8 @@ fun CostWorkspaceScreen(
                                 OutlinedButton(
                                     onClick = {
                                         if (action.contains("CSV") || action.contains("Excel")) {
-                                            homeCsvLauncher.launch("مصروفات_" + section.title + ".csv")
+                                            if (section.id == "car_income") carTripCsvLauncher.launch("سجل_رحلات_السيارة.csv")
+                                            else homeCsvLauncher.launch("مصروفات_" + section.title + ".csv")
                                         } else showDesignNotice = true
                                     },
                                     border = BorderStroke(1.dp, CostBorder),
@@ -440,6 +462,8 @@ fun CostWorkspaceScreen(
                                 onDelete = { financeViewModel.deleteExpense(it.expenseId) }
                             )
                         }
+                    } else if (section.id == "car_income" && activeTab?.id == "trips") {
+                        item { SavedRevenueRecords(records = savedRevenues.filter { it.sourceType == "CAR_TRIP" }) }
                     } else if (section.id == "income") {
                         item { SavedRevenueRecords(records = savedRevenues) }
                     } else if (section.id == "associations") {
@@ -520,7 +544,8 @@ fun CostWorkspaceScreen(
                             }.orEmpty(),
                             onActionUnavailable = { showDesignNotice = true },
                             onExport = {
-                                if (section.id in setOf("house", "work", "personal", "medical", "vehicles")) homeCsvLauncher.launch("مصروفات_" + section.title + ".csv")
+                                if (section.id == "car_income") carTripCsvLauncher.launch("سجل_رحلات_السيارة.csv")
+                                else if (section.id in setOf("house", "work", "personal", "medical", "vehicles")) homeCsvLauncher.launch("مصروفات_" + section.title + ".csv")
                                 else showDesignNotice = true
                             },
                             onSave = { values ->
@@ -546,6 +571,19 @@ fun CostWorkspaceScreen(
                                     } else {
                                         showDesignNotice = true
                                     }
+                                } else if (section.id == "car_income" && activeTab?.id == "add_trip") {
+                                    val amount = values["الأجرة"].orEmpty().replace(',', '.').toBigDecimalOrNull()
+                                    val tripDate = runCatching { LocalDate.parse(values["تاريخ الرحلة"].orEmpty()).atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli() }.getOrNull()
+                                    if (amount != null && amount > BigDecimal.ZERO && tripDate != null) {
+                                        financeViewModel.saveRevenue(
+                                            amount = amount,
+                                            date = tripDate,
+                                            category = "CAR_TRIP",
+                                            title = values["نوع الرحلة"].orEmpty().ifBlank { "رحلة سيارة" },
+                                            notes = values["ملاحظات الرحلة"].orEmpty()
+                                        )
+                                        selectedTab = "trips"
+                                    } else showDesignNotice = true
                                 } else if (section.id == "income") {
                                     val amount = runCatching { BigDecimal(values["المبلغ"].orEmpty().replace(',', '.')) }.getOrNull()
                                     if (amount != null && amount > BigDecimal.ZERO && date != null) {
@@ -1051,7 +1089,7 @@ private fun ExpenseEntryPreview(sectionId: String, tabId: String, initialValues:
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(9.dp)) {
             Button(
                 onClick = {
-                    if (sectionId in setOf("house", "medical", "work", "personal", "income", "associations", "current_account", "education") || (sectionId == "certificates" && tabId == "form") ||
+                    if (sectionId in setOf("house", "medical", "work", "personal", "income", "associations", "current_account", "education") || (sectionId == "car_income" && tabId == "add_trip") || (sectionId == "certificates" && tabId == "form") ||
                         (sectionId == "vehicles" && tabId in setOf("records", "fuel", "maintenance", "oils", "accidents"))) onSave(values)
                     else onActionUnavailable()
                 },
