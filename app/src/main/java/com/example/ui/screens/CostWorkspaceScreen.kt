@@ -532,7 +532,30 @@ fun CostWorkspaceScreen(
                         item { RecordsPreviewDesign(section.title, activeTab?.title.orEmpty()) }
                     }
                 } else if (section.id == "reports") {
-                    item { ReportPreviewDesign { showDesignNotice = true } }
+                    item {
+                        val today = LocalDate.now()
+                        val startDate = when (activeTab?.id) {
+                            "daily" -> today
+                            "weekly" -> today.with(java.time.DayOfWeek.MONDAY)
+                            else -> today.withDayOfMonth(1)
+                        }
+                        val startEpoch = startDate.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
+                        val endEpoch = today.plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli() - 1L
+                        val reportExpenses = savedExpenses.filter { it.date in startEpoch..endEpoch }
+                        val reportRevenues = savedRevenues.filter { it.date in startEpoch..endEpoch }
+                        val expensesTotal = reportExpenses.sumOf { it.amountPiastres }
+                        val revenuesTotal = reportRevenues.sumOf { it.amountPiastres }
+                        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                            Text(when (activeTab?.id) { "daily" -> "التقرير اليومي"; "weekly" -> "التقرير الأسبوعي"; else -> "التقرير الشهري" }, color = CostInk, fontWeight = FontWeight.Bold)
+                            Text("من " + DateUtils.formatDateArabic(startEpoch) + " إلى " + DateUtils.formatDateArabic(endEpoch), color = CostMuted, fontSize = 11.sp)
+                            Text("إجمالي المصروفات: " + com.example.core.MoneyUtils.formatPiastresPlain(expensesTotal) + " جنيه", color = CostInk, fontWeight = FontWeight.Bold)
+                            Text("إجمالي الدخل: " + com.example.core.MoneyUtils.formatPiastresPlain(revenuesTotal) + " جنيه", color = CostInk, fontWeight = FontWeight.Bold)
+                            Text("الصافي: " + com.example.core.MoneyUtils.formatPiastresPlain(revenuesTotal - expensesTotal) + " جنيه", color = if (revenuesTotal >= expensesTotal) Color(0xFF26734D) else Color(0xFFB3261E), fontWeight = FontWeight.Bold)
+                            Text("عدد المصروفات: " + reportExpenses.size + " • عدد الإيرادات: " + reportRevenues.size, color = CostMuted, fontSize = 11.sp)
+                            if (reportExpenses.isNotEmpty()) SavedExpenseRecords(records = reportExpenses, onEdit = { showDesignNotice = true }, onDelete = { financeViewModel.deleteExpense(it.expenseId) })
+                            if (reportRevenues.isNotEmpty()) SavedRevenueRecords(records = reportRevenues)
+                        }
+                    }
                 } else if (section.id == "backup") {
                     item { BackupPreviewDesign(activeTab?.id.orEmpty()) { showDesignNotice = true } }
                 } else {
