@@ -320,10 +320,24 @@ fun CostWorkspaceScreen(
                     }
                 }
                 if (section.id != "reports" && section.id != "backup") {
-                    item {
+                    val quickActions = when (section.id) {
+                        "house" -> listOf("إضافة مصروف" to "form")
+                        "medical" -> listOf("إضافة سجل طبي" to "form")
+                        "work" -> listOf("إضافة مصروف عمل" to "form")
+                        "personal" -> listOf("إضافة مصروف شخصي" to "form")
+                        "associations" -> listOf("جمعية جديدة" to "form")
+                        "vehicles" -> listOf("إضافة سيارة" to "records", "إضافة وقود" to "fuel", "إضافة صيانة" to "maintenance")
+                        "education" -> listOf("إضافة طالب" to "student_add", "إضافة مصروف طالب" to "student_expense_form")
+                        "income" -> listOf("إضافة مصدر دخل" to "form")
+                        "certificates" -> listOf("إضافة شهادة" to "form")
+                        "current_account" -> listOf("إضافة إيداع" to "deposits", "إضافة سحب" to "withdrawals")
+                        "car_income" -> listOf("تسجيل رحلة" to "add_trip")
+                        else -> emptyList()
+                    }
+                    if (quickActions.isNotEmpty()) item {
                         LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.fillMaxWidth()) {
-                            items(if (section.id == "education" && activeTab?.id == "students") listOf("إضافة طالب", "تعديل طالب") else listOf("إضافة", "تعديل", "حذف", "تصفية")) { action ->
-                                OutlinedButton(onClick = { showDesignNotice = true }, border = BorderStroke(1.dp, CostGold), contentPadding = PaddingValues(horizontal = 12.dp, vertical = 7.dp)) {
+                            items(quickActions) { (action, targetTab) ->
+                                OutlinedButton(onClick = { selectedTab = targetTab }, border = BorderStroke(1.dp, CostGold), contentPadding = PaddingValues(horizontal = 12.dp, vertical = 7.dp)) {
                                     Text(action, color = CostInk, fontSize = 11.sp)
                                 }
                             }
