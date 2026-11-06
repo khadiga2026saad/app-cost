@@ -114,7 +114,7 @@ class FinanceRepositorySettlementTest {
     }
 
     @Test
-    fun deleteUnknownLogTypeDeletesNothing() = runBlocking {
+    fun deleteUnknownLogTypeThrowsClearExceptionWithoutChangingBalances() = runBlocking {
         seedTreasury(100_000L)
         val vehicleId = insertVehicle()
         repository.insertFuelLogWithExpense(
@@ -132,8 +132,15 @@ class FinanceRepositorySettlementTest {
         )
         assertEquals(70_000L, balance())
 
-        repository.deleteVehicleLogById(1L, "NOT_A_TYPE")
+        var failure: IllegalArgumentException? = null
+        try {
+            repository.deleteVehicleLogById(1L, "NOT_A_TYPE")
+        } catch (exception: IllegalArgumentException) {
+            failure = exception
+        }
 
+        assertNotNull(failure)
+        assertTrue(failure!!.message.orEmpty().contains("NOT_A_TYPE"))
         assertEquals(70_000L, balance())
         assertEquals(1, db.vehicleLogDao().getFuelLogsForVehicle(vehicleId).first().size)
     }
