@@ -145,6 +145,7 @@ fun CostWorkspaceScreen(
     var selectedTab by remember { mutableStateOf("") }
     var showDesignNotice by remember { mutableStateOf(false) }
     var editingExpense by remember { mutableStateOf<ExpenseEntity?>(null) }
+    var workspaceSearch by remember { mutableStateOf("") }
     val financeViewModel: FinanceViewModel = viewModel(factory = FinanceViewModel.Factory)
     val savedExpenses by financeViewModel.allExpenses.collectAsState()
     val savedRevenues by financeViewModel.allRevenues.collectAsState()
@@ -240,6 +241,8 @@ fun CostWorkspaceScreen(
     val section = costSections.firstOrNull { it.id == selectedSection }
     val tabs = section?.let { tabsFor(it.id) }.orEmpty()
     val activeTab = tabs.firstOrNull { it.id == selectedTab }
+    fun matchesSearch(vararg fields: String?): Boolean =
+        workspaceSearch.isBlank() || fields.any { it?.contains(workspaceSearch.trim(), ignoreCase = true) == true }
 
     BackHandler(enabled = selectedSection != null) {
         if (selectedTab.isNotBlank()) {
@@ -345,7 +348,7 @@ fun CostWorkspaceScreen(
                 }
                 if (section.id != "reports" && section.id != "backup") {
                     item {
-                        OutlinedTextField(value = "", onValueChange = {}, readOnly = true, modifier = Modifier.fillMaxWidth(), singleLine = true, label = { Text("بحث في " + section.title) }, placeholder = { Text("سيُفعّل البحث في المرحلة الثانية") }, shape = RoundedCornerShape(13.dp))
+                        OutlinedTextField(value = workspaceSearch, onValueChange = { workspaceSearch = it }, modifier = Modifier.fillMaxWidth(), singleLine = true, label = { Text("بحث في " + section.title) }, placeholder = { Text("ابحثي بالاسم أو البيان أو التصنيف") }, shape = RoundedCornerShape(13.dp))
                     }
                 }
                 if (section.id != "reports" && section.id != "backup") {
@@ -427,7 +430,7 @@ fun CostWorkspaceScreen(
                 }
                 if (section.id == "car_income" && activeTab?.id == "trip_report") {
                     item {
-                        val trips = savedRevenues.filter { it.sourceType == "CAR_TRIP" }.sortedByDescending { it.date }
+                        val trips = savedRevenues.filter { it.sourceType == "CAR_TRIP" && matchesSearch(it.title, it.notes) }.sortedByDescending { it.date }
                         val total = trips.sumOf { it.amountPiastres }
                         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             Text("إجمالي دخل الرحلات: " + com.example.core.MoneyUtils.formatPiastresPlain(total) + " جنيه", color = CostInk, fontWeight = FontWeight.Bold)
@@ -440,7 +443,7 @@ fun CostWorkspaceScreen(
                     if (section.id in setOf("house", "medical", "work", "personal")) {
                         item {
                             SavedExpenseRecords(
-                                records = savedExpenses.filter { it.department.equals(section.id.uppercase(), ignoreCase = true) },
+                                records = savedExpenses.filter { it.department.equals(section.id.uppercase(), ignoreCase = true) && matchesSearch(it.title, it.subcategory, it.notes) },
                                 onEdit = { record -> editingExpense = record; selectedTab = "form" },
                                 onDelete = { financeViewModel.deleteExpense(it.expenseId) }
                             )
@@ -448,8 +451,9 @@ fun CostWorkspaceScreen(
                     } else if (section.id == "certificates" && activeTab?.id == "list") {
                         item {
                             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                if (savedCertificates.isEmpty()) Text("لا توجد شهادات مسجلة.", color = CostMuted, fontSize = 12.sp)
-                                savedCertificates.forEach { cert ->
+                                val visibleCertificates = savedCertificates.filter { matchesSearch(it.name, it.bankName) }
+                                if (visibleCertificates.isEmpty()) Text("لا توجد شهادات مطابقة للبحث.", color = CostMuted, fontSize = 12.sp)
+                                visibleCertificates.forEach { cert ->
                                     Card(colors = CardDefaults.cardColors(containerColor = Color.White), border = BorderStroke(1.dp, CostBorder)) {
                                         Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                                             Text(cert.name, color = CostInk, fontWeight = FontWeight.Bold)
@@ -497,8 +501,9 @@ fun CostWorkspaceScreen(
                     } else if (section.id == "education" && activeTab?.id == "students") {
                         item {
                             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                if (savedStudents.isEmpty()) Text("لا يوجد طلاب مسجلون.", color = CostMuted, fontSize = 12.sp)
-                                savedStudents.forEach { student ->
+                                val visibleStudents = savedStudents.filter { matchesSearch(it.fullName, it.academicStage, it.academicYear) }
+                                if (visibleStudents.isEmpty()) Text("لا يوجد طلاب مطابقون للبحث.", color = CostMuted, fontSize = 12.sp)
+                                visibleStudents.forEach { student ->
                                     Card(colors = CardDefaults.cardColors(containerColor = Color.White), border = BorderStroke(1.dp, CostBorder)) {
                                         Column(Modifier.fillMaxWidth().padding(12.dp)) {
                                             Text(student.fullName, color = CostInk, fontWeight = FontWeight.Bold)
@@ -511,15 +516,15 @@ fun CostWorkspaceScreen(
                     } else if (section.id == "education" && activeTab?.id == "student_expenses") {
                         item {
                             SavedExpenseRecords(
-                                records = savedExpenses.filter { it.department.equals("EDUCATION", true) },
+                                records = savedExpenses.filter { it.department.equals("EDUCATION", true) && matchesSearch(it.title, it.subcategory, it.notes) },
                                 onEdit = { showDesignNotice = true },
                                 onDelete = { financeViewModel.deleteExpense(it.expenseId) }
                             )
                         }
                     } else if (section.id == "car_income" && activeTab?.id == "trips") {
-                        item { SavedRevenueRecords(records = savedRevenues.filter { it.sourceType == "CAR_TRIP" }) }
+                        item { SavedRevenueRecords(records = savedRevenues.filter { it.sourceType == "CAR_TRIP" && matchesSearch(it.title, it.notes) }) }
                     } else if (section.id == "income") {
-                        item { SavedRevenueRecords(records = savedRevenues) }
+                        item { SavedRevenueRecords(records = savedRevenues.filter { matchesSearch(it.title, it.notes, it.sourceType) }) }
                     } else if (section.id == "associations") {
                         item {
                             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
