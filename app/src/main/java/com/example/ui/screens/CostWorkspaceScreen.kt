@@ -435,7 +435,7 @@ fun CostWorkspaceScreen(
                         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             Text("إجمالي دخل الرحلات: " + com.example.core.MoneyUtils.formatPiastresPlain(total) + " جنيه", color = CostInk, fontWeight = FontWeight.Bold)
                             Text("عدد الرحلات المسجلة: " + trips.size, color = CostMuted, fontSize = 11.sp)
-                            SavedRevenueRecords(records = trips)
+                            SavedRevenueRecords(records = trips, onDelete = { financeViewModel.deleteRevenue(it.revenueId) })
                         }
                     }
                 }
@@ -458,6 +458,7 @@ fun CostWorkspaceScreen(
                                         Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                                             Text(cert.name, color = CostInk, fontWeight = FontWeight.Bold)
                                             Text(cert.bankName + " • أصل الشهادة: " + com.example.core.MoneyUtils.formatPiastresPlain(cert.principalPiastres) + " جنيه", color = CostMuted, fontSize = 11.sp)
+                                            TextButton(onClick = { financeViewModel.deleteCertificate(cert.certificateId) }) { Text("حذف الشهادة") }
                                             Text("العائد السنوي: " + cert.annualRatePercent + "% • الاستحقاق: " + DateUtils.formatDateArabic(cert.maturityDate), color = CostMuted, fontSize = 10.sp)
                                         }
                                     }
@@ -508,6 +509,10 @@ fun CostWorkspaceScreen(
                                         Column(Modifier.fillMaxWidth().padding(12.dp)) {
                                             Text(student.fullName, color = CostInk, fontWeight = FontWeight.Bold)
                                             Text(student.academicStage + " • " + student.academicYear, color = CostMuted, fontSize = 11.sp)
+                                            Row {
+                                                TextButton(onClick = { selectedTab = "student_edit" }) { Text("تعديل") }
+                                                TextButton(onClick = { financeViewModel.deleteStudent(student.studentId) }) { Text("حذف") }
+                                            }
                                         }
                                     }
                                 }
@@ -522,9 +527,9 @@ fun CostWorkspaceScreen(
                             )
                         }
                     } else if (section.id == "car_income" && activeTab?.id == "trips") {
-                        item { SavedRevenueRecords(records = savedRevenues.filter { it.sourceType == "CAR_TRIP" && matchesSearch(it.title, it.notes) }) }
+                        item { SavedRevenueRecords(records = savedRevenues.filter { it.sourceType == "CAR_TRIP" && matchesSearch(it.title, it.notes) }, onDelete = { financeViewModel.deleteRevenue(it.revenueId) }) }
                     } else if (section.id == "income") {
-                        item { SavedRevenueRecords(records = savedRevenues.filter { matchesSearch(it.title, it.notes, it.sourceType) }) }
+                        item { SavedRevenueRecords(records = savedRevenues.filter { matchesSearch(it.title, it.notes, it.sourceType) }, onDelete = { financeViewModel.deleteRevenue(it.revenueId) }) }
                     } else if (section.id == "associations") {
                         item {
                             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -601,7 +606,7 @@ fun CostWorkspaceScreen(
                             Text("الصافي: " + com.example.core.MoneyUtils.formatPiastresPlain(revenuesTotal - expensesTotal) + " جنيه", color = if (revenuesTotal >= expensesTotal) Color(0xFF26734D) else Color(0xFFB3261E), fontWeight = FontWeight.Bold)
                             Text("عدد المصروفات: " + reportExpenses.size + " • عدد الإيرادات: " + reportRevenues.size, color = CostMuted, fontSize = 11.sp)
                             if (reportExpenses.isNotEmpty()) SavedExpenseRecords(records = reportExpenses, onEdit = { showDesignNotice = true }, onDelete = { financeViewModel.deleteExpense(it.expenseId) })
-                            if (reportRevenues.isNotEmpty()) SavedRevenueRecords(records = reportRevenues)
+                            if (reportRevenues.isNotEmpty()) SavedRevenueRecords(records = reportRevenues, onDelete = { financeViewModel.deleteRevenue(it.revenueId) })
                         }
                     }
                 } else if (section.id == "backup") {
@@ -1384,7 +1389,7 @@ private fun SavedExpenseRecords(records: List<ExpenseEntity>, onEdit: (ExpenseEn
 }
 
 @Composable
-private fun SavedRevenueRecords(records: List<com.example.data.local.entities.RevenueEntity>) {
+private fun SavedRevenueRecords(records: List<com.example.data.local.entities.RevenueEntity>, onDelete: (com.example.data.local.entities.RevenueEntity) -> Unit = {}) {
     Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Color.White), border = BorderStroke(1.dp, CostBorder), shape = RoundedCornerShape(15.dp)) {
         Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text("مصادر الدخل المحفوظة", color = CostInk, fontWeight = FontWeight.Bold)
@@ -1394,6 +1399,7 @@ private fun SavedRevenueRecords(records: List<com.example.data.local.entities.Re
                 Text(record.title, color = CostInk, fontWeight = FontWeight.SemiBold)
                 Text("${DateUtils.formatDateArabic(record.date)} • ${record.sourceType}", color = CostMuted, fontSize = 10.sp)
                 Text("${com.example.core.MoneyUtils.formatPiastresPlain(record.amountPiastres)} جنيه", color = CostGoldDark, fontWeight = FontWeight.Bold)
+                TextButton(onClick = { onDelete(record) }) { Text("حذف") }
             }
         }
     }

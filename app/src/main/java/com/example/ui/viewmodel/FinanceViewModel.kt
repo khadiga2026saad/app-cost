@@ -547,6 +547,12 @@ class FinanceViewModel(
         }
     }
 
+    fun deleteStudent(id: Long) {
+        viewModelScope.launch {
+            repository.getStudentById(id)?.let { repository.deleteStudent(it) }
+        }
+    }
+
     fun saveStudent(id: Long = 0, fullName: String, academicStage: String, academicYear: String = DateUtils.currentYear().toString() + "/" + (DateUtils.currentYear() + 1).toString()) {
         viewModelScope.launch {
             if (fullName.isBlank() || academicStage.isBlank()) return@launch
