@@ -382,6 +382,17 @@ fun CostWorkspaceScreen(
                         }
                     }
                 }
+                if (section.id == "car_income" && activeTab?.id == "trip_report") {
+                    item {
+                        val trips = savedRevenues.filter { it.sourceType == "CAR_TRIP" }.sortedByDescending { it.date }
+                        val total = trips.sumOf { it.amountPiastres }
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text("إجمالي دخل الرحلات: " + com.example.core.MoneyUtils.formatPiastresPlain(total) + " جنيه", color = CostInk, fontWeight = FontWeight.Bold)
+                            Text("عدد الرحلات المسجلة: " + trips.size, color = CostMuted, fontSize = 11.sp)
+                            SavedRevenueRecords(records = trips)
+                        }
+                    }
+                }
                 if (activeTab?.id?.let { it in setOf("records", "list", "trips", "students", "student_expenses", "association_list", "movements", "sources", "installments", "payouts") } == true && !(section.id == "vehicles" && activeTab?.id == "records")) {
                     if (section.id in setOf("house", "medical", "work", "personal")) {
                         item {
