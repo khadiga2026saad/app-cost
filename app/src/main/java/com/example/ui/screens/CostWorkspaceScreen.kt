@@ -85,9 +85,7 @@ private fun tabsFor(id: String): List<CostTab> = when (id) {
 }
 
 private fun exportActionsFor(sectionId: String, tabId: String): List<String> = when (sectionId) {
-    "house", "work", "personal" -> listOf("تصدير CSV", "طباعة")
-    "medical" -> listOf("تصدير Excel", "طباعة")
-    "vehicles" -> if (tabId == "oils") listOf("PDF", "Excel", "Word", "طباعة") else emptyList()
+    "house", "work", "personal", "medical", "vehicles" -> listOf("تصدير CSV")
     "education" -> listOf("تصدير HTML / XLS", "طباعة")
     "car_income" -> listOf("Excel", "Word", "طباعة", "نسخ نص التقرير")
     "reports" -> listOf("CSV", "طباعة", "حفظ في الخزنة", "إغلاق")
@@ -175,7 +173,7 @@ fun CostWorkspaceScreen(
                     ?: error("تعذر فتح ملف التصدير")
                 output.bufferedWriter(Charsets.UTF_8).use { it.write(csv) }
             }.onSuccess {
-                Toast.makeText(context, "تم تصدير مصروفات المنزل بنجاح", Toast.LENGTH_LONG).show()
+                Toast.makeText(context, "تم تصدير سجلات القسم بنجاح", Toast.LENGTH_LONG).show()
             }.onFailure {
                 Toast.makeText(context, "تعذر التصدير: " + (it.localizedMessage ?: "خطأ غير معروف"), Toast.LENGTH_LONG).show()
             }
@@ -445,7 +443,7 @@ fun CostWorkspaceScreen(
                             }.orEmpty(),
                             onActionUnavailable = { showDesignNotice = true },
                             onExport = {
-                                if (section.id in setOf("house", "work", "personal", "medical")) homeCsvLauncher.launch("مصروفات_" + section.title + ".csv")
+                                if (section.id in setOf("house", "work", "personal", "medical", "vehicles")) homeCsvLauncher.launch("مصروفات_" + section.title + ".csv")
                                 else showDesignNotice = true
                             },
                             onSave = { values ->
@@ -927,7 +925,7 @@ private fun ExpenseEntryPreview(sectionId: String, tabId: String, initialValues:
             }
         }
         Text(
-            if (sectionId in setOf("house", "work", "personal", "medical")) "يمكنك تصدير سجلات القسم المحفوظة إلى ملف CSV متوافق مع Excel."
+            if (sectionId in setOf("house", "work", "personal", "medical", "vehicles")) "يمكنك تصدير سجلات القسم المحفوظة إلى ملف CSV متوافق مع Excel."
             else "التصدير لهذا القسم غير مفعّل بعد.",
             color = CostMuted,
             fontSize = 10.sp
