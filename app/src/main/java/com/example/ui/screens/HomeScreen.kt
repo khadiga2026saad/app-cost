@@ -598,10 +598,10 @@ fun LiveFinancialTickerBar(accountKey: String = "guest", birthDate: String? = nu
         prefs.registerOnSharedPreferenceChangeListener(listener)
         onDispose { prefs.unregisterOnSharedPreferenceChangeListener(listener) }
     }
-    val birth = birthDate?.let { runCatching { java.time.LocalDate.parse(it) }.getOrNull() }
+    val birth = BirthInfoCalculator.parseBirthDate(birthDate)
     val details = BirthInfoCalculator.compute(birth)?.let { info ->
         listOf(
-            "العمر: ${info.gregorianAgeYears} سنة",
+            "العمر: ${info.gregorianAgeYears} سنة و${info.gregorianAgeMonths} شهر و${info.gregorianAgeDays} يوم",
             "العمر الهجري: ${info.hijriAgeYearsApprox} سنة تقريبًا",
             "البرج الترفيهي: ${info.zodiac}",
             "يوم الميلاد: ${info.birthWeekday}",
