@@ -77,7 +77,7 @@ interface FinanceRepository {
     suspend fun insertOilLogWithExpense(log: VehicleOilLogEntity, vehicleName: String): Long
     fun getAccidentLogsForVehicle(vehicleId: Long): Flow<List<VehicleAccidentLogEntity>>
     suspend fun insertAccidentLogWithExpense(log: VehicleAccidentLogEntity, vehicleName: String): Long
-    suspend fun deleteVehicleLogById(id: Long, logType: String = "")
+    suspend fun deleteVehicleLogById(id: Long, logType: String)
 
     // Gamaeyat
     fun getAllGamaeyat(): Flow<List<GamaeyaEntity>>
@@ -489,7 +489,7 @@ class FinanceRepositoryImpl(private val database: AppDatabase) : FinanceReposito
                     }
                     vehicleLogDao.deleteAccidentLogById(id)
                 }
-                else -> Unit
+                else -> throw IllegalArgumentException("Unsupported vehicle log type: $logType")
             }
         }
 
