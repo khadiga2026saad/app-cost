@@ -142,6 +142,7 @@ fun CostWorkspaceScreen(
     var editingExpense by remember { mutableStateOf<ExpenseEntity?>(null) }
     val financeViewModel: FinanceViewModel = viewModel(factory = FinanceViewModel.Factory)
     val savedExpenses by financeViewModel.allExpenses.collectAsState()
+    val savedRevenues by financeViewModel.allRevenues.collectAsState()
     val savedVehicles by financeViewModel.allVehicles.collectAsState()
     val savedVehicleLogs by financeViewModel.allVehicleLogs.collectAsState()
     val savedStudents by financeViewModel.allStudents.collectAsState()
@@ -205,7 +206,6 @@ fun CostWorkspaceScreen(
             }
         }
     }
-    val savedRevenues by financeViewModel.allRevenues.collectAsState()
     val savedGamaeyat by financeViewModel.allGamaeyat.collectAsState()
     val unpaidGamaeyaInstallments by financeViewModel.allUnpaidGamaeyaInstallments.collectAsState()
     val section = costSections.firstOrNull { it.id == selectedSection }
