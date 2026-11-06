@@ -147,6 +147,8 @@ fun CostWorkspaceScreen(
     val savedStudents by financeViewModel.allStudents.collectAsState()
     val savedTreasuryMovements by financeViewModel.allTreasuryMovements.collectAsState()
     val financeSummary by financeViewModel.currentMonthSummary.collectAsState()
+    val savedCertificates by financeViewModel.allCertificates.collectAsState()
+    val savedCertificateSchedules by financeViewModel.allUncollectedCertificateSchedules.collectAsState()
     val context = LocalContext.current
     val homeCsvLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.CreateDocument("text/csv")
@@ -367,6 +369,38 @@ fun CostWorkspaceScreen(
                                 onDelete = { financeViewModel.deleteExpense(it.expenseId) }
                             )
                         }
+                    } else if (section.id == "certificates" && activeTab?.id == "list") {
+                        item {
+                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                if (savedCertificates.isEmpty()) Text("لا توجد شهادات مسجلة.", color = CostMuted, fontSize = 12.sp)
+                                savedCertificates.forEach { cert ->
+                                    Card(colors = CardDefaults.cardColors(containerColor = Color.White), border = BorderStroke(1.dp, CostBorder)) {
+                                        Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                            Text(cert.name, color = CostInk, fontWeight = FontWeight.Bold)
+                                            Text(cert.bankName + " • أصل الشهادة: " + com.example.core.MoneyUtils.formatPiastresPlain(cert.principalPiastres) + " جنيه", color = CostMuted, fontSize = 11.sp)
+                                            Text("العائد السنوي: " + cert.annualRatePercent + "% • الاستحقاق: " + DateUtils.formatDateArabic(cert.maturityDate), color = CostMuted, fontSize = 10.sp)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    } else if (section.id == "certificates" && activeTab?.id == "payouts") {
+                        item {
+                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                if (savedCertificateSchedules.isEmpty()) Text("لا توجد عوائد غير محصلة.", color = CostMuted, fontSize = 12.sp)
+                                savedCertificateSchedules.forEach { schedule ->
+                                    val cert = savedCertificates.firstOrNull { it.certificateId == schedule.certificateId }
+                                    Card(colors = CardDefaults.cardColors(containerColor = Color.White), border = BorderStroke(1.dp, CostBorder)) {
+                                        Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                            Text(cert?.name ?: "شهادة بنكية", color = CostInk, fontWeight = FontWeight.Bold)
+                                            Text("الدفعة " + schedule.cycleNumber + " • " + DateUtils.formatDateArabic(schedule.expectedDueDate), color = CostMuted, fontSize = 11.sp)
+                                            Text(com.example.core.MoneyUtils.formatPiastresPlain(schedule.expectedAmountPiastres) + " جنيه", color = CostInk, fontWeight = FontWeight.Bold)
+                                            TextButton(onClick = { financeViewModel.collectCertificatePayout(schedule.scheduleId, DateUtils.currentEpochMillis()) }) { Text("تسجيل تحصيل العائد") }
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     } else if (section.id == "current_account" && activeTab?.id == "movements") {
                         item {
                             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -530,6 +564,38 @@ fun CostWorkspaceScreen(
                                         )
                                         selectedTab = "sources"
                                     }
+                                } else if (section.id == "certificates" && activeTab?.id == "form") {
+                                    val principal = values["المبلغ الأصلي"].orEmpty().replace(',', '.').toBigDecimalOrNull()
+                                    val rate = values["معدل العائد السنوي"].orEmpty().replace(',', '.').toDoubleOrNull()
+                                    val issue = runCatching { LocalDate.parse(values["تاريخ الإصدار"].orEmpty()).atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli() }.getOrNull()
+                                    val maturity = runCatching { LocalDate.parse(values["تاريخ الاستحقاق"].orEmpty()).atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli() }.getOrNull()
+                                    val frequency = when (values["دورية صرف العائد"].orEmpty()) {
+                                        "ربع سنوي" -> "QUARTERLY"
+                                        "نصف سنوي" -> "SEMI_ANNUALLY"
+                                        "سنوي" -> "ANNUALLY"
+                                        "عند الاستحقاق" -> "AT_MATURITY"
+                                        else -> "MONTHLY"
+                                    }
+                                    val duration = when (values["مدة الشهادة"].orEmpty()) {
+                                        "سنتان" -> 2
+                                        "3 سنوات" -> 3
+                                        "5 سنوات" -> 5
+                                        else -> 1
+                                    }
+                                    if (!values["اسم البنك"].isNullOrBlank() && principal != null && principal > BigDecimal.ZERO && rate != null && rate >= 0.0 && issue != null && maturity != null && maturity > issue) {
+                                        financeViewModel.saveCertificate(
+                                            name = values["رقم الشهادة"].orEmpty().ifBlank { "شهادة " + values["اسم البنك"].orEmpty() },
+                                            bankName = values["اسم البنك"].orEmpty(),
+                                            principalAmount = principal,
+                                            annualInterestRate = rate,
+                                            payoutFrequency = frequency,
+                                            issueDate = issue,
+                                            maturityDate = maturity,
+                                            durationYears = duration,
+                                            notes = values["الملاحظات"].orEmpty()
+                                        )
+                                        selectedTab = "list"
+                                    } else showDesignNotice = true
                                 } else if (section.id == "education") {
                                     when (activeTab?.id) {
                                         "student_add" -> {
@@ -985,7 +1051,7 @@ private fun ExpenseEntryPreview(sectionId: String, tabId: String, initialValues:
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(9.dp)) {
             Button(
                 onClick = {
-                    if (sectionId in setOf("house", "medical", "work", "personal", "income", "associations", "current_account", "education") ||
+                    if (sectionId in setOf("house", "medical", "work", "personal", "income", "associations", "current_account", "education") || (sectionId == "certificates" && tabId == "form") ||
                         (sectionId == "vehicles" && tabId in setOf("records", "fuel", "maintenance", "oils", "accidents"))) onSave(values)
                     else onActionUnavailable()
                 },

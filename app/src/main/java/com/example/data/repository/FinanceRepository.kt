@@ -20,6 +20,9 @@ import com.example.data.local.entities.VehicleMaintenanceLogEntity
 import com.example.data.local.entities.VehicleOilLogEntity
 import kotlinx.coroutines.flow.Flow
 import java.math.BigDecimal
+import java.time.Instant
+import java.time.ZoneId
+import java.time.temporal.ChronoUnit
 
 interface FinanceRepository {
     // Treasury
@@ -582,13 +585,16 @@ class FinanceRepositoryImpl(private val database: AppDatabase) : FinanceReposito
             val rate = BigDecimal(cert.annualRatePercent)
             val dayMillis = 86_400_000L
 
+            val issueDate = Instant.ofEpochMilli(cert.issueDate).atZone(ZoneId.systemDefault()).toLocalDate()
+            val maturityDate = Instant.ofEpochMilli(cert.maturityDate).atZone(ZoneId.systemDefault()).toLocalDate()
+            val durationMonths = ChronoUnit.MONTHS.between(issueDate, maturityDate).coerceAtLeast(1L)
             val cycleCount = when (cert.payoutFrequency.uppercase()) {
-                "MONTHLY" -> cert.durationYears * 12
-                "QUARTERLY" -> cert.durationYears * 4
-                "SEMI_ANNUALLY" -> cert.durationYears * 2
-                "ANNUALLY" -> cert.durationYears
+                "MONTHLY" -> durationMonths.toInt()
+                "QUARTERLY" -> ((durationMonths + 2L) / 3L).toInt()
+                "SEMI_ANNUALLY" -> ((durationMonths + 5L) / 6L).toInt()
+                "ANNUALLY" -> ((durationMonths + 11L) / 12L).toInt()
                 "AT_MATURITY" -> 1
-                else -> cert.durationYears * 12
+                else -> durationMonths.toInt()
             }
 
             val cycleIntervalDays = when (cert.payoutFrequency.uppercase()) {
@@ -610,12 +616,13 @@ class FinanceRepositoryImpl(private val database: AppDatabase) : FinanceReposito
                 "QUARTERLY" -> (BigDecimal(annualProfitPiastres).divide(BigDecimal(4), 0, java.math.RoundingMode.HALF_UP)).toLong()
                 "SEMI_ANNUALLY" -> (BigDecimal(annualProfitPiastres).divide(BigDecimal(2), 0, java.math.RoundingMode.HALF_UP)).toLong()
                 "ANNUALLY" -> annualProfitPiastres
-                "AT_MATURITY" -> annualProfitPiastres * cert.durationYears
+                "AT_MATURITY" -> BigDecimal(annualProfitPiastres).multiply(BigDecimal(durationMonths)).divide(BigDecimal(12), 0, java.math.RoundingMode.HALF_UP).toLong()
                 else -> (BigDecimal(annualProfitPiastres).divide(BigDecimal(12), 0, java.math.RoundingMode.HALF_UP)).toLong()
             }
 
             val schedules = (1..cycleCount).map { cycle ->
-                val dueDate = cert.issueDate + (dayMillis * cycleIntervalDays * cycle)
+                val calculatedDueDate = cert.issueDate + (dayMillis * cycleIntervalDays * cycle)
+                val dueDate = minOf(calculatedDueDate, cert.maturityDate)
                 CertificatePayoutScheduleEntity(
                     certificateId = certId,
                     cycleNumber = cycle,

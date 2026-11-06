@@ -626,7 +626,8 @@ class FinanceViewModel(
         payoutFrequency: String,
         issueDate: Long,
         maturityDate: Long,
-        notes: String = ""
+        notes: String = "",
+        durationYears: Int = 3
     ) {
         viewModelScope.launch {
             val principalPiastres = MoneyUtils.egpToPiastres(principalAmount)
@@ -637,7 +638,7 @@ class FinanceViewModel(
                 principalPiastres = principalPiastres,
                 annualRatePercent = annualInterestRate.toString(),
                 payoutFrequency = payoutFrequency,
-                durationYears = 3,
+                durationYears = durationYears.coerceAtLeast(1),
                 issueDate = issueDate,
                 maturityDate = maturityDate
             )
@@ -652,6 +653,15 @@ class FinanceViewModel(
                 repository.deleteCertificate(cert)
             }
         }
+    }
+
+    val allUncollectedCertificateSchedules: StateFlow<List<com.example.data.local.entities.CertificatePayoutScheduleEntity>> =
+        repository.getDueUncollectedSchedules(Long.MAX_VALUE).stateIn(
+            viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList()
+        )
+
+    fun collectCertificatePayout(scheduleId: Long, collectedDate: Long) {
+        viewModelScope.launch { repository.collectCertificatePayout(scheduleId, collectedDate) }
     }
 
     companion object {
