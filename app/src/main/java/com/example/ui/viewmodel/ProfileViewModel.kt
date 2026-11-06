@@ -32,7 +32,7 @@ class ProfileViewModel(
         require(accountKey.isNotBlank())
         viewModelScope.launch {
             try {
-                repository.ensureMigrated(accountKey, fallbackName)
+                // Legacy preferences are migrated by SmartCostApplication before profile use.
                 _loading.value = false
                 repository.observe(accountKey).collect { _profile.value = it }
             } catch (cancelled: CancellationException) {
