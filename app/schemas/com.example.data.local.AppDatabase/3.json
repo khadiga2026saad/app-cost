@@ -1,0 +1,1716 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 3,
+    "identityHash": "e6fe4964ad116f5e31af587c46119d4b",
+    "entities": [
+      {
+        "tableName": "current_account_treasury",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`accountId` INTEGER NOT NULL, `accountName` TEXT NOT NULL, `currentBalancePiastres` INTEGER NOT NULL, `openingBalancePiastres` INTEGER NOT NULL, `lastReconciledAt` INTEGER NOT NULL, PRIMARY KEY(`accountId`))",
+        "fields": [
+          {
+            "fieldPath": "accountId",
+            "columnName": "accountId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "accountName",
+            "columnName": "accountName",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "currentBalancePiastres",
+            "columnName": "currentBalancePiastres",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "openingBalancePiastres",
+            "columnName": "openingBalancePiastres",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastReconciledAt",
+            "columnName": "lastReconciledAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "columnNames": [
+            "accountId"
+          ],
+          "autoGenerate": false
+        },
+        "indices": [],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "students",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`studentId` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `fullName` TEXT NOT NULL, `academicStage` TEXT NOT NULL, `schoolOrInstitution` TEXT, `academicYear` TEXT NOT NULL, `monthlyBudgetPiastres` INTEGER, `isActive` INTEGER NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "studentId",
+            "columnName": "studentId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fullName",
+            "columnName": "fullName",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "academicStage",
+            "columnName": "academicStage",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "schoolOrInstitution",
+            "columnName": "schoolOrInstitution",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "academicYear",
+            "columnName": "academicYear",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "monthlyBudgetPiastres",
+            "columnName": "monthlyBudgetPiastres",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "isActive",
+            "columnName": "isActive",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "columnNames": [
+            "studentId"
+          ],
+          "autoGenerate": true
+        },
+        "indices": [
+          {
+            "name": "index_students_fullName",
+            "unique": true,
+            "columnNames": [
+              "fullName"
+            ],
+            "orders": [
+              "ASC"
+            ],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_students_fullName` ON `${TABLE_NAME}` (`fullName`)"
+          }
+        ],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "vehicles",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`vehicleId` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `plateNumber` TEXT NOT NULL, `initialOdometerKm` INTEGER NOT NULL, `currentOdometerKm` INTEGER NOT NULL, `fuelTankCapacityLiters` REAL, `oilChangeIntervalKm` INTEGER NOT NULL, `lastOilChangeKm` INTEGER NOT NULL, `isActive` INTEGER NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "vehicleId",
+            "columnName": "vehicleId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "plateNumber",
+            "columnName": "plateNumber",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "initialOdometerKm",
+            "columnName": "initialOdometerKm",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "currentOdometerKm",
+            "columnName": "currentOdometerKm",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fuelTankCapacityLiters",
+            "columnName": "fuelTankCapacityLiters",
+            "affinity": "REAL",
+            "notNull": false
+          },
+          {
+            "fieldPath": "oilChangeIntervalKm",
+            "columnName": "oilChangeIntervalKm",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastOilChangeKm",
+            "columnName": "lastOilChangeKm",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isActive",
+            "columnName": "isActive",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "columnNames": [
+            "vehicleId"
+          ],
+          "autoGenerate": true
+        },
+        "indices": [
+          {
+            "name": "index_vehicles_plateNumber",
+            "unique": true,
+            "columnNames": [
+              "plateNumber"
+            ],
+            "orders": [
+              "ASC"
+            ],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_vehicles_plateNumber` ON `${TABLE_NAME}` (`plateNumber`)"
+          }
+        ],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "expenses",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`expenseId` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `amountPiastres` INTEGER NOT NULL, `date` INTEGER NOT NULL, `department` TEXT NOT NULL, `subcategory` TEXT NOT NULL, `title` TEXT NOT NULL, `notes` TEXT, `vendorOrPayer` TEXT, `referenceInvoice` TEXT, `studentId` INTEGER, `vehicleId` INTEGER, `vehicleLogId` INTEGER, `createdAt` INTEGER NOT NULL, `updatedAt` INTEGER NOT NULL, FOREIGN KEY(`studentId`) REFERENCES `students`(`studentId`) ON UPDATE NO ACTION ON DELETE RESTRICT, FOREIGN KEY(`vehicleId`) REFERENCES `vehicles`(`vehicleId`) ON UPDATE NO ACTION ON DELETE RESTRICT)",
+        "fields": [
+          {
+            "fieldPath": "expenseId",
+            "columnName": "expenseId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "amountPiastres",
+            "columnName": "amountPiastres",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "date",
+            "columnName": "date",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "department",
+            "columnName": "department",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "subcategory",
+            "columnName": "subcategory",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "title",
+            "columnName": "title",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "notes",
+            "columnName": "notes",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "vendorOrPayer",
+            "columnName": "vendorOrPayer",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "referenceInvoice",
+            "columnName": "referenceInvoice",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "studentId",
+            "columnName": "studentId",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "vehicleId",
+            "columnName": "vehicleId",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "vehicleLogId",
+            "columnName": "vehicleLogId",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "createdAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "updatedAt",
+            "columnName": "updatedAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "columnNames": [
+            "expenseId"
+          ],
+          "autoGenerate": true
+        },
+        "indices": [
+          {
+            "name": "index_expenses_date",
+            "unique": false,
+            "columnNames": [
+              "date"
+            ],
+            "orders": [
+              "ASC"
+            ],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_expenses_date` ON `${TABLE_NAME}` (`date`)"
+          },
+          {
+            "name": "index_expenses_department",
+            "unique": false,
+            "columnNames": [
+              "department"
+            ],
+            "orders": [
+              "ASC"
+            ],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_expenses_department` ON `${TABLE_NAME}` (`department`)"
+          },
+          {
+            "name": "index_expenses_studentId",
+            "unique": false,
+            "columnNames": [
+              "studentId"
+            ],
+            "orders": [
+              "ASC"
+            ],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_expenses_studentId` ON `${TABLE_NAME}` (`studentId`)"
+          },
+          {
+            "name": "index_expenses_vehicleId",
+            "unique": false,
+            "columnNames": [
+              "vehicleId"
+            ],
+            "orders": [
+              "ASC"
+            ],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_expenses_vehicleId` ON `${TABLE_NAME}` (`vehicleId`)"
+          },
+          {
+            "name": "index_expenses_vehicleLogId",
+            "unique": true,
+            "columnNames": [
+              "vehicleLogId"
+            ],
+            "orders": [
+              "ASC"
+            ],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_expenses_vehicleLogId` ON `${TABLE_NAME}` (`vehicleLogId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "students",
+            "onDelete": "RESTRICT",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "studentId"
+            ],
+            "referencedColumns": [
+              "studentId"
+            ]
+          },
+          {
+            "table": "vehicles",
+            "onDelete": "RESTRICT",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "vehicleId"
+            ],
+            "referencedColumns": [
+              "vehicleId"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "vehicle_fuel_logs",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`fuelLogId` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `vehicleId` INTEGER NOT NULL, `date` INTEGER NOT NULL, `odometerKm` INTEGER NOT NULL, `quantityLiters` REAL NOT NULL, `pricePerLiterPiastres` INTEGER NOT NULL, `totalCostPiastres` INTEGER NOT NULL, `isFullTank` INTEGER NOT NULL, `stationName` TEXT, `fuelType` TEXT NOT NULL, `linkedExpenseId` INTEGER NOT NULL, FOREIGN KEY(`vehicleId`) REFERENCES `vehicles`(`vehicleId`) ON UPDATE NO ACTION ON DELETE CASCADE, FOREIGN KEY(`linkedExpenseId`) REFERENCES `expenses`(`expenseId`) ON UPDATE NO ACTION ON DELETE CASCADE)",
+        "fields": [
+          {
+            "fieldPath": "fuelLogId",
+            "columnName": "fuelLogId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "vehicleId",
+            "columnName": "vehicleId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "date",
+            "columnName": "date",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "odometerKm",
+            "columnName": "odometerKm",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "quantityLiters",
+            "columnName": "quantityLiters",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "pricePerLiterPiastres",
+            "columnName": "pricePerLiterPiastres",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "totalCostPiastres",
+            "columnName": "totalCostPiastres",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isFullTank",
+            "columnName": "isFullTank",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "stationName",
+            "columnName": "stationName",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "fuelType",
+            "columnName": "fuelType",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "linkedExpenseId",
+            "columnName": "linkedExpenseId",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "columnNames": [
+            "fuelLogId"
+          ],
+          "autoGenerate": true
+        },
+        "indices": [
+          {
+            "name": "index_vehicle_fuel_logs_vehicleId",
+            "unique": false,
+            "columnNames": [
+              "vehicleId"
+            ],
+            "orders": [
+              "ASC"
+            ],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_vehicle_fuel_logs_vehicleId` ON `${TABLE_NAME}` (`vehicleId`)"
+          },
+          {
+            "name": "index_vehicle_fuel_logs_linkedExpenseId",
+            "unique": true,
+            "columnNames": [
+              "linkedExpenseId"
+            ],
+            "orders": [
+              "ASC"
+            ],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_vehicle_fuel_logs_linkedExpenseId` ON `${TABLE_NAME}` (`linkedExpenseId`)"
+          },
+          {
+            "name": "index_vehicle_fuel_logs_date",
+            "unique": false,
+            "columnNames": [
+              "date"
+            ],
+            "orders": [
+              "ASC"
+            ],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_vehicle_fuel_logs_date` ON `${TABLE_NAME}` (`date`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "vehicles",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "vehicleId"
+            ],
+            "referencedColumns": [
+              "vehicleId"
+            ]
+          },
+          {
+            "table": "expenses",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "linkedExpenseId"
+            ],
+            "referencedColumns": [
+              "expenseId"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "vehicle_maintenance_logs",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`maintenanceLogId` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `vehicleId` INTEGER NOT NULL, `date` INTEGER NOT NULL, `odometerKm` INTEGER NOT NULL, `maintenanceType` TEXT NOT NULL, `description` TEXT NOT NULL, `partsCostPiastres` INTEGER NOT NULL, `laborCostPiastres` INTEGER NOT NULL, `additionalFeesPiastres` INTEGER NOT NULL, `totalCostPiastres` INTEGER NOT NULL, `serviceCenter` TEXT, `invoiceRef` TEXT, `linkedExpenseId` INTEGER NOT NULL, FOREIGN KEY(`vehicleId`) REFERENCES `vehicles`(`vehicleId`) ON UPDATE NO ACTION ON DELETE CASCADE, FOREIGN KEY(`linkedExpenseId`) REFERENCES `expenses`(`expenseId`) ON UPDATE NO ACTION ON DELETE CASCADE)",
+        "fields": [
+          {
+            "fieldPath": "maintenanceLogId",
+            "columnName": "maintenanceLogId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "vehicleId",
+            "columnName": "vehicleId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "date",
+            "columnName": "date",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "odometerKm",
+            "columnName": "odometerKm",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "maintenanceType",
+            "columnName": "maintenanceType",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "description",
+            "columnName": "description",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "partsCostPiastres",
+            "columnName": "partsCostPiastres",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "laborCostPiastres",
+            "columnName": "laborCostPiastres",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "additionalFeesPiastres",
+            "columnName": "additionalFeesPiastres",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "totalCostPiastres",
+            "columnName": "totalCostPiastres",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "serviceCenter",
+            "columnName": "serviceCenter",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "invoiceRef",
+            "columnName": "invoiceRef",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "linkedExpenseId",
+            "columnName": "linkedExpenseId",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "columnNames": [
+            "maintenanceLogId"
+          ],
+          "autoGenerate": true
+        },
+        "indices": [
+          {
+            "name": "index_vehicle_maintenance_logs_vehicleId",
+            "unique": false,
+            "columnNames": [
+              "vehicleId"
+            ],
+            "orders": [
+              "ASC"
+            ],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_vehicle_maintenance_logs_vehicleId` ON `${TABLE_NAME}` (`vehicleId`)"
+          },
+          {
+            "name": "index_vehicle_maintenance_logs_linkedExpenseId",
+            "unique": true,
+            "columnNames": [
+              "linkedExpenseId"
+            ],
+            "orders": [
+              "ASC"
+            ],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_vehicle_maintenance_logs_linkedExpenseId` ON `${TABLE_NAME}` (`linkedExpenseId`)"
+          },
+          {
+            "name": "index_vehicle_maintenance_logs_date",
+            "unique": false,
+            "columnNames": [
+              "date"
+            ],
+            "orders": [
+              "ASC"
+            ],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_vehicle_maintenance_logs_date` ON `${TABLE_NAME}` (`date`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "vehicles",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "vehicleId"
+            ],
+            "referencedColumns": [
+              "vehicleId"
+            ]
+          },
+          {
+            "table": "expenses",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "linkedExpenseId"
+            ],
+            "referencedColumns": [
+              "expenseId"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "vehicle_oil_logs",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`oilLogId` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `vehicleId` INTEGER NOT NULL, `date` INTEGER NOT NULL, `odometerAtChangeKm` INTEGER NOT NULL, `oilBrandAndGrade` TEXT NOT NULL, `intervalKm` INTEGER NOT NULL, `nextDueOdometerKm` INTEGER NOT NULL, `isFilterReplaced` INTEGER NOT NULL, `totalCostPiastres` INTEGER NOT NULL, `linkedExpenseId` INTEGER NOT NULL, FOREIGN KEY(`vehicleId`) REFERENCES `vehicles`(`vehicleId`) ON UPDATE NO ACTION ON DELETE CASCADE, FOREIGN KEY(`linkedExpenseId`) REFERENCES `expenses`(`expenseId`) ON UPDATE NO ACTION ON DELETE CASCADE)",
+        "fields": [
+          {
+            "fieldPath": "oilLogId",
+            "columnName": "oilLogId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "vehicleId",
+            "columnName": "vehicleId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "date",
+            "columnName": "date",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "odometerAtChangeKm",
+            "columnName": "odometerAtChangeKm",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "oilBrandAndGrade",
+            "columnName": "oilBrandAndGrade",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "intervalKm",
+            "columnName": "intervalKm",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "nextDueOdometerKm",
+            "columnName": "nextDueOdometerKm",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isFilterReplaced",
+            "columnName": "isFilterReplaced",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "totalCostPiastres",
+            "columnName": "totalCostPiastres",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "linkedExpenseId",
+            "columnName": "linkedExpenseId",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "columnNames": [
+            "oilLogId"
+          ],
+          "autoGenerate": true
+        },
+        "indices": [
+          {
+            "name": "index_vehicle_oil_logs_vehicleId",
+            "unique": false,
+            "columnNames": [
+              "vehicleId"
+            ],
+            "orders": [
+              "ASC"
+            ],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_vehicle_oil_logs_vehicleId` ON `${TABLE_NAME}` (`vehicleId`)"
+          },
+          {
+            "name": "index_vehicle_oil_logs_linkedExpenseId",
+            "unique": true,
+            "columnNames": [
+              "linkedExpenseId"
+            ],
+            "orders": [
+              "ASC"
+            ],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_vehicle_oil_logs_linkedExpenseId` ON `${TABLE_NAME}` (`linkedExpenseId`)"
+          },
+          {
+            "name": "index_vehicle_oil_logs_date",
+            "unique": false,
+            "columnNames": [
+              "date"
+            ],
+            "orders": [
+              "ASC"
+            ],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_vehicle_oil_logs_date` ON `${TABLE_NAME}` (`date`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "vehicles",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "vehicleId"
+            ],
+            "referencedColumns": [
+              "vehicleId"
+            ]
+          },
+          {
+            "table": "expenses",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "linkedExpenseId"
+            ],
+            "referencedColumns": [
+              "expenseId"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "vehicle_accident_logs",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`accidentLogId` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `vehicleId` INTEGER NOT NULL, `accidentDate` INTEGER NOT NULL, `odometerKm` INTEGER, `description` TEXT NOT NULL, `estimatedDamagePiastres` INTEGER NOT NULL, `actualRepairCostPiastres` INTEGER NOT NULL, `insuranceCompensationPiastres` INTEGER NOT NULL, `netUserCostPiastres` INTEGER NOT NULL, `compensationStatus` TEXT NOT NULL, `linkedExpenseId` INTEGER, FOREIGN KEY(`vehicleId`) REFERENCES `vehicles`(`vehicleId`) ON UPDATE NO ACTION ON DELETE CASCADE, FOREIGN KEY(`linkedExpenseId`) REFERENCES `expenses`(`expenseId`) ON UPDATE NO ACTION ON DELETE SET NULL)",
+        "fields": [
+          {
+            "fieldPath": "accidentLogId",
+            "columnName": "accidentLogId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "vehicleId",
+            "columnName": "vehicleId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "accidentDate",
+            "columnName": "accidentDate",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "odometerKm",
+            "columnName": "odometerKm",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "description",
+            "columnName": "description",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "estimatedDamagePiastres",
+            "columnName": "estimatedDamagePiastres",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "actualRepairCostPiastres",
+            "columnName": "actualRepairCostPiastres",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "insuranceCompensationPiastres",
+            "columnName": "insuranceCompensationPiastres",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "netUserCostPiastres",
+            "columnName": "netUserCostPiastres",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "compensationStatus",
+            "columnName": "compensationStatus",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "linkedExpenseId",
+            "columnName": "linkedExpenseId",
+            "affinity": "INTEGER",
+            "notNull": false
+          }
+        ],
+        "primaryKey": {
+          "columnNames": [
+            "accidentLogId"
+          ],
+          "autoGenerate": true
+        },
+        "indices": [
+          {
+            "name": "index_vehicle_accident_logs_vehicleId",
+            "unique": false,
+            "columnNames": [
+              "vehicleId"
+            ],
+            "orders": [
+              "ASC"
+            ],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_vehicle_accident_logs_vehicleId` ON `${TABLE_NAME}` (`vehicleId`)"
+          },
+          {
+            "name": "index_vehicle_accident_logs_linkedExpenseId",
+            "unique": true,
+            "columnNames": [
+              "linkedExpenseId"
+            ],
+            "orders": [
+              "ASC"
+            ],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_vehicle_accident_logs_linkedExpenseId` ON `${TABLE_NAME}` (`linkedExpenseId`)"
+          },
+          {
+            "name": "index_vehicle_accident_logs_accidentDate",
+            "unique": false,
+            "columnNames": [
+              "accidentDate"
+            ],
+            "orders": [
+              "ASC"
+            ],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_vehicle_accident_logs_accidentDate` ON `${TABLE_NAME}` (`accidentDate`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "vehicles",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "vehicleId"
+            ],
+            "referencedColumns": [
+              "vehicleId"
+            ]
+          },
+          {
+            "table": "expenses",
+            "onDelete": "SET NULL",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "linkedExpenseId"
+            ],
+            "referencedColumns": [
+              "expenseId"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "gamaeyat",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`gamaeyaId` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `totalPoolValuePiastres` INTEGER NOT NULL, `numberOfMembers` INTEGER NOT NULL, `monthlyInstallmentPiastres` INTEGER NOT NULL, `myTurnOrder` INTEGER NOT NULL, `startDate` INTEGER NOT NULL, `expectedPayoutDate` INTEGER NOT NULL, `actualPayoutDate` INTEGER, `isPayoutReceived` INTEGER NOT NULL, `status` TEXT NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "gamaeyaId",
+            "columnName": "gamaeyaId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "totalPoolValuePiastres",
+            "columnName": "totalPoolValuePiastres",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "numberOfMembers",
+            "columnName": "numberOfMembers",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "monthlyInstallmentPiastres",
+            "columnName": "monthlyInstallmentPiastres",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "myTurnOrder",
+            "columnName": "myTurnOrder",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "startDate",
+            "columnName": "startDate",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "expectedPayoutDate",
+            "columnName": "expectedPayoutDate",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "actualPayoutDate",
+            "columnName": "actualPayoutDate",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "isPayoutReceived",
+            "columnName": "isPayoutReceived",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "status",
+            "columnName": "status",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "columnNames": [
+            "gamaeyaId"
+          ],
+          "autoGenerate": true
+        },
+        "indices": [],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "gamaeya_installments",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`installmentId` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `gamaeyaId` INTEGER NOT NULL, `installmentNumber` INTEGER NOT NULL, `dueDate` INTEGER NOT NULL, `paidDate` INTEGER, `amountPiastres` INTEGER NOT NULL, `isPaid` INTEGER NOT NULL, `idempotencyKey` TEXT NOT NULL, `notes` TEXT, FOREIGN KEY(`gamaeyaId`) REFERENCES `gamaeyat`(`gamaeyaId`) ON UPDATE NO ACTION ON DELETE CASCADE)",
+        "fields": [
+          {
+            "fieldPath": "installmentId",
+            "columnName": "installmentId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "gamaeyaId",
+            "columnName": "gamaeyaId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "installmentNumber",
+            "columnName": "installmentNumber",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "dueDate",
+            "columnName": "dueDate",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "paidDate",
+            "columnName": "paidDate",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "amountPiastres",
+            "columnName": "amountPiastres",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isPaid",
+            "columnName": "isPaid",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "idempotencyKey",
+            "columnName": "idempotencyKey",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "notes",
+            "columnName": "notes",
+            "affinity": "TEXT",
+            "notNull": false
+          }
+        ],
+        "primaryKey": {
+          "columnNames": [
+            "installmentId"
+          ],
+          "autoGenerate": true
+        },
+        "indices": [
+          {
+            "name": "index_gamaeya_installments_gamaeyaId_installmentNumber",
+            "unique": true,
+            "columnNames": [
+              "gamaeyaId",
+              "installmentNumber"
+            ],
+            "orders": [
+              "ASC",
+              "ASC"
+            ],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_gamaeya_installments_gamaeyaId_installmentNumber` ON `${TABLE_NAME}` (`gamaeyaId`, `installmentNumber`)"
+          },
+          {
+            "name": "index_gamaeya_installments_idempotencyKey",
+            "unique": true,
+            "columnNames": [
+              "idempotencyKey"
+            ],
+            "orders": [
+              "ASC"
+            ],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_gamaeya_installments_idempotencyKey` ON `${TABLE_NAME}` (`idempotencyKey`)"
+          },
+          {
+            "name": "index_gamaeya_installments_dueDate_isPaid",
+            "unique": false,
+            "columnNames": [
+              "dueDate",
+              "isPaid"
+            ],
+            "orders": [
+              "ASC",
+              "ASC"
+            ],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_gamaeya_installments_dueDate_isPaid` ON `${TABLE_NAME}` (`dueDate`, `isPaid`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "gamaeyat",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "gamaeyaId"
+            ],
+            "referencedColumns": [
+              "gamaeyaId"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "financial_certificates",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`certificateId` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `bankName` TEXT NOT NULL, `principalPiastres` INTEGER NOT NULL, `annualRatePercent` TEXT NOT NULL, `payoutFrequency` TEXT NOT NULL, `durationYears` INTEGER NOT NULL, `issueDate` INTEGER NOT NULL, `maturityDate` INTEGER NOT NULL, `isActive` INTEGER NOT NULL, `isRedeemedEarly` INTEGER NOT NULL, `redemptionPenaltyPiastres` INTEGER NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "certificateId",
+            "columnName": "certificateId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "bankName",
+            "columnName": "bankName",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "principalPiastres",
+            "columnName": "principalPiastres",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "annualRatePercent",
+            "columnName": "annualRatePercent",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "payoutFrequency",
+            "columnName": "payoutFrequency",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "durationYears",
+            "columnName": "durationYears",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "issueDate",
+            "columnName": "issueDate",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "maturityDate",
+            "columnName": "maturityDate",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isActive",
+            "columnName": "isActive",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isRedeemedEarly",
+            "columnName": "isRedeemedEarly",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "redemptionPenaltyPiastres",
+            "columnName": "redemptionPenaltyPiastres",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "columnNames": [
+            "certificateId"
+          ],
+          "autoGenerate": true
+        },
+        "indices": [],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "certificate_payout_schedules",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`scheduleId` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `certificateId` INTEGER NOT NULL, `cycleNumber` INTEGER NOT NULL, `expectedDueDate` INTEGER NOT NULL, `expectedAmountPiastres` INTEGER NOT NULL, `actualCollectedDate` INTEGER, `isCollected` INTEGER NOT NULL, `payoutKey` TEXT NOT NULL, `linkedRevenueId` INTEGER, FOREIGN KEY(`certificateId`) REFERENCES `financial_certificates`(`certificateId`) ON UPDATE NO ACTION ON DELETE CASCADE, FOREIGN KEY(`linkedRevenueId`) REFERENCES `revenues`(`revenueId`) ON UPDATE NO ACTION ON DELETE SET NULL)",
+        "fields": [
+          {
+            "fieldPath": "scheduleId",
+            "columnName": "scheduleId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "certificateId",
+            "columnName": "certificateId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "cycleNumber",
+            "columnName": "cycleNumber",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "expectedDueDate",
+            "columnName": "expectedDueDate",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "expectedAmountPiastres",
+            "columnName": "expectedAmountPiastres",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "actualCollectedDate",
+            "columnName": "actualCollectedDate",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "isCollected",
+            "columnName": "isCollected",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "payoutKey",
+            "columnName": "payoutKey",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "linkedRevenueId",
+            "columnName": "linkedRevenueId",
+            "affinity": "INTEGER",
+            "notNull": false
+          }
+        ],
+        "primaryKey": {
+          "columnNames": [
+            "scheduleId"
+          ],
+          "autoGenerate": true
+        },
+        "indices": [
+          {
+            "name": "index_certificate_payout_schedules_certificateId",
+            "unique": false,
+            "columnNames": [
+              "certificateId"
+            ],
+            "orders": [
+              "ASC"
+            ],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_certificate_payout_schedules_certificateId` ON `${TABLE_NAME}` (`certificateId`)"
+          },
+          {
+            "name": "index_certificate_payout_schedules_payoutKey",
+            "unique": true,
+            "columnNames": [
+              "payoutKey"
+            ],
+            "orders": [
+              "ASC"
+            ],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_certificate_payout_schedules_payoutKey` ON `${TABLE_NAME}` (`payoutKey`)"
+          },
+          {
+            "name": "index_certificate_payout_schedules_expectedDueDate_isCollected",
+            "unique": false,
+            "columnNames": [
+              "expectedDueDate",
+              "isCollected"
+            ],
+            "orders": [
+              "ASC",
+              "ASC"
+            ],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_certificate_payout_schedules_expectedDueDate_isCollected` ON `${TABLE_NAME}` (`expectedDueDate`, `isCollected`)"
+          },
+          {
+            "name": "index_certificate_payout_schedules_linkedRevenueId",
+            "unique": true,
+            "columnNames": [
+              "linkedRevenueId"
+            ],
+            "orders": [
+              "ASC"
+            ],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_certificate_payout_schedules_linkedRevenueId` ON `${TABLE_NAME}` (`linkedRevenueId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "financial_certificates",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "certificateId"
+            ],
+            "referencedColumns": [
+              "certificateId"
+            ]
+          },
+          {
+            "table": "revenues",
+            "onDelete": "SET NULL",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "linkedRevenueId"
+            ],
+            "referencedColumns": [
+              "revenueId"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "revenues",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`revenueId` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `amountPiastres` INTEGER NOT NULL, `date` INTEGER NOT NULL, `sourceType` TEXT NOT NULL, `title` TEXT NOT NULL, `payerOrInstitution` TEXT, `isAccrualCollection` INTEGER NOT NULL, `accrualReferenceId` INTEGER, `certificateId` INTEGER, `cycleKey` TEXT, `notes` TEXT, FOREIGN KEY(`certificateId`) REFERENCES `financial_certificates`(`certificateId`) ON UPDATE NO ACTION ON DELETE RESTRICT)",
+        "fields": [
+          {
+            "fieldPath": "revenueId",
+            "columnName": "revenueId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "amountPiastres",
+            "columnName": "amountPiastres",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "date",
+            "columnName": "date",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sourceType",
+            "columnName": "sourceType",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "title",
+            "columnName": "title",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "payerOrInstitution",
+            "columnName": "payerOrInstitution",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "isAccrualCollection",
+            "columnName": "isAccrualCollection",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "accrualReferenceId",
+            "columnName": "accrualReferenceId",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "certificateId",
+            "columnName": "certificateId",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "cycleKey",
+            "columnName": "cycleKey",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "notes",
+            "columnName": "notes",
+            "affinity": "TEXT",
+            "notNull": false
+          }
+        ],
+        "primaryKey": {
+          "columnNames": [
+            "revenueId"
+          ],
+          "autoGenerate": true
+        },
+        "indices": [
+          {
+            "name": "index_revenues_date",
+            "unique": false,
+            "columnNames": [
+              "date"
+            ],
+            "orders": [
+              "ASC"
+            ],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_revenues_date` ON `${TABLE_NAME}` (`date`)"
+          },
+          {
+            "name": "index_revenues_sourceType",
+            "unique": false,
+            "columnNames": [
+              "sourceType"
+            ],
+            "orders": [
+              "ASC"
+            ],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_revenues_sourceType` ON `${TABLE_NAME}` (`sourceType`)"
+          },
+          {
+            "name": "index_revenues_certificateId",
+            "unique": false,
+            "columnNames": [
+              "certificateId"
+            ],
+            "orders": [
+              "ASC"
+            ],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_revenues_certificateId` ON `${TABLE_NAME}` (`certificateId`)"
+          },
+          {
+            "name": "index_revenues_cycleKey",
+            "unique": true,
+            "columnNames": [
+              "cycleKey"
+            ],
+            "orders": [
+              "ASC"
+            ],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_revenues_cycleKey` ON `${TABLE_NAME}` (`cycleKey`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "financial_certificates",
+            "onDelete": "RESTRICT",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "certificateId"
+            ],
+            "referencedColumns": [
+              "certificateId"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "treasury_movements",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`movementId` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `movementType` TEXT NOT NULL, `amountPiastres` INTEGER NOT NULL, `date` INTEGER NOT NULL, `reason` TEXT NOT NULL, `balanceBeforePiastres` INTEGER NOT NULL, `balanceAfterPiastres` INTEGER NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "movementId",
+            "columnName": "movementId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "movementType",
+            "columnName": "movementType",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "amountPiastres",
+            "columnName": "amountPiastres",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "date",
+            "columnName": "date",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "reason",
+            "columnName": "reason",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "balanceBeforePiastres",
+            "columnName": "balanceBeforePiastres",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "balanceAfterPiastres",
+            "columnName": "balanceAfterPiastres",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "columnNames": [
+            "movementId"
+          ],
+          "autoGenerate": true
+        },
+        "indices": [
+          {
+            "name": "index_treasury_movements_date",
+            "unique": false,
+            "columnNames": [
+              "date"
+            ],
+            "orders": [
+              "ASC"
+            ],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_treasury_movements_date` ON `${TABLE_NAME}` (`date`)"
+          },
+          {
+            "name": "index_treasury_movements_movementType",
+            "unique": false,
+            "columnNames": [
+              "movementType"
+            ],
+            "orders": [
+              "ASC"
+            ],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_treasury_movements_movementType` ON `${TABLE_NAME}` (`movementType`)"
+          }
+        ],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "users",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `username` TEXT NOT NULL, `email` TEXT NOT NULL, `passwordHash` TEXT NOT NULL, `salt` TEXT NOT NULL, `createdAt` INTEGER NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "username",
+            "columnName": "username",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "email",
+            "columnName": "email",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "passwordHash",
+            "columnName": "passwordHash",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "salt",
+            "columnName": "salt",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "createdAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "columnNames": [
+            "id"
+          ],
+          "autoGenerate": true
+        },
+        "indices": [
+          {
+            "name": "index_users_username",
+            "unique": true,
+            "columnNames": [
+              "username"
+            ],
+            "orders": [
+              "ASC"
+            ],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_users_username` ON `${TABLE_NAME}` (`username`)"
+          },
+          {
+            "name": "index_users_email",
+            "unique": true,
+            "columnNames": [
+              "email"
+            ],
+            "orders": [
+              "ASC"
+            ],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_users_email` ON `${TABLE_NAME}` (`email`)"
+          }
+        ],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "user_profiles",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`accountKey` TEXT NOT NULL, `fullName` TEXT NOT NULL, `nickname` TEXT NOT NULL, `birthDate` TEXT, `phone` TEXT, `photoPath` TEXT, `currency` TEXT NOT NULL, `dateFormat` TEXT NOT NULL, `numberLanguage` TEXT NOT NULL, PRIMARY KEY(`accountKey`))",
+        "fields": [
+          {
+            "fieldPath": "accountKey",
+            "columnName": "accountKey",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fullName",
+            "columnName": "fullName",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "nickname",
+            "columnName": "nickname",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "birthDate",
+            "columnName": "birthDate",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "phone",
+            "columnName": "phone",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "photoPath",
+            "columnName": "photoPath",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "currency",
+            "columnName": "currency",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "dateFormat",
+            "columnName": "dateFormat",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "numberLanguage",
+            "columnName": "numberLanguage",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "columnNames": [
+            "accountKey"
+          ],
+          "autoGenerate": false
+        },
+        "indices": [],
+        "foreignKeys": []
+      }
+    ],
+    "views": [],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'e6fe4964ad116f5e31af587c46119d4b')"
+    ]
+  }
+}
