@@ -460,7 +460,7 @@ class FinanceViewModel(
         }
     }
 
-    fun deleteVehicleLog(id: Long, logType: String = "") {
+    fun deleteVehicleLog(id: Long, logType: String) {
         viewModelScope.launch {
             repository.deleteVehicleLogById(id, logType)
         }
