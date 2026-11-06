@@ -656,7 +656,7 @@ class FinanceViewModel(
     }
 
     val allUncollectedCertificateSchedules: StateFlow<List<com.example.data.local.entities.CertificatePayoutScheduleEntity>> =
-        repository.getDueUncollectedSchedules(Long.MAX_VALUE).stateIn(
+        repository.getDueUncollectedSchedules(DateUtils.currentEpochMillis()).stateIn(
             viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList()
         )
 
