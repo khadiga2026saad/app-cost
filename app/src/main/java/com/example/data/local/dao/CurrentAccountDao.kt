@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Transaction
 import com.example.data.local.entities.CurrentAccountEntity
 import kotlinx.coroutines.flow.Flow
 
@@ -19,6 +20,14 @@ interface CurrentAccountDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertOrUpdate(account: CurrentAccountEntity)
 
-    @Query("UPDATE current_account_treasury SET currentBalancePiastres = :newBalancePiastres, lastReconciledAt = :reconciledAt WHERE accountId = 1")
-    suspend fun updateBalance(newBalancePiastres: Long, reconciledAt: Long)
+    @Transaction
+    suspend fun updateBalance(newBalancePiastres: Long, reconciledAt: Long) {
+        val account = getAccountDirect() ?: CurrentAccountEntity()
+        insertOrUpdate(
+            account.copy(
+                currentBalancePiastres = newBalancePiastres,
+                lastReconciledAt = reconciledAt
+            )
+        )
+    }
 }
