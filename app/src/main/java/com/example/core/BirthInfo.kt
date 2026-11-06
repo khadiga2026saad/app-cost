@@ -35,8 +35,8 @@ object BirthInfoCalculator {
             value.forEach { char ->
                 append(
                     when (char) {
-                        in '\\u0660'..'\\u0669' -> ('0'.code + char.code - '\\u0660'.code).toChar()
-                        in '\\u06F0'..'\\u06F9' -> ('0'.code + char.code - '\\u06F0'.code).toChar()
+                        in '\u0660'..'\u0669' -> ('0'.code + char.code - '\u0660'.code).toChar()
+                        in '\u06F0'..'\u06F9' -> ('0'.code + char.code - '\u06F0'.code).toChar()
                         else -> char
                     }
                 )
