@@ -8,6 +8,8 @@ import android.content.Context
 import com.example.data.local.entities.VehicleEntity
 import android.widget.Toast
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.net.Uri
 import java.io.File
 import java.io.FileOutputStream
 import java.io.FileInputStream
@@ -15,6 +17,9 @@ import com.example.data.local.AppDatabase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import androidx.compose.foundation.Image
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -416,13 +421,16 @@ fun CostWorkspaceScreen(
                                         Text("سجلات الوقود والصيانة: " + logs.size, color = CostMuted, fontSize = 10.sp)
                                         logs.take(5).forEach { log ->
                                             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
-                                                Text(
-                                                    (when (log.logType) { "FUEL" -> "وقود"; "OIL" -> "زيوت وفلاتر"; "ACCIDENT" -> "حادث"; else -> "صيانة" }) + " • " +
-                                                        DateUtils.formatDateArabic(log.date) + " • " + log.amount + " جنيه",
-                                                    color = CostInk,
-                                                    fontSize = 11.sp,
-                                                    modifier = Modifier.weight(1f)
-                                                )
+                                                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                                                    Text(
+                                                        (when (log.logType) { "FUEL" -> "وقود"; "OIL" -> "زيوت وفلاتر"; "ACCIDENT" -> "حادث"; else -> "صيانة" }) + " • " +
+                                                            DateUtils.formatDateArabic(log.date) + " • " + log.amount + " جنيه",
+                                                        color = CostInk,
+                                                        fontSize = 11.sp
+                                                    )
+                                                    val attachment = log.notes.substringAfter("مرفق صورة:", "").trim().takeIf { log.notes.contains("مرفق صورة:") && it.isNotBlank() }
+                                                    if (attachment != null) AttachmentPreview(attachment)
+                                                }
                                                 TextButton(onClick = { financeViewModel.deleteVehicleLog(log.id, log.logType) }) { Text("حذف") }
                                             }
                                         }
@@ -808,7 +816,7 @@ fun CostWorkspaceScreen(
                                                             odometer = currentOdometer,
                                                             liters = liters,
                                                             serviceType = values["نوع الوقود"].orEmpty(),
-                                                            serviceCenter = listOf(values["محطة الوقود"].orEmpty(), values["مرفق الصورة"].orEmpty().takeIf { it.isNotBlank() }?.let { "صورة عداد: $it" }.orEmpty()).filter { it.isNotBlank() }.joinToString(" | "),
+                                                            serviceCenter = listOf(values["محطة الوقود"].orEmpty(), values["مرفق الصورة"].orEmpty().takeIf { it.isNotBlank() }?.let { "مرفق صورة: $it" }.orEmpty()).filter { it.isNotBlank() }.joinToString(" | "),
                                                             notes = values["ملاحظات"].orEmpty(),
                                                             fuelType = values["نوع الوقود"].orEmpty()
                                                         )
@@ -837,7 +845,7 @@ fun CostWorkspaceScreen(
                                                     val quantity = values["الكمية"].orEmpty().replace(',', '.').toBigDecimalOrNull() ?: BigDecimal.ONE
                                                     val interval = values["فترة التغيير"].orEmpty().filter(Char::isDigit).toLongOrNull() ?: 5000L
                                                     if (unitPrice > BigDecimal.ZERO && quantity > BigDecimal.ZERO) {
-                                                        financeViewModel.saveOilLog(vehicle.vehicleId, unitPrice.multiply(quantity), date, currentOdometer, listOf(values["العلامة التجارية"], values["اسم المنتج"], values["مرفق الصورة"]).filterNotNull().filter { it.isNotBlank() }.joinToString(" "), interval, values["نوع الخدمة"].orEmpty().contains("فلتر"))
+                                                        financeViewModel.saveOilLog(vehicle.vehicleId, unitPrice.multiply(quantity), date, currentOdometer, listOf(values["العلامة التجارية"], values["اسم المنتج"]).filterNotNull().filter { it.isNotBlank() }.joinToString(" ") + values["مرفق الصورة"].orEmpty().takeIf { it.isNotBlank() }?.let { " | مرفق صورة: $it" }.orEmpty(), interval, values["نوع الخدمة"].orEmpty().contains("فلتر"))
                                                         selectedTab = "records"
                                                     } else showDesignNotice = true
                                                 } else {
@@ -845,7 +853,7 @@ fun CostWorkspaceScreen(
                                                     val actual = values["تكلفة الإصلاح الفعلية"].orEmpty().replace(',', '.').toBigDecimalOrNull() ?: BigDecimal.ZERO
                                                     val insurance = values["تعويض التأمين"].orEmpty().replace(',', '.').toBigDecimalOrNull() ?: BigDecimal.ZERO
                                                     if (estimate >= BigDecimal.ZERO && actual >= BigDecimal.ZERO && insurance >= BigDecimal.ZERO) {
-                                                        financeViewModel.saveAccidentLog(vehicle.vehicleId, date, odometer, listOf(values["عنوان الحادث"], values["الموقع"], values["مرفق الصورة"]).filterNotNull().filter { it.isNotBlank() }.joinToString(" — "), estimate, actual, insurance, values["ملاحظات"].orEmpty())
+                                                        financeViewModel.saveAccidentLog(vehicle.vehicleId, date, odometer, listOf(values["عنوان الحادث"], values["الموقع"]).filterNotNull().filter { it.isNotBlank() }.joinToString(" — ") + values["مرفق الصورة"].orEmpty().takeIf { it.isNotBlank() }?.let { " | مرفق صورة: $it" }.orEmpty(), estimate, actual, insurance, values["ملاحظات"].orEmpty())
                                                         selectedTab = "records"
                                                     } else showDesignNotice = true
                                                 }
@@ -1217,6 +1225,32 @@ private fun ExpenseEntryPreview(sectionId: String, tabId: String, initialValues:
             fontSize = 10.sp
         )
 
+    }
+}
+
+@Composable
+private fun AttachmentPreview(reference: String) {
+    val context = LocalContext.current
+    val bitmap = remember(reference) {
+        runCatching {
+            if (reference.startsWith("content://")) {
+                context.contentResolver.openInputStream(Uri.parse(reference))?.use { stream ->
+                    BitmapFactory.decodeStream(stream, null, BitmapFactory.Options().apply { inSampleSize = 4 })
+                }
+            } else {
+                BitmapFactory.decodeFile(reference, BitmapFactory.Options().apply { inSampleSize = 2 })
+            }
+        }.getOrNull()
+    }
+    if (bitmap != null) {
+        Image(
+            bitmap = bitmap.asImageBitmap(),
+            contentDescription = "الصورة المرفقة بالسجل",
+            modifier = Modifier.fillMaxWidth().heightIn(max = 180.dp),
+            contentScale = ContentScale.Fit
+        )
+    } else {
+        Text("الصورة محفوظة لكن تعذر عرض المعاينة.", color = CostMuted, fontSize = 10.sp)
     }
 }
 
