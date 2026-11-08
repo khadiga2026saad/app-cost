@@ -238,11 +238,15 @@ class FinanceRepositoryImpl(private val database: AppDatabase) : FinanceReposito
         database.withTransaction {
             require(newRevenue.amountPiastres > 0) { "Revenue amount must be greater than zero" }
             revenueDao.updateRevenue(newRevenue)
-            val delta = newRevenue.amountPiastres - oldRevenue.amountPiastres
-            if (delta != 0L && !newRevenue.isAccrualCollection) {
+            // Apply the difference between the old and new cash effects. Accrual
+            // entries do not affect the treasury until they are actually collected.
+            val oldCashImpact = if (oldRevenue.isAccrualCollection) 0L else oldRevenue.amountPiastres
+            val newCashImpact = if (newRevenue.isAccrualCollection) 0L else newRevenue.amountPiastres
+            val cashDelta = Math.subtractExact(newCashImpact, oldCashImpact)
+            if (cashDelta != 0L) {
                 val account = currentAccountDao.getAccountDirect()
                     ?: CurrentAccountEntity(accountId = 1L, currentBalancePiastres = 0L)
-                val newBalance = account.currentBalancePiastres + delta
+                val newBalance = Math.addExact(account.currentBalancePiastres, cashDelta)
                 currentAccountDao.updateBalance(newBalance, DateUtils.currentEpochMillis())
             }
         }
