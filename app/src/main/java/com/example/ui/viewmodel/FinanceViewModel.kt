@@ -266,34 +266,18 @@ class FinanceViewModel(
             initialValue = emptyList()
         )
 
-    // Reports: compare all twelve months of the year selected in the report filter.
-    // Keep the chart/list synchronized when the user navigates to a previous or next year.
+    // Reports: twelve-month comparison follows the year selected by the report filter.
     val monthlyReports: StateFlow<List<MonthlyReportItem>> = combine(
         _currentMonthFilter,
         repository.getAllExpenses(),
         repository.getAllRevenues()
     ) { filter, expenses, revenues ->
-        val selectedYear = filter.year
-        (1..12).map { month ->
-            val start = DateUtils.getMonthStartEpoch(selectedYear, month)
-            val end = DateUtils.getMonthEndEpoch(selectedYear, month)
-            val monthExpenses = expenses.asSequence()
-                .filter { it.date in start..end }
-                .sumOf { it.amountPiastres }
-            val monthRevenues = revenues.asSequence()
-                .filter { it.date in start..end && !it.isAccrualCollection }
-                .sumOf { it.amountPiastres }
-            MonthlyReportItem(
-                year = selectedYear,
-                month = month,
-                monthName = DateUtils.arabicMonthNames[month - 1],
-                totalExpensesPiastres = monthExpenses,
-                totalRevenuesPiastres = monthRevenues,
-                netBalancePiastres = monthRevenues - monthExpenses
-            )
-        }
+        calculationUseCase.calculateMonthlyReports(filter.year, expenses, revenues)
     }.stateIn(
         scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = emptyList()
+    )        scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = emptyList()
     )
