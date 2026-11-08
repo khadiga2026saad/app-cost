@@ -314,4 +314,64 @@ class FinanceRepositorySettlementTest {
         assertEquals(100_000L, balance())
     }
 
+
+    @Test
+    fun deletingMaturedCertificateDoesNotReturnPrincipalTwice() = runBlocking {
+        seedTreasury(1_200_000L)
+        val certId = repository.createCertificateWithSchedules(
+            FinancialCertificateEntity(
+                name = "شهادة مستحقة",
+                bankName = "بنك الاختبار",
+                principalPiastres = 1_000_000L,
+                annualRatePercent = "20.00",
+                payoutFrequency = "AT_MATURITY",
+                durationYears = 1,
+                issueDate = 1_000L,
+                maturityDate = 31_536_000_000L
+            )
+        )
+        val staleActiveCopy = repository.getCertificateById(certId)!!
+        repository.redeemCertificate(
+            certId,
+            redemptionDate = 31_536_000_000L,
+            isEarlyBreak = false,
+            penaltyPiastres = 0L
+        )
+        assertEquals(1_200_000L, balance())
+
+        repository.deleteCertificate(staleActiveCopy)
+
+        assertEquals(1_200_000L, balance())
+        assertNull(repository.getCertificateById(certId))
+    }
+
+    @Test
+    fun deletingEarlyRedeemedCertificateReversesOnlyItsPenalty() = runBlocking {
+        seedTreasury(1_200_000L)
+        val certId = repository.createCertificateWithSchedules(
+            FinancialCertificateEntity(
+                name = "شهادة مكسورة",
+                bankName = "بنك الاختبار",
+                principalPiastres = 1_000_000L,
+                annualRatePercent = "20.00",
+                payoutFrequency = "MONTHLY",
+                durationYears = 1,
+                issueDate = 1_000L,
+                maturityDate = 31_536_000_000L
+            )
+        )
+        repository.redeemCertificate(
+            certId,
+            redemptionDate = 1_000_000_000L,
+            isEarlyBreak = true,
+            penaltyPiastres = 50_000L
+        )
+        assertEquals(1_150_000L, balance())
+
+        repository.deleteCertificate(repository.getCertificateById(certId)!!)
+
+        assertEquals(1_200_000L, balance())
+        assertNull(repository.getCertificateById(certId))
+    }
+
 }
