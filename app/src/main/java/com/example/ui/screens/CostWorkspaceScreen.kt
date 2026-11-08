@@ -1214,10 +1214,12 @@ private fun ExpenseEntryPreview(sectionId: String, tabId: String, initialValues:
                     PreviewDateInput("تاريخ القبض", value("تاريخ القبض")) { setValue("تاريخ القبض", it) }
                     PreviewInput("ملاحظات", value("ملاحظات"), multiline = true) { setValue("ملاحظات", it) }
                 } else {
-                    PreviewDropdown("اسم الجمعية", listOf("اختاري الجمعية"), value("اسم الجمعية").ifBlank { "اختاري الجمعية" }) { setValue("اسم الجمعية", it) }
-                    PreviewInput("الشهر / رقم القسط", value("الشهر / رقم القسط")) { setValue("الشهر / رقم القسط", it) }
-                    PreviewInput("قيمة القسط أو القبض", value("قيمة القسط أو القبض"), numeric = true) { setValue("قيمة القسط أو القبض", it) }
-                    PreviewDateInput("التاريخ", value("التاريخ")) { setValue("التاريخ", it) }
+                    Text(
+                        "تُدار الأقساط والقبض من السجلات المعروضة أعلى الصفحة. اختاري الجمعية أو القسط المطلوب من القائمة لتنفيذ العملية؛ لا تُنشأ حركة مالية من هذا النموذج.",
+                        color = CostMuted,
+                        fontSize = 11.sp,
+                        lineHeight = 17.sp
+                    )
                 }
             }
             "vehicles" -> when (tabId) {
@@ -1330,10 +1332,12 @@ private fun ExpenseEntryPreview(sectionId: String, tabId: String, initialValues:
                 PreviewInput("ملاحظات", value("ملاحظات"), multiline = true) { setValue("ملاحظات", it) }
             }
             "certificates" -> if (tabId == "payouts") {
-                PreviewDropdown("الشهادة", listOf("اختاري الشهادة المسجلة"), value("الشهادة").ifBlank { "اختاري الشهادة المسجلة" }) { setValue("الشهادة", it) }
-                PreviewDateInput("تاريخ صرف العائد", value("تاريخ صرف العائد")) { setValue("تاريخ صرف العائد", it) }
-                PreviewInput("قيمة العائد", value("قيمة العائد"), numeric = true) { setValue("قيمة العائد", it) }
-                PreviewInput("ملاحظات", value("ملاحظات"), multiline = true) { setValue("ملاحظات", it) }
+                Text(
+                    "تُعرض العوائد المستحقة أعلى الصفحة. استخدمي زر «تسجيل تحصيل العائد» بجوار الدفعة المطلوبة لتسجيل التحصيل الفعلي.",
+                    color = CostMuted,
+                    fontSize = 11.sp,
+                    lineHeight = 17.sp
+                )
             } else {
                 PreviewInput("اسم البنك", value("اسم البنك")) { setValue("اسم البنك", it) }
                 PreviewInput("رقم الشهادة", value("رقم الشهادة")) { setValue("رقم الشهادة", it) }
@@ -1400,17 +1404,16 @@ private fun ExpenseEntryPreview(sectionId: String, tabId: String, initialValues:
                 }
             }
         }
+        val saveSupported = sectionId in setOf("house", "medical", "work", "personal", "income", "current_account") ||
+            (sectionId == "associations" && tabId == "form") ||
+            (sectionId == "education" && tabId in setOf("student_add", "student_edit", "student_expense_form")) ||
+            (sectionId == "car_income" && tabId == "add_trip") ||
+            (sectionId == "certificates" && tabId == "form") ||
+            (sectionId == "vehicles" && tabId in setOf("records", "fuel", "maintenance", "oils", "accidents"))
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(9.dp)) {
             Button(
-                onClick = {
-                    val saveSupported = sectionId in setOf("house", "medical", "work", "personal", "income", "current_account") ||
-                        (sectionId == "associations" && tabId == "form") ||
-                        (sectionId == "education" && tabId in setOf("student_add", "student_edit", "student_expense_form")) ||
-                        (sectionId == "car_income" && tabId == "add_trip") ||
-                        (sectionId == "certificates" && tabId == "form") ||
-                        (sectionId == "vehicles" && tabId in setOf("records", "fuel", "maintenance", "oils", "accidents"))
-                    if (saveSupported) onSave(values) else onActionUnavailable()
-                },
+                onClick = { if (saveSupported) onSave(values) else onActionUnavailable() },
+                enabled = saveSupported,
                 modifier = Modifier.weight(1.15f),
                 colors = ButtonDefaults.buttonColors(containerColor = CostInk, contentColor = CostGold),
                 shape = RoundedCornerShape(13.dp),
