@@ -215,7 +215,7 @@ private fun MedicalRecordCard(item: MedicalExpenseEntity, en: Boolean, onEdit: (
         amount = formatEgp(total),
         date = formatDate(item.date),
         details = listOf(item.conditionDescription, item.doctorDiagnosis, item.notes).filter { it.isNotBlank() }.joinToString(" • "),
-        attachmentCount = attachmentCount(item.attachmentsJson),
+        attachmentsJson = item.attachmentsJson,
         en = en, onEdit = onEdit, onDelete = onDelete
     )
 }
