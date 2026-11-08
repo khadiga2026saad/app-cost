@@ -1267,6 +1267,18 @@ private fun ExpenseEntryPreview(sectionId: String, tabId: String, initialValues:
                     PreviewInput("سعر المستلزمات", value("سعر المستلزمات"), numeric = true) { setValue("سعر المستلزمات", it) }
                     PreviewInput("وصف الأجور", value("وصف الأجور")) { setValue("وصف الأجور", it) }
                     PreviewInput("قيمة الأجور", value("قيمة الأجور"), numeric = true) { setValue("قيمة الأجور", it) }
+                    val partsCost = value("سعر المستلزمات").replace(',', '.').toBigDecimalOrNull() ?: BigDecimal.ZERO
+                    val laborCost = value("قيمة الأجور").replace(',', '.').toBigDecimalOrNull() ?: BigDecimal.ZERO
+                    Surface(color = Color(0xFFF4F6F8), shape = RoundedCornerShape(10.dp), modifier = Modifier.fillMaxWidth()) {
+                        Row(Modifier.fillMaxWidth().padding(11.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                            Text("إجمالي الصيانة (قطع + أجور)", color = CostMuted, fontSize = 11.sp)
+                            Text(
+                                com.example.core.MoneyUtils.formatPiastresPlain(com.example.core.MoneyUtils.egpToPiastres(partsCost.add(laborCost))) + " جنيه",
+                                color = CostInk,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         OutlinedButton(onClick = { cameraLauncher.launch(null) }, modifier = Modifier.weight(1f)) { Icon(Icons.Outlined.CameraAlt, null); Spacer(Modifier.width(5.dp)); Text("تصوير") }
                         OutlinedButton(onClick = { imagePickerLauncher.launch(arrayOf("image/*")) }, modifier = Modifier.weight(1f)) { Icon(Icons.Outlined.AddPhotoAlternate, null); Spacer(Modifier.width(5.dp)); Text("اختيار صورة") }
