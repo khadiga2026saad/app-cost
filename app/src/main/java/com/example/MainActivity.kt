@@ -324,7 +324,8 @@ fun SmartCostProApp(
             )
         } else if (showingCostCategories) {
             CostWorkspaceScreen(
-                onNavigateBack = { showingCostCategories = false; currentScreen = Screen.DASHBOARD }
+                onNavigateBack = { showingCostCategories = false; currentScreen = Screen.DASHBOARD },
+                isEnglish = isEnglish
             )
         } else if (currentScreen == Screen.DASHBOARD) {
             HomeScreen(
