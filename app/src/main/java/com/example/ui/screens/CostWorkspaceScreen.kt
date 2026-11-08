@@ -892,7 +892,13 @@ fun CostWorkspaceScreen(
                                             val name = values["اسم الطالب"].orEmpty().trim()
                                             val stage = values["المرحلة"].orEmpty().ifBlank { "ابتدائي" }
                                             if (name.isNotBlank()) {
-                                                financeViewModel.saveStudent(fullName = name, academicStage = stage)
+                                                financeViewModel.saveStudent(
+                                                    fullName = name,
+                                                    academicStage = stage,
+                                                    academicYear = values["العام الدراسي"].orEmpty().ifBlank {
+                                                        DateUtils.currentYear().toString() + "/" + (DateUtils.currentYear() + 1).toString()
+                                                    }
+                                                )
                                                 selectedTab = "students"
                                             } else showDesignNotice = true
                                         }
@@ -1345,9 +1351,8 @@ private fun ExpenseEntryPreview(sectionId: String, tabId: String, initialValues:
                 "student_add" -> {
                     PreviewInput("اسم الطالب", value("اسم الطالب")) { setValue("اسم الطالب", it) }
                     PreviewDropdown("المرحلة التعليمية", listOf("رياض أطفال", "ابتدائي", "إعدادي", "ثانوي", "جامعة"), value("المرحلة").ifBlank { "ابتدائي" }) { setValue("المرحلة", it) }
-                    PreviewInput("العمر", value("العمر"), numeric = true) { setValue("العمر", it) }
-                    PreviewInput("الرقم القومي أو المرجعي — 14 رقمًا", value("الرقم القومي أو المرجعي"), numeric = true) { setValue("الرقم القومي أو المرجعي", it.filter(Char::isDigit).take(14)) }
-                    Text("هذا الرقم مطلوب ويتكون من 14 رقمًا.", color = CostMuted, fontSize = 10.sp)
+                    PreviewInput("العام الدراسي", value("العام الدراسي").ifBlank { DateUtils.currentYear().toString() + "/" + (DateUtils.currentYear() + 1).toString() }) { setValue("العام الدراسي", it) }
+                    Text("يُحفظ العام الدراسي ضمن ملف الطالب.", color = CostMuted, fontSize = 10.sp)
                 }
                 "student_edit" -> {
                     PreviewDropdown("اختاري الطالب المراد تعديله", studentOptions, value("الطالب").ifBlank { studentOptions.first() }) { setValue("الطالب", it) }
