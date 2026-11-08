@@ -804,8 +804,10 @@ fun CostWorkspaceScreen(
                                 val date = runCatching { LocalDate.parse(values["التاريخ"].orEmpty()).atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli() }.getOrNull()
                                 if (section.id == "associations" && activeTab?.id == "form") {
                                     val totalPool = runCatching { BigDecimal(values["قيمة الجمعية"].orEmpty().replace(',', '.')) }.getOrNull()
-                                    val monthlyInstallment = runCatching { BigDecimal(values["قيمة القسط الشهري"].orEmpty().replace(',', '.')) }.getOrNull()
                                     val members = values["عدد الأفراد"].orEmpty().toIntOrNull()
+                                    val monthlyInstallment = if (totalPool != null && members != null && members > 0) {
+                                        runCatching { totalPool.divide(BigDecimal(members), 2, java.math.RoundingMode.HALF_UP) }.getOrNull()
+                                    } else null
                                     val turnOrder = values["رقم الدور"].orEmpty().toIntOrNull()
                                     val startDate = runCatching { LocalDate.parse(values["تاريخ البداية"].orEmpty()).atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli() }.getOrNull()
                                     val payoutDate = runCatching { LocalDate.parse(values["تاريخ القبض"].orEmpty()).atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli() }.getOrNull()
@@ -1186,7 +1188,27 @@ private fun ExpenseEntryPreview(sectionId: String, tabId: String, initialValues:
                     PreviewInput("اسم الجمعية", value("اسم الجمعية")) { setValue("اسم الجمعية", it) }
                     PreviewInput("قيمة الجمعية", value("قيمة الجمعية"), numeric = true) { setValue("قيمة الجمعية", it) }
                     PreviewInput("عدد الأفراد", value("عدد الأفراد"), numeric = true) { setValue("عدد الأفراد", it) }
-                    PreviewInput("قيمة القسط الشهري", value("قيمة القسط الشهري"), numeric = true) { setValue("قيمة القسط الشهري", it) }
+                    val poolValue = value("قيمة الجمعية").replace(',', '.').toBigDecimalOrNull()
+                    val memberCount = value("عدد الأفراد").toIntOrNull()
+                    val calculatedInstallment = if (poolValue != null && memberCount != null && memberCount > 0) {
+                        poolValue.divide(BigDecimal(memberCount), 2, java.math.RoundingMode.HALF_UP)
+                    } else null
+                    Surface(
+                        color = Color(0xFFF4F6F8),
+                        shape = RoundedCornerShape(10.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(Modifier.padding(11.dp), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                            Text("القسط الشهري المحسوب", color = CostMuted, fontSize = 10.sp)
+                            Text(
+                                calculatedInstallment?.let { com.example.core.MoneyUtils.formatPiastresPlain(com.example.core.MoneyUtils.egpToPiastres(it)) + " جنيه" }
+                                    ?: "أدخلي قيمة الجمعية وعدد الأفراد لحساب القسط",
+                                color = CostInk,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text("المعادلة: قيمة الجمعية ÷ عدد الأفراد.", color = CostMuted, fontSize = 10.sp)
+                        }
+                    }
                     PreviewInput("رقم الدور", value("رقم الدور"), numeric = true) { setValue("رقم الدور", it) }
                     PreviewDateInput("تاريخ البداية", value("تاريخ البداية")) { setValue("تاريخ البداية", it) }
                     PreviewDateInput("تاريخ القبض", value("تاريخ القبض")) { setValue("تاريخ القبض", it) }
@@ -1381,9 +1403,13 @@ private fun ExpenseEntryPreview(sectionId: String, tabId: String, initialValues:
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(9.dp)) {
             Button(
                 onClick = {
-                    if (sectionId in setOf("house", "medical", "work", "personal", "income", "associations", "current_account", "education") || (sectionId == "car_income" && tabId == "add_trip") || (sectionId == "certificates" && tabId == "form") ||
-                        (sectionId == "vehicles" && tabId in setOf("records", "fuel", "maintenance", "oils", "accidents"))) onSave(values)
-                    else onActionUnavailable()
+                    val saveSupported = sectionId in setOf("house", "medical", "work", "personal", "income", "current_account") ||
+                        (sectionId == "associations" && tabId == "form") ||
+                        (sectionId == "education" && tabId in setOf("student_add", "student_edit", "student_expense_form")) ||
+                        (sectionId == "car_income" && tabId == "add_trip") ||
+                        (sectionId == "certificates" && tabId == "form") ||
+                        (sectionId == "vehicles" && tabId in setOf("records", "fuel", "maintenance", "oils", "accidents"))
+                    if (saveSupported) onSave(values) else onActionUnavailable()
                 },
                 modifier = Modifier.weight(1.15f),
                 colors = ButtonDefaults.buttonColors(containerColor = CostInk, contentColor = CostGold),
