@@ -51,12 +51,13 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-private val CostInk = Color(0xFF171717)
-private val CostGold = Color(0xFFD4AF37)
-private val CostGoldDark = Color(0xFFAA8010)
-private val CostCanvas = Color(0xFFF7F6F2)
-private val CostBorder = Color(0xFFE8DFC9)
-private val CostMuted = Color(0xFF77736A)
+// Calm neutral finance palette: slate, soft grey and white (no metallic/gold accents).
+private val CostInk = Color(0xFF263238)
+private val CostGold = Color(0xFF78909C)
+private val CostGoldDark = Color(0xFF546E7A)
+private val CostCanvas = Color(0xFFF4F6F8)
+private val CostBorder = Color(0xFFE1E7EC)
+private val CostMuted = Color(0xFF687782)
 
 private data class CostSection(val id: String, val title: String, val subtitle: String, val icon: ImageVector, val group: String)
 private data class CostTab(val id: String, val title: String)
@@ -319,7 +320,7 @@ fun CostWorkspaceScreen(
                     Text(activeTab?.title ?: section?.title ?: "قسم التكاليف", color = CostInk, fontSize = 18.sp, fontWeight = FontWeight.Bold)
                     Text(section?.subtitle ?: "إدارة المصروفات والدخل والحسابات في مكان واحد", color = CostMuted, fontSize = 10.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
-                Surface(shape = RoundedCornerShape(10.dp), color = Color(0xFFF8F1D9)) {
+                Surface(shape = RoundedCornerShape(10.dp), color = Color(0xFFEAF0F3)) {
                     Text("SMART COST", color = CostGoldDark, fontSize = 10.sp, fontWeight = FontWeight.ExtraBold, modifier = Modifier.padding(horizontal = 9.dp, vertical = 7.dp))
                 }
             }
@@ -334,22 +335,59 @@ fun CostWorkspaceScreen(
                         Text("13 قسمًا رئيسيًا", color = CostGoldDark, fontSize = 11.sp, fontWeight = FontWeight.Bold)
                     }
                 }
-                costSections.chunked(2).forEach { rowSections ->
-                    item {
-                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                            rowSections.forEach { sectionItem ->
-                                CostSectionCard(sectionItem, Modifier.weight(1f)) {
-                                    selectedSection = sectionItem.id
-                                    selectedTab = ""
-                                }
-                            }
-                            if (rowSections.size == 1) Spacer(Modifier.weight(1f))
+                item {
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(18.dp),
+                        color = Color.White,
+                        border = BorderStroke(1.dp, CostBorder)
+                    ) {
+                        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
+                            Text("إدارة مالية موحدة", color = CostInk, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                            Text(
+                                "اختاري المجال أولًا، ثم انتقلي إلى سجلاته أو نموذج الإدخال أو تقاريره. لكل مجال بياناته الخاصة.",
+                                color = CostMuted,
+                                fontSize = 12.sp,
+                                lineHeight = 18.sp
+                            )
                         }
                     }
                 }
-                item {
-                    OutlinedButton(onClick = { showDesignNotice = true }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(14.dp), border = BorderStroke(1.dp, CostGold)) {
-                        Text("إضافة قسم مالي جديد", color = CostInk, fontWeight = FontWeight.Bold)
+                costSections.groupBy { it.group }.forEach { (groupTitle, groupSections) ->
+                    item {
+                        Row(
+                            Modifier.fillMaxWidth().padding(top = 5.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(groupTitle, color = CostInk, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                            Spacer(Modifier.width(8.dp))
+                            Surface(
+                                shape = RoundedCornerShape(20.dp),
+                                color = Color(0xFFEAF0F3)
+                            ) {
+                                Text(
+                                    groupSections.size.toString(),
+                                    color = CostGoldDark,
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                                )
+                            }
+                        }
+                    }
+                    groupSections.chunked(2).forEach { rowSections ->
+                        item {
+                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                                rowSections.forEach { sectionItem ->
+                                    CostSectionCard(sectionItem, Modifier.weight(1f)) {
+                                        selectedSection = sectionItem.id
+                                        selectedTab = ""
+                                        workspaceSearch = ""
+                                    }
+                                }
+                                if (rowSections.size == 1) Spacer(Modifier.weight(1f))
+                            }
+                        }
                     }
                 }
             }
@@ -382,7 +420,7 @@ fun CostWorkspaceScreen(
                                 Spacer(Modifier.width(9.dp))
                                 Text(section.title, color = Color.White, fontSize = 19.sp, fontWeight = FontWeight.Bold)
                             }
-                            Text(section.subtitle, color = Color(0xFFE7E3D8), fontSize = 11.sp)
+                            Text(section.subtitle, color = Color(0xFFE7EDF0), fontSize = 11.sp)
                             Row(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
                                 SummaryPill("إجمالي الفترة: —")
                                 SummaryPill("عدد السجلات: —")
@@ -973,7 +1011,7 @@ private fun DashboardSummaryDesign(onAction: () -> Unit) {
                 Text("تصنيف المصروفات حسب القسم", color = CostMuted, fontSize = 12.sp)
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     items(listOf("المنزل", "الطبي", "العمل", "الشخصي", "المركبات", "التعليم")) { label ->
-                        Surface(shape = RoundedCornerShape(18.dp), color = Color(0xFFF8F1D9), border = BorderStroke(1.dp, CostBorder)) {
+                        Surface(shape = RoundedCornerShape(18.dp), color = Color(0xFFEAF0F3), border = BorderStroke(1.dp, CostBorder)) {
                             Text(label, color = CostInk, fontSize = 11.sp, modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp))
                         }
                     }
@@ -1456,7 +1494,7 @@ private fun OptionsPreview(options: List<String>) {
                 Text("الاختيارات المتاحة", color = CostInk, fontWeight = FontWeight.Bold, fontSize = 12.sp)
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     items(options) { option ->
-                        Surface(shape = RoundedCornerShape(20.dp), color = Color(0xFFF8F1D9), border = BorderStroke(1.dp, CostBorder)) {
+                        Surface(shape = RoundedCornerShape(20.dp), color = Color(0xFFEAF0F3), border = BorderStroke(1.dp, CostBorder)) {
                             Text(option, color = CostInk, fontSize = 10.sp, modifier = Modifier.padding(horizontal = 10.dp, vertical = 7.dp))
                         }
                     }
@@ -1527,7 +1565,7 @@ private fun RecordsPreviewDesign(sectionTitle: String, tabTitle: String) {
 
 @Composable
 private fun SummaryPill(label: String) {
-    Surface(shape = RoundedCornerShape(30.dp), color = Color(0xFF343434)) {
+    Surface(shape = RoundedCornerShape(30.dp), color = Color(0xFF455A64)) {
         Text(label, color = Color.White, fontSize = 9.sp, modifier = Modifier.padding(horizontal = 9.dp, vertical = 6.dp))
     }
 }
@@ -1536,11 +1574,11 @@ private fun SummaryPill(label: String) {
 private fun CostTabCard(tab: CostTab, modifier: Modifier, onClick: () -> Unit) {
     Surface(onClick = onClick, modifier = modifier.height(112.dp), shape = RoundedCornerShape(15.dp), color = Color.White, border = BorderStroke(1.dp, CostBorder), shadowElevation = 1.dp) {
         Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp), horizontalAlignment = Alignment.Start) {
-            Surface(shape = RoundedCornerShape(9.dp), color = Color(0xFFF8F1D9)) {
+            Surface(shape = RoundedCornerShape(9.dp), color = Color(0xFFEAF0F3)) {
                 Icon(Icons.Outlined.FolderOpen, contentDescription = null, modifier = Modifier.padding(7.dp).size(20.dp), tint = CostInk)
             }
             Text(tab.title, color = CostInk, fontSize = 14.sp, fontWeight = FontWeight.Bold, maxLines = 2, overflow = TextOverflow.Ellipsis)
-            Text("فتح القسم ←", color = CostGoldDark, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+            Text("عرض التفاصيل ←", color = CostGoldDark, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
         }
     }
 }
@@ -1549,12 +1587,12 @@ private fun CostTabCard(tab: CostTab, modifier: Modifier, onClick: () -> Unit) {
 private fun CostSectionCard(section: CostSection, modifier: Modifier, onClick: () -> Unit) {
     Surface(onClick = onClick, modifier = modifier.height(152.dp), shape = RoundedCornerShape(16.dp), color = Color.White, border = BorderStroke(1.dp, CostBorder), shadowElevation = 1.dp) {
         Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(7.dp)) {
-            Surface(shape = RoundedCornerShape(10.dp), color = Color(0xFFF8F1D9)) {
+            Surface(shape = RoundedCornerShape(10.dp), color = Color(0xFFEAF0F3)) {
                 Icon(section.icon, contentDescription = null, modifier = Modifier.padding(8.dp).size(21.dp), tint = CostInk)
             }
             Text(section.title, color = CostInk, fontSize = 14.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Text(section.subtitle, color = CostMuted, fontSize = 11.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
-            Text("فتح القسم  ←", color = CostGoldDark, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+            Text("عرض التفاصيل  ←", color = CostGoldDark, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
         }
     }
 }
