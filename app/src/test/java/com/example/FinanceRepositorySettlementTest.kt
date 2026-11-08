@@ -7,6 +7,7 @@ import com.example.data.local.AppDatabase
 import com.example.data.local.entities.CurrentAccountEntity
 import com.example.data.local.entities.ExpenseEntity
 import com.example.data.local.entities.FinancialCertificateEntity
+import com.example.data.local.entities.RevenueEntity
 import com.example.data.local.entities.VehicleAccidentLogEntity
 import com.example.data.local.entities.VehicleEntity
 import com.example.data.local.entities.VehicleFuelLogEntity
@@ -278,4 +279,39 @@ class FinanceRepositorySettlementTest {
         assertTrue(db.revenueDao().getAllRevenues().first().isEmpty())
         assertNull(repository.getCertificateById(certId))
     }
+
+    @Test
+    fun updateRevenueReconcilesTreasuryAcrossAccrualCollectionTransitions() = runBlocking {
+        seedTreasury(100_000L)
+
+        val accrual = RevenueEntity(
+            amountPiastres = 10_000L,
+            date = 1_000L,
+            sourceType = "OTHER_INCOME",
+            title = "دخل مستحق",
+            isAccrualCollection = true
+        )
+        val accrualId = repository.insertRevenue(accrual)
+        assertEquals(100_000L, balance())
+
+        val collected = accrual.copy(
+            revenueId = accrualId,
+            amountPiastres = 15_000L,
+            isAccrualCollection = false
+        )
+        repository.updateRevenue(accrual.copy(revenueId = accrualId), collected)
+        assertEquals(115_000L, balance())
+
+        val changedBackToAccrual = collected.copy(
+            amountPiastres = 7_000L,
+            isAccrualCollection = true
+        )
+        repository.updateRevenue(collected, changedBackToAccrual)
+        assertEquals(100_000L, balance())
+
+        val updatedAccrual = changedBackToAccrual.copy(amountPiastres = 9_000L)
+        repository.updateRevenue(changedBackToAccrual, updatedAccrual)
+        assertEquals(100_000L, balance())
+    }
+
 }
