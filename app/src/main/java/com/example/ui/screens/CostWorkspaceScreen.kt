@@ -343,7 +343,7 @@ fun CostWorkspaceScreen(
                     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         Text("كل الأقسام", color = CostInk, fontSize = 20.sp, fontWeight = FontWeight.Bold)
                         Text("اختاري القسم المطلوب لعرض بطاقاته الفرعية وسجلاته ونماذج الإدخال.", color = CostMuted, fontSize = 12.sp)
-                        Text("13 قسمًا رئيسيًا", color = CostGoldDark, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                        Text("${costSections.size} قسمًا رئيسيًا", color = CostGoldDark, fontSize = 11.sp, fontWeight = FontWeight.Bold)
                     }
                 }
                 item {
