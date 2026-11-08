@@ -28,7 +28,7 @@ class HouseholdMedicalRepository(context: Context, private val db: AppDatabase) 
         val oldPaths = JSONArray(item.attachmentsJson)
         val combined = JSONArray()
         for (i in 0 until oldPaths.length()) combined.put(oldPaths.getString(i))
-        newPaths.forEach(combined::put)
+        newPaths.forEach { combined.put(it) }
         householdDao.update(item.copy(attachmentsJson = combined.toString(), updatedAt = System.currentTimeMillis()))
         return item.id
     }
