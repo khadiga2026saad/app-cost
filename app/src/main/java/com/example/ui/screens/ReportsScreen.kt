@@ -188,13 +188,15 @@ fun ReportsScreen(
                             modifier = Modifier.padding(vertical = 8.dp)
                         )
                     } else {
-                        summary.departmentSummaries.forEach { item ->
-                            DepartmentProgressRow(
-                                department = item.department,
-                                amount = item.totalAmount,
-                                percentage = item.percentageOfTotal
-                            )
-                        }
+                        summary.departmentSummaries
+                            .filter { it.totalAmountPiastres > 0L }
+                            .forEach { item ->
+                                DepartmentProgressRow(
+                                    department = item.department,
+                                    amount = item.totalAmount,
+                                    percentage = item.percentageOfTotal
+                                )
+                            }
                     }
                 }
             }
