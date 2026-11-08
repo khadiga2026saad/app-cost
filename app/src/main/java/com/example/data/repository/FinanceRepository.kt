@@ -720,26 +720,40 @@ class FinanceRepositoryImpl(private val database: AppDatabase) : FinanceReposito
      */
     override suspend fun deleteCertificate(cert: FinancialCertificateEntity): Unit =
         database.withTransaction {
-            val collected = certificateDao.getSchedulesForCertificateDirect(cert.certificateId)
+            // Always use the persisted state: the caller may hold a stale pre-redemption copy.
+            val persistedCert = certificateDao.getCertificateById(cert.certificateId)
+                ?: return@withTransaction
+            val collected = certificateDao.getSchedulesForCertificateDirect(persistedCert.certificateId)
                 .filter { it.isCollected && it.linkedRevenueId != null }
             for (schedule in collected) {
-                val revenue = revenueDao.getRevenueById(schedule.linkedRevenueId!!)
+                val revenue = schedule.linkedRevenueId?.let { revenueDao.getRevenueById(it) }
                 if (revenue != null) {
                     val account = currentAccountDao.getAccountDirect()
                         ?: CurrentAccountEntity(accountId = 1L, currentBalancePiastres = 0L)
                     currentAccountDao.updateBalance(
-                        account.currentBalancePiastres - revenue.amountPiastres,
+                        Math.subtractExact(account.currentBalancePiastres, revenue.amountPiastres),
                         DateUtils.currentEpochMillis()
                     )
                     revenueDao.deleteRevenue(revenue)
                 }
             }
-            val account = currentAccountDao.getAccountDirect()
-                ?: CurrentAccountEntity(accountId = 1L, currentBalancePiastres = 0L)
-            currentAccountDao.updateBalance(
-                account.currentBalancePiastres + cert.principalPiastres,
-                DateUtils.currentEpochMillis()
-            )
-            certificateDao.deleteCertificate(cert)
+
+            // An active certificate only has its original purchase outflow to reverse.
+            // A redeemed certificate already returned principal (minus any early-break
+            // penalty), so reversing its history must restore only that penalty.
+            val reversal = if (persistedCert.isActive) {
+                persistedCert.principalPiastres
+            } else {
+                persistedCert.redemptionPenaltyPiastres
+            }
+            if (reversal != 0L) {
+                val account = currentAccountDao.getAccountDirect()
+                    ?: CurrentAccountEntity(accountId = 1L, currentBalancePiastres = 0L)
+                currentAccountDao.updateBalance(
+                    Math.addExact(account.currentBalancePiastres, reversal),
+                    DateUtils.currentEpochMillis()
+                )
+            }
+            certificateDao.deleteCertificate(persistedCert)
         }
 }
