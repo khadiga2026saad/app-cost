@@ -2,6 +2,7 @@ package com.example.ui.screens
 
 import android.net.Uri
 import android.content.Intent
+import android.content.Context
 import androidx.core.content.FileProvider
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -290,6 +291,9 @@ private fun HouseholdForm(en: Boolean, existing: HouseholdExpenseEntity?, onCanc
         uris.forEach { uri -> runCatching { context.contentResolver.takePersistableUriPermission(uri, android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION) } }
         picked.addAll(uris)
     }
+    var cameraUri by remember { mutableStateOf<Uri?>(null) }
+    val camera = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { success -> if (success) cameraUri?.let { picked.add(it) }; cameraUri = null }
+    val takePhoto = { createCameraUri(context)?.let { cameraUri = it; camera.launch(it) } }
     SheetHeader(if (existing == null) if (en) "Add household expense" else "إضافة مصروف منزل جديد" else if (en) "Edit household expense" else "تعديل المصروف المنزلي", if (en) "Expense details" else "بيانات المصروف", onCancel)
     Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp), verticalArrangement = Arrangement.spacedBy(11.dp)) {
         Box {
@@ -305,7 +309,7 @@ private fun HouseholdForm(en: Boolean, existing: HouseholdExpenseEntity?, onCanc
             FilterChip(type == "LABOR_AND_SERVICES", { type = "LABOR_AND_SERVICES" }, label = { Text(if (en) "Labor & services" else "مصنعية وأجرة يد", fontSize = 10.sp) })
         }
         OutlinedTextField(notes, { notes = it }, Modifier.fillMaxWidth(), label = { Text(if (en) "Notes and details" else "ملاحظات وتفاصيل") }, placeholder = { Text(if (en) "Additional details..." else "تفاصيل إضافية...") }, minLines = 2, maxLines = 4, shape = RoundedCornerShape(13.dp))
-        AttachmentInput(if (en) "Receipts and invoices" else "صور الفواتير وإيصالات الشراء", picked, { picker.launch(arrayOf("image/*", "application/pdf")) }, en, attachmentCount(existing?.attachmentsJson.orEmpty()) + picked.size)
+        AttachmentInput(if (en) "Receipts and invoices" else "صور الفواتير وإيصالات الشراء", picked, { picker.launch(arrayOf("image/*", "application/pdf")) }, takePhoto, en, attachmentCount(existing?.attachmentsJson.orEmpty()) + picked.size)
         error?.let { Text(it, color = MaterialTheme.colorScheme.error, fontSize = 11.sp) }
         FormActions(if (existing == null) if (en) "Save expense" else "حفظ المصروف" else if (en) "Update" else "تحديث", if (en) "Cancel" else "إلغاء", {
             val parsed = runCatching { BigDecimal(amount.trim()).movePointRight(2).longValueExact() }.getOrNull()
@@ -338,6 +342,9 @@ private fun MedicalForm(en: Boolean, existing: MedicalExpenseEntity?, onPick: ()
         uris.forEach { uri -> runCatching { context.contentResolver.takePersistableUriPermission(uri, android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION) } }
         picked.addAll(uris)
     }
+    var cameraUri by remember { mutableStateOf<Uri?>(null) }
+    val camera = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { success -> if (success) cameraUri?.let { picked.add(it) }; cameraUri = null }
+    val takePhoto = { createCameraUri(context)?.let { cameraUri = it; camera.launch(it) } }
     SheetHeader(if (existing == null) if (en) "Add medical checkup" else "إضافة كشف طبي" else if (en) "Edit medical checkup" else "تعديل الكشف الطبي", if (en) "Patient and visit details" else "بيانات المريض وتفاصيل الزيارة", onCancel)
     Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         OutlinedTextField(patient, { patient = it }, Modifier.fillMaxWidth(), label = { Text(if (en) "Patient name *" else "اسم المريض *") }, singleLine = true, shape = RoundedCornerShape(13.dp))
@@ -360,7 +367,7 @@ private fun MedicalForm(en: Boolean, existing: MedicalExpenseEntity?, onPick: ()
         }
         DateInput(dateLabel, if (en) "Visit date" else "تاريخ الكشف") { dateOpen = true }
         OutlinedTextField(notes, { notes = it }, Modifier.fillMaxWidth(), label = { Text(if (en) "Additional notes" else "ملاحظات إضافية") }, minLines = 2, maxLines = 3, shape = RoundedCornerShape(13.dp))
-        AttachmentInput(if (en) "Prescriptions and medical documents" else "الروشتات وأوراق الكشف الطبي", picked, { picker.launch(arrayOf("image/*", "application/pdf")) }, en, attachmentCount(existing?.attachmentsJson.orEmpty()) + picked.size)
+        AttachmentInput(if (en) "Prescriptions and medical documents" else "الروشتات وأوراق الكشف الطبي", picked, { picker.launch(arrayOf("image/*", "application/pdf")) }, takePhoto, en, attachmentCount(existing?.attachmentsJson.orEmpty()) + picked.size)
         error?.let { Text(it, color = MaterialTheme.colorScheme.error, fontSize = 11.sp) }
         FormActions(if (existing == null) if (en) "Save" else "حفظ" else if (en) "Update" else "تحديث", if (en) "Cancel" else "إلغاء", {
             val check = parseMoney(checkup)
@@ -394,7 +401,7 @@ private fun DateInput(value: String, label: String, click: () -> Unit) {
 }
 
 @Composable
-private fun AttachmentInput(title: String, files: List<Uri>, pick: () -> Unit, en: Boolean, totalCount: Int) {
+private fun AttachmentInput(title: String, files: List<Uri>, pick: () -> Unit, takePhoto: () -> Unit, en: Boolean, totalCount: Int) {
     Surface(Modifier.fillMaxWidth(), shape = RoundedCornerShape(14.dp), color = HSoft, border = BorderStroke(1.dp, Color(0xFFD4E3DD))) {
         Row(Modifier.padding(11.dp), verticalAlignment = Alignment.CenterVertically) {
             Icon(Icons.Outlined.AttachFile, null, tint = HAccent)
@@ -403,8 +410,13 @@ private fun AttachmentInput(title: String, files: List<Uri>, pick: () -> Unit, e
                 Text(title, color = HInk, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                 Text(if (totalCount == 0) if (en) "No files attached" else "لم يتم إرفاق ملفات" else if (en) "$totalCount file(s) attached" else "عدد الملفات: $totalCount", color = HMuted, fontSize = 10.sp)
             }
-            OutlinedButton(onClick = pick, shape = RoundedCornerShape(10.dp)) {
-                Icon(Icons.Outlined.UploadFile, null, modifier = Modifier.size(15.dp)); Spacer(Modifier.width(3.dp)); Text(if (en) "Attach" else "إرفاق", fontSize = 10.sp)
+            Column(horizontalAlignment = Alignment.End) {
+                OutlinedButton(onClick = pick, shape = RoundedCornerShape(10.dp), contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)) {
+                    Icon(Icons.Outlined.UploadFile, null, modifier = Modifier.size(15.dp)); Spacer(Modifier.width(3.dp)); Text(if (en) "Files" else "ملفات", fontSize = 10.sp)
+                }
+                TextButton(onClick = takePhoto, contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)) {
+                    Icon(Icons.Outlined.PhotoCamera, null, modifier = Modifier.size(14.dp)); Spacer(Modifier.width(3.dp)); Text(if (en) "Camera" else "تصوير", fontSize = 10.sp)
+                }
             }
         }
     }
@@ -417,6 +429,12 @@ private fun FormActions(primary: String, cancel: String, save: () -> Unit, close
         OutlinedButton(onClick = close, Modifier.weight(1f), shape = RoundedCornerShape(12.dp)) { Text(cancel) }
     }
 }
+
+private fun createCameraUri(context: Context): Uri? = runCatching {
+    val directory = File(context.cacheDir, "camera").apply { mkdirs() }
+    val image = File.createTempFile("financial_capture_", ".jpg", directory)
+    FileProvider.getUriForFile(context, context.packageName + ".fileprovider", image)
+}.getOrNull()
 
 private fun parseMoney(value: String): Long? = runCatching {
     if (value.isBlank()) 0L else BigDecimal(value.trim()).movePointRight(2).longValueExact().also { require(it >= 0L) }
