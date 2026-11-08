@@ -1029,7 +1029,17 @@ fun CostWorkspaceScreen(
                                             department = section.id.uppercase(),
                                             category = values["التصنيف"].orEmpty().ifBlank { values["نوع مصروف العمل"].orEmpty().ifBlank { "عام" } },
                                             title = title,
-                                            notes = values["الملاحظات"].orEmpty()
+                                            notes = if (section.id == "medical") {
+                                                listOf(
+                                                    "المنشأة: " + values["اسم المنشأة الطبية"].orEmpty(),
+                                                    "نوع المنشأة: " + values["نوع المنشأة الطبية"].orEmpty(),
+                                                    "الحالة: " + values["الحالة"].orEmpty(),
+                                                    "التشخيص: " + values["التشخيص"].orEmpty(),
+                                                    "تكلفة الكشف: " + values["تكلفة الكشف أو الفحص"].orEmpty(),
+                                                    "تكلفة الدواء: " + values["تكلفة الدواء / العلاج"].orEmpty(),
+                                                    values["ملاحظات طبية"].orEmpty()
+                                                ).filter { it.isNotBlank() && !it.endsWith(": ") }.joinToString(" • ")
+                                            } else values["الملاحظات"].orEmpty()
                                         )
                                         editingExpense = null
                                         selectedTab = "records"
@@ -1147,7 +1157,18 @@ private fun ExpenseEntryPreview(sectionId: String, tabId: String, initialValues:
                 PreviewInput("الملاحظات", value("الملاحظات"), multiline = true) { setValue("الملاحظات", it) }
             }
             "medical" -> {
-                PreviewInput("اسم الشخص", value("اسم الشخص")) { setValue("اسم الشخص", it) }
+                PreviewInput("فرد الأسرة / اسم الشخص", value("اسم الشخص")) { setValue("اسم الشخص", it) }
+                PreviewInput("اسم المنشأة الطبية", value("اسم المنشأة الطبية")) { setValue("اسم المنشأة الطبية", it) }
+                PreviewDropdown(
+                    "نوع المنشأة الطبية",
+                    listOf("مستشفى", "عيادة", "مركز طبي", "معمل تحاليل", "مركز أشعة", "صيدلية", "أخرى"),
+                    value("نوع المنشأة الطبية").ifBlank { "عيادة" }
+                ) { setValue("نوع المنشأة الطبية", it) }
+                PreviewDropdown(
+                    "الحالة",
+                    listOf("كشف", "متابعة", "طوارئ", "تحاليل", "أشعة", "شراء علاج", "أخرى"),
+                    value("الحالة").ifBlank { "كشف" }
+                ) { setValue("الحالة", it) }
                 PreviewInput("التشخيص", value("التشخيص"), multiline = true) { setValue("التشخيص", it) }
                 PreviewInput("تكلفة الكشف أو الفحص", value("تكلفة الكشف أو الفحص"), numeric = true) { setValue("تكلفة الكشف أو الفحص", it) }
                 PreviewInput("تكلفة الدواء / العلاج", value("تكلفة الدواء / العلاج"), numeric = true) { setValue("تكلفة الدواء / العلاج", it) }
