@@ -4,7 +4,7 @@ import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
 
-@Entity(tableName = "household_expenses", indices = [Index("date"), Index("category")])
+@Entity(tableName = "household_expenses", indices = [Index(value = ["date"]), Index(value = ["category"])])
 data class HouseholdExpenseEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val category: String,
