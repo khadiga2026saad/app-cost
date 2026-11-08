@@ -41,7 +41,7 @@ fun HouseholdMedicalScreen(onBack: () -> Unit, isEnglish: Boolean = false, modif
     var medical by remember { mutableStateOf(false) }
     var showSheet by remember { mutableStateOf(false) }
     val files = remember { mutableStateListOf<Uri>() }
-    val picker = rememberLauncherForActivityResult(ActivityResultContracts.GetMultipleContents()) { files.addAll(it) }
+    val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { files.addAll(it) }
     val snack = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val addText = if (isEnglish) if (medical) "Add checkup" else "Add expense" else if (medical) "إضافة كشف" else "إضافة مصروف"
@@ -109,7 +109,7 @@ fun HouseholdMedicalScreen(onBack: () -> Unit, isEnglish: Boolean = false, modif
     if (showSheet) {
         ModalBottomSheet(onDismissRequest = { showSheet = false }, containerColor = Color.White, dragHandle = null) {
             if (medical) {
-                MedicalDesignForm(isEnglish, files, { picker.launch("image/*") }, { showSheet = false }) {
+                MedicalDesignForm(isEnglish, files, { picker.launch(arrayOf("image/*", "application/pdf")) }, { showSheet = false }) {
                     scope.launch { snack.showSnackbar(if (isEnglish) "Saving will be enabled after design approval." else "سيتم تفعيل الحفظ بعد اعتماد التصميم.") }
                 }
             } else {
