@@ -63,8 +63,7 @@ private data class CostSection(val id: String, val title: String, val subtitle: 
 private data class CostTab(val id: String, val title: String)
 
 private val costSections = listOf(
-    CostSection("house", "المنزل", "مصروفات البيت والاحتياجات اليومية", Icons.Outlined.Home, "المصروفات"),
-    CostSection("medical", "المصروفات الطبية", "الأفراد والمنشآت والتشخيص والعلاج", Icons.Outlined.MedicalServices, "المصروفات"),
+    CostSection("house", "مصروفات منزلية", "المنزل والقسم الطبي: الطعام والمستلزمات والعلاج", Icons.Outlined.Home, "المصروفات"),
     CostSection("work", "العمل", "تكاليف ومصروفات العمل", Icons.Outlined.Work, "المصروفات"),
     CostSection("personal", "المصروفات الشخصية", "المصروفات اليومية والالتزامات الشخصية", Icons.Outlined.Person, "المصروفات"),
     CostSection("associations", "الجمعيات", "قيمة الجمعية والأقساط والقبض", Icons.Outlined.Groups, "المصروفات"),
@@ -144,9 +143,11 @@ private fun choicesFor(sectionId: String, tabId: String): List<String> = when (s
 @Composable
 fun CostWorkspaceScreen(
     onNavigateBack: () -> Unit,
+    isEnglish: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     var selectedSection by remember { mutableStateOf<String?>(null) }
+    var showHouseholdMedical by remember { mutableStateOf(false) }
     var selectedTab by remember { mutableStateOf("") }
     var orderedSections by remember { mutableStateOf(costSections) }
     var isReorderMode by remember { mutableStateOf(false) }
@@ -298,8 +299,10 @@ fun CostWorkspaceScreen(
     fun matchesSearch(vararg fields: String?): Boolean =
         workspaceSearch.isBlank() || fields.any { it?.contains(workspaceSearch.trim(), ignoreCase = true) == true }
 
-    BackHandler(enabled = selectedSection != null) {
-        if (selectedTab.isNotBlank()) {
+    BackHandler(enabled = showHouseholdMedical || selectedSection != null) {
+        if (showHouseholdMedical) {
+            showHouseholdMedical = false
+        } else if (selectedTab.isNotBlank()) {
             selectedTab = ""
         } else {
             selectedSection = null
@@ -328,7 +331,13 @@ fun CostWorkspaceScreen(
             }
         }
     ) { padding ->
-        if (section == null) {
+        if (showHouseholdMedical) {
+            HouseholdMedicalScreen(
+                onBack = { showHouseholdMedical = false },
+                isEnglish = isEnglish,
+                modifier = Modifier.fillMaxSize().padding(padding)
+            )
+        } else if (section == null) {
             LazyColumn(Modifier.fillMaxSize().padding(padding).padding(horizontal = 16.dp), contentPadding = PaddingValues(top = 14.dp, bottom = 26.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 item {
                     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -442,7 +451,12 @@ fun CostWorkspaceScreen(
                                         },
                                         onClick = {
                                             if (!isReorderMode) {
-                                                selectedSection = sectionItem.id
+                                                if (sectionItem.id == "house") {
+                                                    showHouseholdMedical = true
+                                                    selectedSection = null
+                                                } else {
+                                                    selectedSection = sectionItem.id
+                                                }
                                                 selectedTab = ""
                                                 workspaceSearch = ""
                                             }
