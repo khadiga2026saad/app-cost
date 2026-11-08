@@ -1,6 +1,7 @@
 package com.example
 
 import com.example.core.MoneyUtils
+import com.example.core.DateUtils
 import com.example.data.local.entities.ExpenseEntity
 import com.example.data.local.entities.RevenueEntity
 import com.example.data.local.entities.VehicleEntity
@@ -195,4 +196,66 @@ class FinancialCalculationsTest {
         assertEquals(0L, summary.totalRevenuesPiastres)
         assertEquals(0L, summary.netIncomePiastres)
     }
+
+    @Test
+    fun `monthly reports use selected year and exclude uncollected accrual revenue`() {
+        val year = 2025
+        val expenses = listOf(
+            ExpenseEntity(
+                amountPiastres = 1_000L,
+                date = DateUtils.getMonthStartEpoch(year, 1) + 5_000L,
+                department = "HOME",
+                subcategory = "بقالة",
+                title = "مصروف يناير"
+            ),
+            ExpenseEntity(
+                amountPiastres = 500L,
+                date = DateUtils.getMonthStartEpoch(year, 2) + 5_000L,
+                department = "HOME",
+                subcategory = "فواتير",
+                title = "مصروف فبراير"
+            ),
+            ExpenseEntity(
+                amountPiastres = 99_000L,
+                date = DateUtils.getMonthStartEpoch(year - 1, 1) + 5_000L,
+                department = "HOME",
+                subcategory = "قديم",
+                title = "مصروف سنة سابقة"
+            )
+        )
+        val revenues = listOf(
+            RevenueEntity(
+                amountPiastres = 3_000L,
+                date = DateUtils.getMonthStartEpoch(year, 1) + 8_000L,
+                sourceType = "SALARY",
+                title = "دخل يناير"
+            ),
+            RevenueEntity(
+                amountPiastres = 9_000L,
+                date = DateUtils.getMonthStartEpoch(year, 1) + 9_000L,
+                sourceType = "OTHER_INCOME",
+                title = "دخل مستحق غير محصل",
+                isAccrualCollection = true
+            ),
+            RevenueEntity(
+                amountPiastres = 88_000L,
+                date = DateUtils.getMonthStartEpoch(year - 1, 1) + 8_000L,
+                sourceType = "SALARY",
+                title = "دخل سنة سابقة"
+            )
+        )
+
+        val reports = useCase.calculateMonthlyReports(year, expenses, revenues)
+
+        assertEquals(12, reports.size)
+        assertEquals(year, reports[0].year)
+        assertEquals(1_000L, reports[0].totalExpensesPiastres)
+        assertEquals(3_000L, reports[0].totalRevenuesPiastres)
+        assertEquals(2_000L, reports[0].netBalancePiastres)
+        assertEquals(500L, reports[1].totalExpensesPiastres)
+        assertEquals(0L, reports[1].totalRevenuesPiastres)
+        assertEquals(-500L, reports[1].netBalancePiastres)
+        assertEquals(0L, reports[2].totalExpensesPiastres)
+    }
+
 }
