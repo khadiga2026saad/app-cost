@@ -1047,7 +1047,13 @@ fun CostWorkspaceScreen(
                                                     "تكلفة الدواء: " + values["تكلفة الدواء / العلاج"].orEmpty(),
                                                     values["ملاحظات طبية"].orEmpty()
                                                 ).filter { it.isNotBlank() && !it.endsWith(": ") }.joinToString(" • ")
-                                            } else values["الملاحظات"].orEmpty()
+                                            } else {
+                                                listOf(
+                                                    "طريقة الدفع: " + values["طريقة الدفع"].orEmpty(),
+                                                    "نوع الصرف: " + values["نوع الصرف"].orEmpty(),
+                                                    values["الملاحظات"].orEmpty()
+                                                ).filter { it.isNotBlank() && !it.endsWith(": ") }.joinToString(" • ")
+                                            }
                                         )
                                         editingExpense = null
                                         selectedTab = "records"
@@ -1162,6 +1168,11 @@ private fun ExpenseEntryPreview(sectionId: String, tabId: String, initialValues:
                     Text("نوع الصرف", color = CostInk, fontWeight = FontWeight.Bold, fontSize = 13.sp)
                     PreviewDropdown("اختر نوع الصرف", listOf("مشتريات ومستلزمات", "مصنعية وأجرة يد"), value("نوع الصرف").ifBlank { "مشتريات ومستلزمات" }) { setValue("نوع الصرف", it) }
                 }
+                PreviewDropdown(
+                    "طريقة الدفع",
+                    listOf("نقدي", "Visa / Mastercard", "تحويل بنكي / Instapay", "محفظة إلكترونية", "شيك / آجل"),
+                    value("طريقة الدفع").ifBlank { "نقدي" }
+                ) { setValue("طريقة الدفع", it) }
                 PreviewInput("الملاحظات", value("الملاحظات"), multiline = true) { setValue("الملاحظات", it) }
             }
             "medical" -> {
