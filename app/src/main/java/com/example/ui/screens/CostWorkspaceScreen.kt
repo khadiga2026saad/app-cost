@@ -148,6 +148,8 @@ fun CostWorkspaceScreen(
 ) {
     var selectedSection by remember { mutableStateOf<String?>(null) }
     var selectedTab by remember { mutableStateOf("") }
+    var orderedSections by remember { mutableStateOf(costSections) }
+    var isReorderMode by remember { mutableStateOf(false) }
     var showDesignNotice by remember { mutableStateOf(false) }
     var editingExpense by remember { mutableStateOf<ExpenseEntity?>(null) }
     var workspaceSearch by remember { mutableStateOf("") }
@@ -353,7 +355,41 @@ fun CostWorkspaceScreen(
                         }
                     }
                 }
-                costSections.groupBy { it.group }.forEach { (groupTitle, groupSections) ->
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    OutlinedButton(
+                        onClick = { isReorderMode = !isReorderMode },
+                        modifier = Modifier.weight(1f),
+                        border = BorderStroke(1.dp, CostBorder),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Icon(
+                            if (isReorderMode) Icons.Outlined.Check else Icons.Outlined.SwapVert,
+                            contentDescription = null,
+                            modifier = Modifier.size(17.dp)
+                        )
+                        Spacer(Modifier.width(6.dp))
+                        Text(if (isReorderMode) "إنهاء الترتيب" else "إعادة ترتيب الأقسام", fontSize = 11.sp)
+                    }
+                    if (isReorderMode) {
+                        TextButton(onClick = { orderedSections = costSections }) {
+                            Text("الترتيب الافتراضي", color = CostGoldDark, fontSize = 10.sp)
+                        }
+                    }
+                }
+                if (isReorderMode) {
+                    item {
+                        Text(
+                            "حرّكي الأقسام داخل مجموعتها باستخدام السهمين، ثم اختاري إنهاء الترتيب.",
+                            color = CostMuted,
+                            fontSize = 11.sp
+                        )
+                    }
+                }
+                orderedSections.groupBy { it.group }.forEach { (groupTitle, groupSections) ->
                     item {
                         Row(
                             Modifier.fillMaxWidth().padding(top = 5.dp),
@@ -379,11 +415,39 @@ fun CostWorkspaceScreen(
                         item {
                             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                                 rowSections.forEach { sectionItem ->
-                                    CostSectionCard(sectionItem, Modifier.weight(1f)) {
-                                        selectedSection = sectionItem.id
-                                        selectedTab = ""
-                                        workspaceSearch = ""
-                                    }
+                                    val positionInGroup = groupSections.indexOf(sectionItem)
+                                    CostSectionCard(
+                                        section = sectionItem,
+                                        modifier = Modifier.weight(1f),
+                                        isReorderMode = isReorderMode,
+                                        canMoveUp = positionInGroup > 0,
+                                        canMoveDown = positionInGroup < groupSections.lastIndex,
+                                        onMoveUp = {
+                                            val currentIndex = orderedSections.indexOf(sectionItem)
+                                            val previousIndex = orderedSections.indexOf(groupSections[positionInGroup - 1])
+                                            orderedSections = orderedSections.toMutableList().also { list ->
+                                                val item = list[currentIndex]
+                                                list[currentIndex] = list[previousIndex]
+                                                list[previousIndex] = item
+                                            }
+                                        },
+                                        onMoveDown = {
+                                            val currentIndex = orderedSections.indexOf(sectionItem)
+                                            val nextIndex = orderedSections.indexOf(groupSections[positionInGroup + 1])
+                                            orderedSections = orderedSections.toMutableList().also { list ->
+                                                val item = list[currentIndex]
+                                                list[currentIndex] = list[nextIndex]
+                                                list[nextIndex] = item
+                                            }
+                                        },
+                                        onClick = {
+                                            if (!isReorderMode) {
+                                                selectedSection = sectionItem.id
+                                                selectedTab = ""
+                                                workspaceSearch = ""
+                                            }
+                                        }
+                                    )
                                 }
                                 if (rowSections.size == 1) Spacer(Modifier.weight(1f))
                             }
@@ -1584,15 +1648,42 @@ private fun CostTabCard(tab: CostTab, modifier: Modifier, onClick: () -> Unit) {
 }
 
 @Composable
-private fun CostSectionCard(section: CostSection, modifier: Modifier, onClick: () -> Unit) {
-    Surface(onClick = onClick, modifier = modifier.height(152.dp), shape = RoundedCornerShape(16.dp), color = Color.White, border = BorderStroke(1.dp, CostBorder), shadowElevation = 1.dp) {
+private fun CostSectionCard(
+    section: CostSection,
+    modifier: Modifier,
+    isReorderMode: Boolean = false,
+    canMoveUp: Boolean = false,
+    canMoveDown: Boolean = false,
+    onMoveUp: () -> Unit = {},
+    onMoveDown: () -> Unit = {},
+    onClick: () -> Unit
+) {
+    Surface(
+        onClick = onClick,
+        modifier = modifier.height(if (isReorderMode) 184.dp else 152.dp),
+        shape = RoundedCornerShape(16.dp),
+        color = Color.White,
+        border = BorderStroke(1.dp, CostBorder),
+        shadowElevation = 1.dp
+    ) {
         Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(7.dp)) {
-            Surface(shape = RoundedCornerShape(10.dp), color = Color(0xFFEAF0F3)) {
-                Icon(section.icon, contentDescription = null, modifier = Modifier.padding(8.dp).size(21.dp), tint = CostInk)
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Surface(shape = RoundedCornerShape(10.dp), color = Color(0xFFEAF0F3)) {
+                    Icon(section.icon, contentDescription = null, modifier = Modifier.padding(8.dp).size(21.dp), tint = CostGoldDark)
+                }
+                if (isReorderMode) {
+                    Spacer(Modifier.weight(1f))
+                    IconButton(onClick = onMoveUp, enabled = canMoveUp, modifier = Modifier.size(30.dp)) {
+                        Icon(Icons.Outlined.KeyboardArrowUp, contentDescription = "تحريك لأعلى", tint = if (canMoveUp) CostGoldDark else CostMuted.copy(alpha = 0.35f))
+                    }
+                    IconButton(onClick = onMoveDown, enabled = canMoveDown, modifier = Modifier.size(30.dp)) {
+                        Icon(Icons.Outlined.KeyboardArrowDown, contentDescription = "تحريك لأسفل", tint = if (canMoveDown) CostGoldDark else CostMuted.copy(alpha = 0.35f))
+                    }
+                }
             }
             Text(section.title, color = CostInk, fontSize = 14.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Text(section.subtitle, color = CostMuted, fontSize = 11.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
-            Text("عرض التفاصيل  ←", color = CostGoldDark, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+            Text(if (isReorderMode) "ترتيب داخل المجموعة" else "عرض التفاصيل  ←", color = CostGoldDark, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
         }
     }
 }
