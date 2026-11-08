@@ -27,6 +27,34 @@ import java.math.RoundingMode
 class FinancialCalculationUseCase {
 
     /**
+     * Builds the twelve monthly totals for the selected calendar year.
+     * Accrual-only revenue entries are excluded until collected, matching the
+     * executive summary and treasury reporting rules.
+     */
+    fun calculateMonthlyReports(
+        year: Int,
+        expenses: List<ExpenseEntity>,
+        revenues: List<RevenueEntity>
+    ): List<MonthlyReportItem> = (1..12).map { month ->
+        val start = DateUtils.getMonthStartEpoch(year, month)
+        val end = DateUtils.getMonthEndEpoch(year, month)
+        val monthExpenses = expenses.asSequence()
+            .filter { it.date in start..end }
+            .sumOf { it.amountPiastres }
+        val monthRevenues = revenues.asSequence()
+            .filter { it.date in start..end && !it.isAccrualCollection }
+            .sumOf { it.amountPiastres }
+        MonthlyReportItem(
+            year = year,
+            month = month,
+            monthName = DateUtils.arabicMonthNames[month - 1],
+            totalExpensesPiastres = monthExpenses,
+            totalRevenuesPiastres = monthRevenues,
+            netBalancePiastres = monthRevenues - monthExpenses
+        )
+    }
+
+    /**
      * Calculates the comprehensive executive summary adhering strictly to Section 12.1 of the Constitution:
      * - Total Monthly Expenses = sum(expenses.amountPiastres)
      * - Total Monthly Earned Income = sum(revenues.amountPiastres where isAccrualCollection == false)
