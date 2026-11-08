@@ -43,7 +43,7 @@ class HouseholdMedicalRepository(context: Context, private val db: AppDatabase) 
         val oldPaths = JSONArray(item.attachmentsJson)
         val combined = JSONArray()
         for (i in 0 until oldPaths.length()) combined.put(oldPaths.getString(i))
-        newPaths.forEach(combined::put)
+        newPaths.forEach { combined.put(it) }
         medicalDao.update(item.copy(attachmentsJson = combined.toString(), updatedAt = System.currentTimeMillis()))
         return item.id
     }
@@ -70,7 +70,7 @@ class HouseholdMedicalRepository(context: Context, private val db: AppDatabase) 
                 }
                 val target = File(destination, "${UUID.randomUUID()}$extension")
                 appContext.contentResolver.openInputStream(uri)?.use { input ->
-                    target.outputStream().use(input::copyTo)
+                    target.outputStream().use { output -> input.copyTo(output) }
                 } ?: error("Unable to open attachment")
                 target.absolutePath
             }.getOrNull()
