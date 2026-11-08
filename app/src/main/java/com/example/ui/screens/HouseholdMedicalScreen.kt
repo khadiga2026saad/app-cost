@@ -1,6 +1,8 @@
 package com.example.ui.screens
 
 import android.net.Uri
+import android.content.Intent
+import androidx.core.content.FileProvider
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
@@ -34,6 +36,7 @@ import com.example.ui.viewmodel.HouseholdMedicalViewModel
 import org.json.JSONArray
 import java.math.BigDecimal
 import java.text.DecimalFormat
+import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -197,7 +200,7 @@ private fun HouseholdRecordCard(item: HouseholdExpenseEntity, en: Boolean, onEdi
         amount = formatEgp(item.amountPiastres),
         date = formatDate(item.date),
         details = item.notes,
-        attachmentCount = attachmentCount(item.attachmentsJson),
+        attachmentsJson = item.attachmentsJson,
         en = en, onEdit = onEdit, onDelete = onDelete
     )
 }
@@ -217,7 +220,10 @@ private fun MedicalRecordCard(item: MedicalExpenseEntity, en: Boolean, onEdit: (
 }
 
 @Composable
-private fun RecordCard(title: String, subtitle: String, amount: String, date: String, details: String, attachmentCount: Int, en: Boolean, onEdit: () -> Unit, onDelete: () -> Unit) {
+private fun RecordCard(title: String, subtitle: String, amount: String, date: String, details: String, attachmentsJson: String, en: Boolean, onEdit: () -> Unit, onDelete: () -> Unit) {
+    var showAttachments by remember { mutableStateOf(false) }
+    val attachments = remember(attachmentsJson) { attachmentPaths(attachmentsJson) }
+    val context = LocalContext.current
     Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = Color.White), border = BorderStroke(1.dp, HBorder)) {
         Column(Modifier.padding(13.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -228,20 +234,40 @@ private fun RecordCard(title: String, subtitle: String, amount: String, date: St
                 Text(amount, color = HAccent, fontSize = 15.sp, fontWeight = FontWeight.Bold)
             }
             if (details.isNotBlank()) Text(details, color = HMuted, fontSize = 11.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            if (attachments.isNotEmpty()) TextButton(onClick = { showAttachments = true }, contentPadding = PaddingValues(0.dp)) {
+                Icon(Icons.Outlined.AttachFile, null, tint = HAccent, modifier = Modifier.size(14.dp))
+                Text(if (en) "View attachments (${attachments.size})" else "عرض المرفقات (${attachments.size})", color = HAccent, fontSize = 10.sp)
+            }
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Outlined.CalendarMonth, null, tint = HMuted, modifier = Modifier.size(14.dp))
                 Spacer(Modifier.width(4.dp))
                 Text(date, color = HMuted, fontSize = 10.sp)
-                if (attachmentCount > 0) {
-                    Spacer(Modifier.width(12.dp))
-                    Icon(Icons.Outlined.AttachFile, null, tint = HAccent, modifier = Modifier.size(14.dp))
-                    Text(attachmentCount.toString(), color = HAccent, fontSize = 10.sp)
-                }
                 Spacer(Modifier.weight(1f))
                 IconButton(onClick = onEdit, modifier = Modifier.size(34.dp)) { Icon(Icons.Outlined.Edit, if (en) "Edit" else "تعديل", tint = HAccent, modifier = Modifier.size(18.dp)) }
                 IconButton(onClick = onDelete, modifier = Modifier.size(34.dp)) { Icon(Icons.Outlined.DeleteOutline, if (en) "Delete" else "حذف", tint = Color(0xFFB44C4C), modifier = Modifier.size(18.dp)) }
             }
         }
+    }
+    if (showAttachments) {
+        AlertDialog(
+            onDismissRequest = { showAttachments = false },
+            title = { Text(if (en) "Attached files" else "الملفات المرفقة") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    attachments.forEach { path ->
+                        TextButton(onClick = {
+                            runCatching {
+                                val file = File(path)
+                                val uri = FileProvider.getUriForFile(context, context.packageName + ".fileprovider", file)
+                                val mime = if (file.extension.equals("pdf", true)) "application/pdf" else "image/*"
+                                context.startActivity(Intent(Intent.ACTION_VIEW).setDataAndType(uri, mime).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION))
+                            }
+                        }) { Text(File(path).name, maxLines = 1, overflow = TextOverflow.Ellipsis) }
+                    }
+                }
+            },
+            confirmButton = { TextButton(onClick = { showAttachments = false }) { Text(if (en) "Close" else "إغلاق") } }
+        )
     }
 }
 
@@ -400,7 +426,9 @@ private fun formatEgp(piastres: Long): String = "${DecimalFormat("#,##0.00").for
 
 private fun formatDate(epoch: Long): String = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(Date(epoch))
 
-private fun attachmentCount(json: String): Int = runCatching { JSONArray(json).length() }.getOrDefault(0)
+private fun attachmentPaths(json: String): List<String> = runCatching { val array = JSONArray(json); (0 until array.length()).map { array.getString(it) } }.getOrDefault(emptyList())
+
+private fun attachmentCount(json: String): Int = attachmentPaths(json).size
 
 private fun isCurrentMonth(epoch: Long): Boolean {
     val record = Calendar.getInstance().apply { timeInMillis = epoch }
