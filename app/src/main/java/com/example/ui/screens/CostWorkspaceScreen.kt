@@ -311,7 +311,7 @@ fun CostWorkspaceScreen(
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
-        containerColor = CostCanvas,
+        containerColor = Color.White,
         topBar = {
             if (!showHouseholdMedical) Row(Modifier.fillMaxWidth().background(Color.White).padding(horizontal = 12.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
                 IconButton(onClick = {
@@ -322,8 +322,8 @@ fun CostWorkspaceScreen(
                     } else onNavigateBack()
                 }) { Icon(Icons.Outlined.ArrowForward, contentDescription = "رجوع", tint = CostInk) }
                 Column(Modifier.weight(1f)) {
-                    Text(activeTab?.title ?: section?.title ?: "قسم التكاليف", color = CostInk, fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                    Text(section?.subtitle ?: "إدارة المصروفات والدخل والحسابات في مكان واحد", color = CostMuted, fontSize = 10.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(activeTab?.title ?: section?.title ?: "التكاليف والمصروفات", color = CostInk, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                    Text(section?.subtitle ?: "المصروفات المنزلية والطبية", color = CostMuted, fontSize = 10.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
                 Surface(shape = RoundedCornerShape(10.dp), color = Color(0xFFEAF0F3)) {
                     Text("SMART COST", color = CostGoldDark, fontSize = 10.sp, fontWeight = FontWeight.ExtraBold, modifier = Modifier.padding(horizontal = 9.dp, vertical = 7.dp))
@@ -338,135 +338,33 @@ fun CostWorkspaceScreen(
                 modifier = Modifier.fillMaxSize().padding(padding)
             )
         } else if (section == null) {
-            LazyColumn(Modifier.fillMaxSize().padding(padding).padding(horizontal = 16.dp), contentPadding = PaddingValues(top = 14.dp, bottom = 26.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            LazyColumn(
+                Modifier.fillMaxSize().background(Color.White).padding(padding).padding(horizontal = 18.dp),
+                contentPadding = PaddingValues(top = 24.dp, bottom = 32.dp),
+                verticalArrangement = Arrangement.spacedBy(18.dp)
+            ) {
                 item {
-                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Text("كل الأقسام", color = CostInk, fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                        Text("اختاري القسم المطلوب لعرض بطاقاته الفرعية وسجلاته ونماذج الإدخال.", color = CostMuted, fontSize = 12.sp)
-                        Text("${costSections.size} قسمًا رئيسيًا", color = CostGoldDark, fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                    }
-                }
-                item {
-                    Surface(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(18.dp),
-                        color = Color.White,
-                        border = BorderStroke(1.dp, CostBorder)
-                    ) {
-                        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
-                            Text("إدارة مالية موحدة", color = CostInk, fontSize = 16.sp, fontWeight = FontWeight.Bold)
-                            Text(
-                                "اختاري المجال أولًا، ثم انتقلي إلى سجلاته أو نموذج الإدخال أو تقاريره. لكل مجال بياناته الخاصة.",
-                                color = CostMuted,
-                                fontSize = 12.sp,
-                                lineHeight = 18.sp
-                            )
-                        }
-                    }
-                }
-                Row(
-                    Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    OutlinedButton(
-                        onClick = { isReorderMode = !isReorderMode },
-                        modifier = Modifier.weight(1f),
-                        border = BorderStroke(1.dp, CostBorder),
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        Icon(
-                            if (isReorderMode) Icons.Outlined.Check else Icons.Outlined.SwapVert,
-                            contentDescription = null,
-                            modifier = Modifier.size(17.dp)
-                        )
-                        Spacer(Modifier.width(6.dp))
-                        Text(if (isReorderMode) "إنهاء الترتيب" else "إعادة ترتيب الأقسام", fontSize = 11.sp)
-                    }
-                    if (isReorderMode) {
-                        TextButton(onClick = { orderedSections = costSections }) {
-                            Text("الترتيب الافتراضي", color = CostGoldDark, fontSize = 10.sp)
-                        }
-                    }
-                }
-                if (isReorderMode) {
-                    item {
+                    Column(verticalArrangement = Arrangement.spacedBy(7.dp)) {
+                        Text("التكاليف والمصروفات", color = CostInk, fontSize = 23.sp, fontWeight = FontWeight.Bold)
                         Text(
-                            "حرّكي الأقسام داخل مجموعتها باستخدام السهمين، ثم اختاري إنهاء الترتيب.",
+                            "اختاري القسم لعرض المصروفات المنزلية والطبية وتسجيل البيانات ومتابعتها.",
                             color = CostMuted,
-                            fontSize = 11.sp
+                            fontSize = 13.sp,
+                            lineHeight = 20.sp
                         )
                     }
                 }
-                orderedSections.groupBy { it.group }.forEach { (groupTitle, groupSections) ->
-                    item {
-                        Row(
-                            Modifier.fillMaxWidth().padding(top = 5.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(groupTitle, color = CostInk, fontSize = 15.sp, fontWeight = FontWeight.Bold)
-                            Spacer(Modifier.width(8.dp))
-                            Surface(
-                                shape = RoundedCornerShape(20.dp),
-                                color = Color(0xFFEAF0F3)
-                            ) {
-                                Text(
-                                    groupSections.size.toString(),
-                                    color = CostGoldDark,
-                                    fontSize = 10.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
-                                )
-                            }
+                item {
+                    CostSectionCard(
+                        section = costSections.first { it.id == "house" },
+                        modifier = Modifier.fillMaxWidth(),
+                        onClick = {
+                            showHouseholdMedical = true
+                            selectedSection = null
+                            selectedTab = ""
+                            workspaceSearch = ""
                         }
-                    }
-                    groupSections.chunked(2).forEach { rowSections ->
-                        item {
-                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                                rowSections.forEach { sectionItem ->
-                                    val positionInGroup = groupSections.indexOf(sectionItem)
-                                    CostSectionCard(
-                                        section = sectionItem,
-                                        modifier = Modifier.weight(1f),
-                                        isReorderMode = isReorderMode,
-                                        canMoveUp = positionInGroup > 0,
-                                        canMoveDown = positionInGroup < groupSections.lastIndex,
-                                        onMoveUp = {
-                                            val currentIndex = orderedSections.indexOf(sectionItem)
-                                            val previousIndex = orderedSections.indexOf(groupSections[positionInGroup - 1])
-                                            orderedSections = orderedSections.toMutableList().also { list ->
-                                                val item = list[currentIndex]
-                                                list[currentIndex] = list[previousIndex]
-                                                list[previousIndex] = item
-                                            }
-                                        },
-                                        onMoveDown = {
-                                            val currentIndex = orderedSections.indexOf(sectionItem)
-                                            val nextIndex = orderedSections.indexOf(groupSections[positionInGroup + 1])
-                                            orderedSections = orderedSections.toMutableList().also { list ->
-                                                val item = list[currentIndex]
-                                                list[currentIndex] = list[nextIndex]
-                                                list[nextIndex] = item
-                                            }
-                                        },
-                                        onClick = {
-                                            if (!isReorderMode) {
-                                                if (sectionItem.id == "house") {
-                                                    showHouseholdMedical = true
-                                                    selectedSection = null
-                                                } else {
-                                                    selectedSection = sectionItem.id
-                                                }
-                                                selectedTab = ""
-                                                workspaceSearch = ""
-                                            }
-                                        }
-                                    )
-                                }
-                                if (rowSections.size == 1) Spacer(Modifier.weight(1f))
-                            }
-                        }
-                    }
+                    )
                 }
             }
         } else if (activeTab == null) {
