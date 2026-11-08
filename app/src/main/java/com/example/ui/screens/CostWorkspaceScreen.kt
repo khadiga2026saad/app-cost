@@ -313,7 +313,7 @@ fun CostWorkspaceScreen(
         modifier = modifier.fillMaxSize(),
         containerColor = CostCanvas,
         topBar = {
-            Row(Modifier.fillMaxWidth().background(Color.White).padding(horizontal = 12.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
+            if (!showHouseholdMedical) Row(Modifier.fillMaxWidth().background(Color.White).padding(horizontal = 12.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
                 IconButton(onClick = {
                     if (selectedTab.isNotBlank()) {
                         selectedTab = ""
