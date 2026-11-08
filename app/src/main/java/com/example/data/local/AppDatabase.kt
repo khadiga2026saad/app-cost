@@ -17,6 +17,8 @@ import com.example.data.local.dao.VehicleDao
 import com.example.data.local.dao.VehicleLogDao
 import com.example.data.local.dao.UserDao
 import com.example.data.local.dao.ProfileDao
+import com.example.data.local.dao.HouseholdExpenseDao
+import com.example.data.local.dao.MedicalExpenseDao
 import com.example.data.local.entities.UserProfile
 import com.example.data.local.entities.CertificatePayoutScheduleEntity
 import com.example.data.local.entities.CurrentAccountEntity
@@ -33,6 +35,8 @@ import com.example.data.local.entities.VehicleFuelLogEntity
 import com.example.data.local.entities.VehicleMaintenanceLogEntity
 import com.example.data.local.entities.VehicleOilLogEntity
 import com.example.data.local.entities.UserEntity
+import com.example.data.local.entities.HouseholdExpenseEntity
+import com.example.data.local.entities.MedicalExpenseEntity
 
 @Database(
     entities = [
@@ -51,9 +55,11 @@ import com.example.data.local.entities.UserEntity
         RevenueEntity::class,
         TreasuryMovementEntity::class,
         UserEntity::class,
-        UserProfile::class
+        UserProfile::class,
+        HouseholdExpenseEntity::class,
+        MedicalExpenseEntity::class
     ],
-    version = 3,
+    version = 4,
     exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -69,6 +75,8 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun gamaeyaDao(): GamaeyaDao
     abstract fun certificateDao(): CertificateDao
     abstract fun treasuryMovementDao(): TreasuryMovementDao
+    abstract fun householdExpenseDao(): HouseholdExpenseDao
+    abstract fun medicalExpenseDao(): MedicalExpenseDao
 
     companion object {
         val MIGRATION_2_3 = object : Migration(2, 3) {
@@ -83,6 +91,16 @@ abstract class AppDatabase : RoomDatabase() {
                 db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_users_email` ON `users` (`email`)")
             }
         }
+        val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("CREATE TABLE IF NOT EXISTS household_expenses (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, category TEXT NOT NULL, amountPiastres INTEGER NOT NULL, date INTEGER NOT NULL, expenseType TEXT NOT NULL, notes TEXT NOT NULL, attachmentsJson TEXT NOT NULL, createdAt INTEGER NOT NULL, updatedAt INTEGER NOT NULL)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_household_expenses_date ON household_expenses(date)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_household_expenses_category ON household_expenses(category)")
+                db.execSQL("CREATE TABLE IF NOT EXISTS medical_expenses (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, patientName TEXT NOT NULL, facilityType TEXT NOT NULL, facilityName TEXT NOT NULL, conditionDescription TEXT NOT NULL, doctorDiagnosis TEXT NOT NULL, checkupCostPiastres INTEGER NOT NULL, medicationCostPiastres INTEGER NOT NULL, date INTEGER NOT NULL, notes TEXT NOT NULL, attachmentsJson TEXT NOT NULL, createdAt INTEGER NOT NULL, updatedAt INTEGER NOT NULL)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_medical_expenses_date ON medical_expenses(date)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_medical_expenses_patientName ON medical_expenses(patientName)")
+            }
+        }
         @Volatile
         private var INSTANCE: AppDatabase? = null
 
@@ -93,7 +111,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "smart_cost_pro_database"
                 )
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
                     .build()
                 INSTANCE = instance
                 instance
