@@ -6,6 +6,8 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -144,7 +146,7 @@ private fun HouseholdDesignForm(en: Boolean, files: List<Uri>, pick: () -> Unit,
     val date = rememberDatePickerState(initialSelectedDateMillis = System.currentTimeMillis())
     val dateLabel = date.selectedDateMillis?.let { SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(Date(it)) } ?: SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(Date())
     SheetHeader(if (en) "Add household expense" else "إضافة مصروف منزل جديد", if (en) "Expense details" else "بيانات المصروف", close)
-    Column(Modifier.fillMaxWidth().heightIn(max = 680.dp).padding(horizontal = 20.dp), verticalArrangement = Arrangement.spacedBy(11.dp)) {
+    Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp), verticalArrangement = Arrangement.spacedBy(11.dp)) {
         Box {
             OutlinedTextField(category, {}, Modifier.fillMaxWidth().clickable { menu = true }, readOnly = true, label = { Text(if (en) "Expense category *" else "تصنيف المصروف *") }, shape = RoundedCornerShape(13.dp), trailingIcon = { Text("⌄") })
             DropdownMenu(menu, { menu = false }) { cats.forEach { DropdownMenuItem(text = { Text(it) }, onClick = { category = it; menu = false }) } }
@@ -180,7 +182,7 @@ private fun MedicalDesignForm(en: Boolean, files: List<Uri>, pick: () -> Unit, c
     val dateLabel = date.selectedDateMillis?.let { SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(Date(it)) } ?: SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(Date())
     val facilities = if (en) listOf("Hospital", "Clinic") else listOf("مستشفى", "عيادة")
     SheetHeader(if (en) "Add medical checkup" else "إضافة كشف طبي", if (en) "Patient and visit details" else "بيانات المريض وتفاصيل الزيارة", close)
-    Column(Modifier.fillMaxWidth().heightIn(max = 720.dp).padding(horizontal = 20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+    Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         OutlinedTextField(patient, { patient = it }, Modifier.fillMaxWidth(), label = { Text(if (en) "Patient name *" else "اسم المريض *") }, singleLine = true, shape = RoundedCornerShape(13.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
             Box(Modifier.weight(.8f)) {
